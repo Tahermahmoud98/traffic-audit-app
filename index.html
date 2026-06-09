@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>قسم التدقيق - دائرة المرور</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@100..900&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- ===== WELCOME SPLASH SCREEN ===== -->
+    <div id="splash-screen" class="splash-screen">
+        <!-- Animated background blobs -->
+        <div class="splash-blob blob-1"></div>
+        <div class="splash-blob blob-2"></div>
+        <div class="splash-blob blob-3"></div>
+
+        <div class="splash-content">
+            <!-- Logo emblem -->
+            <div class="splash-logo-ring">
+                <div class="splash-logo-inner">
+                    <img src="logo.png" alt="شعار الإقليم" class="splash-emblem">
+                </div>
+            </div>
+
+            <!-- Title block -->
+            <div class="splash-titles">
+                <p class="splash-gov" data-tr="gov_name">حكومة إقليم كوردستان - العراق</p>
+                <p class="splash-ministry" data-tr="ministry">وزارة الداخلية</p>
+                <h1 class="splash-main" data-tr="dept_name">مديرية مرور زاخو</h1>
+                <div class="splash-divider-line"></div>
+                <h2 class="splash-sub" data-tr="audit_system">نظام قسم التدقيق</h2>
+            </div>
+
+            <!-- Animated loading dots -->
+            <div class="splash-dots">
+                <span></span><span></span><span></span>
+            </div>
+
+            <!-- Enter button -->
+            <button class="splash-enter-btn" onclick="enterApp()">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span data-tr="enter_btn">دخول النظام</span>
+            </button>
+
+            <p class="splash-year">© 2025 - مديرية مرور زاخو</p>
+        </div>
+    </div>
+    <!-- ===== END SPLASH SCREEN ===== -->
+
+    <!-- Global Print Header -->
+    <div class="print-only print-document-header">
+        <div class="print-row">
+            <div class="print-col text-right">
+                <p class="bold-text" data-tr="gov_name">حكومة إقليم كوردستان - العراق</p>
+                <p class="bold-text" data-tr="ministry">وزارة الداخلية</p>
+                <p class="bold-text" data-tr="dept_name">مديرية مرور زاخو</p>
+                <p class="bold-text" data-tr="audit_dept">قسم التدقيق</p>
+            </div>
+            <div class="print-col center">
+                <img src="logo.png" alt="شعار حكومة إقليم كوردستان" class="print-logo">
+                <h3 id="print-section-title">سجل التدقيق</h3>
+            </div>
+            <div class="print-col text-left">
+                <p><span data-tr="lbl_date_print">التاريخ:</span> <span id="print-current-date"></span></p>
+                <p><span data-tr="lbl_page_num">رقم الصفحة:</span> 1</p>
+                <p><span data-tr="lbl_print_time">وقت الطباعة:</span> <span id="print-timestamp"></span></p>
+            </div>
+        </div>
+        <div class="print-divider"></div>
+    </div>
+
+    <!-- Background Elements -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+
+    <div class="app-container">
+
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header glass-panel no-print">
+                <div class="header-title">
+                    <div class="brand-lockup">
+                        <div class="logo brand-logo">
+                            <img src="logo.png" alt="Logo">
+                        </div>
+                        <h1 data-tr="app_title">قسم التدقيق - مديرية مرور زاخو</h1>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="header-search">
+                        <input id="section-search" class="search-input" type="search" placeholder="ابحث في القسم...">
+                        <button class="btn-icon-sm" title="بحث" onclick="performSearch()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        <button class="btn-icon-sm" title="مسح" onclick="clearSearch()"><i class="fa-solid fa-times"></i></button>
+                    </div>
+                    <button class="btn-lang" onclick="toggleLanguage()">
+                        <i class="fa-solid fa-globe"></i>
+                        <span id="lang-text">English</span>
+                    </button>
+                    <button class="btn-secondary" onclick="openSignatureModal()" title="أسماء الطباعة">
+                        <i class="fa-solid fa-user-pen"></i>
+                        <span data-tr="sig_details_btn">أسماء الطباعة</span>
+                    </button>
+                    <button class="btn-bulk-print" onclick="openBulkPrintModal()" title="طباعة جماعية">
+                        <i class="fa-solid fa-print"></i>
+                        <span data-tr="bulk_print">طباعة جماعية</span>
+                    </button>
+                    <button class="btn-backup" onclick="openBackupModal()" title="النسخ الاحتياطي">
+                        <i class="fa-solid fa-database"></i>
+                        <span data-tr="backup_btn">النسخ الاحتياطي</span>
+                    </button>
+                    <div class="user-profile">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff" alt="User">
+                        <span data-tr="sys_admin">مدير النظام</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Sections Container -->
+            <div class="sections-container">
+
+                <!-- Dashboard Overview Cards -->
+                <div class="overview-cards-wrapper no-print">
+                    <p class="overview-subtitle" data-tr="ov_subtitle">مديرية مرور زاخو - قسم التدقيق</p>
+
+                    <div class="overview-cards-grid">
+                        <!-- Receipts Card -->
+                        <div class="overview-card" onclick="showSection('receipts-section')">
+                            <div class="ov-icon-wrap receipts-color">
+                                <i class="fa-solid fa-file-invoice-dollar"></i>
+                            </div>
+                            <h3 class="ov-title" data-tr="receipts">الوصولات</h3>
+                            <div class="ov-stats">
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_receipts_count">عدد الوصولات:</span>
+                                    <span class="ov-value" id="ov-receipts-count">0</span>
+                                </div>
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_receipts_total">إجمالي المبالغ:</span>
+                                    <span class="ov-value accent" id="ov-receipts-total">0 د.ع</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delegations Card -->
+                        <div class="overview-card" onclick="showSection('delegations-section')">
+                            <div class="ov-icon-wrap delegations-color">
+                                <i class="fa-solid fa-plane-departure"></i>
+                            </div>
+                            <h3 class="ov-title" data-tr="delegations">الإيفادات</h3>
+                            <div class="ov-stats">
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_delegations_count">عدد السجلات:</span>
+                                    <span class="ov-value" id="ov-delegations-count">0</span>
+                                </div>
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_delegations_total">المبلغ الكلي:</span>
+                                    <span class="ov-value accent" id="ov-delegations-total">0 د.ع</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Children Card -->
+                        <div class="overview-card" onclick="showSection('children-section')">
+                            <div class="ov-icon-wrap children-color">
+                                <i class="fa-solid fa-children"></i>
+                            </div>
+                            <h3 class="ov-title" data-tr="children">الأطفال</h3>
+                            <div class="ov-stats">
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_children_count">عدد الأطفال:</span>
+                                    <span class="ov-value" id="ov-children-count">0</span>
+                                </div>
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_delegations_total">المبلغ الكلي:</span>
+                                    <span class="ov-value accent" id="ov-children-total">0 د.ع</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Marriage Card -->
+                        <div class="overview-card" onclick="showSection('marriage-section')">
+                            <div class="ov-icon-wrap marriage-color">
+                                <i class="fa-solid fa-ring"></i>
+                            </div>
+                            <h3 class="ov-title" data-tr="marriage">الزواج</h3>
+                            <div class="ov-stats">
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_marriage_count">عقود الزواج:</span>
+                                    <span class="ov-value" id="ov-marriage-count">0</span>
+                                </div>
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_delegations_total">المبلغ الكلي:</span>
+                                    <span class="ov-value accent" id="ov-marriage-total">0 د.ع</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Fines Card -->
+                        <div class="overview-card" onclick="showSection('fines-section')">
+                            <div class="ov-icon-wrap fines-color">
+                                <i class="fa-solid fa-book"></i>
+                            </div>
+                            <h3 class="ov-title" data-tr="fines">الغرامات</h3>
+                            <div class="ov-stats">
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_fines_count">عدد الدفاتر:</span>
+                                    <span class="ov-value" id="ov-fines-count">0</span>
+                                </div>
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_delegations_total">المبلغ الكلي:</span>
+                                    <span class="ov-value accent" id="ov-fines-total">0 د.ع</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Global Stats Card -->
+                        <div class="overview-card stats-card" onclick="showSection('stats-section'); renderStats();">
+                            <div class="ov-icon-wrap stats-color">
+                                <i class="fa-solid fa-chart-pie"></i>
+                            </div>
+                            <h3 class="ov-title" data-tr="stats">الإحصائيات الشاملة</h3>
+                            <p class="ov-sub" data-tr="ov_stats_sub">تحليل كامل للنظام</p>
+                            <div class="ov-stats">
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_total_records">إجمالي السجلات:</span>
+                                    <span class="ov-value accent" id="ov-total-records">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="section-divider no-print">
+
+                    <!-- Statistics Section -->
+                    <section id="stats-section" class="content-section">
+                        <div class="section-header print-header">
+                            <h2 data-tr="stats"><i class="fa-solid fa-chart-pie" style="color: var(--primary); margin-left: 10px;"></i>الإحصائيات الشاملة</h2>
+                            <div class="header-buttons no-print">
+                                <button class="btn-back" onclick="showHome()">
+                                    <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
+                                </button>
+                                <button class="btn-secondary" onclick="printSection('stats')">
+                                    <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
+                                </button>
+                                <button class="btn-primary" onclick="renderStats()">
+                                    <i class="fa-solid fa-arrows-rotate"></i> <span>تحديث الإحصائيات</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="section-stats" id="stats-content"></div>
+                        <div class="table-responsive glass-panel">
+                            <div id="stats-panels" class="stats-panels"></div>
+                        </div>
+                        
+                        <!-- Monthly Archive -->
+                        <div class="glass-panel" style="margin-top: 20px; padding: 20px;" id="stats-archive-panel">
+                            <h3 style="margin-bottom: 15px; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-box-archive"></i>
+                                <span data-tr="monthly_archive">الأرشيف الشهري للإحصائيات</span>
+                            </h3>
+                            <div class="table-responsive" style="padding: 0;">
+                                <table class="data-table" id="archive-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-tr="th_month">الشهر</th>
+                                            <th data-tr="ov_total_records">عدد السجلات</th>
+                                            <th data-tr="st_total_amounts">إجمالي المبالغ</th>
+                                            <th class="no-print" data-tr="th_actions">العمليات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="archive-table-body">
+                                        <!-- Injected dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+
+                <!-- Receipts Section -->
+                <section id="receipts-section" class="content-section">
+                    <div class="section-header print-header">
+                        <h2 data-tr="receipts"><i class="fa-solid fa-file-invoice-dollar"
+                                style="color: var(--primary); margin-left: 10px;"></i>سجل الوصولات</h2>
+                        <div class="header-buttons no-print">
+                            <button class="btn-back" onclick="showHome()">
+                                <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
+                            </button>
+                            <button class="btn-secondary" onclick="printSection('receipts')">
+                                <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
+                            </button>
+                            <button class="btn-primary" onclick="openModal('receipts-modal')">
+                                <i class="fa-solid fa-plus"></i> <span data-tr="add_receipt">إضافة وصل جديد</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-stats no-print" id="receipts-stats"></div>
+                    <div class="table-responsive glass-panel">
+                        <table class="data-table" id="receipts-table">
+                            <thead>
+                                <tr>
+                                    <th data-tr="th_type">النوع</th>
+                                    <th data-tr="th_directorate">المديرية</th>
+                                    <th data-tr="th_department">القسم</th>
+                                    <th data-tr="th_location">المكان</th>
+                                    <th data-tr="th_date">التاريخ</th>
+                                    <th data-tr="th_code">الكود</th>
+                                    <th data-tr="th_amount">المبلغ</th>
+                                    <th class="no-print" data-tr="th_image">صورة الوصل</th>
+                                    <th class="no-print" data-tr="th_actions">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Delegations Section -->
+                <section id="delegations-section" class="content-section">
+                    <div class="section-header print-header">
+                        <h2><i class="fa-solid fa-plane-departure"
+                                style="color: var(--primary); margin-left: 10px;"></i>سجل الإيفادات</h2>
+                        <div class="header-buttons no-print">
+                            <button class="btn-back" onclick="showHome()">
+                                <i class="fa-solid fa-arrow-right"></i> الرجوع
+                            </button>
+                            <button class="btn-secondary" onclick="printSection('delegations')">
+                                <i class="fa-solid fa-print"></i> طباعة القسم
+                            </button>
+                            <button class="btn-primary" onclick="openModal('delegations-modal')">
+                                <i class="fa-solid fa-plus"></i> <span data-tr="add_delegation">إضافة إيفاد جديد</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-stats no-print" id="delegations-stats"></div>
+                    <div class="table-responsive glass-panel">
+                        <table class="data-table" id="delegations-table">
+                            <thead>
+                                <tr>
+                                    <th data-tr="th_name">الاسم الثلاثي</th>
+                                    <th data-tr="th_month">الشهر</th>
+                                    <th data-tr="th_count">عدد الإيفادات</th>
+                                    <th data-tr="th_export">صادر</th>
+                                    <th data-tr="th_import">وارد</th>
+                                    <th data-tr="th_amount">المبلغ</th>
+                                    <th data-tr="th_total">المبلغ الكلي</th>
+                                    <th class="no-print" data-tr="th_actions">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Children Section -->
+                <section id="children-section" class="content-section">
+                    <div class="section-header print-header">
+                        <h2 data-tr="children"><i class="fa-solid fa-children"
+                                style="color: var(--primary); margin-left: 10px;"></i>سجل إضافة الأطفال</h2>
+                        <div class="header-buttons no-print">
+                            <button class="btn-back" onclick="showHome()">
+                                <i class="fa-solid fa-arrow-right"></i> الرجوع
+                            </button>
+                            <button class="btn-secondary" onclick="printSection('children')">
+                                <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
+                            </button>
+                            <button class="btn-primary" onclick="openModal('children-modal')">
+                                <i class="fa-solid fa-plus"></i> <span data-tr="add_child">إضافة طفل جديد</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-stats no-print" id="children-stats"></div>
+                    <div class="table-responsive glass-panel">
+                        <table class="data-table" id="children-table">
+                            <thead>
+                                <tr>
+                                    <th data-tr="th_father">اسم الأب</th>
+                                    <th data-tr="th_mother">اسم الأم</th>
+                                    <th data-tr="th_child">اسم الطفل</th>
+                                    <th data-tr="th_gender">الجنس</th>
+                                    <th data-tr="th_dob">الميلاد</th>
+                                    <th data-tr="th_arrival">تاريخ الوصول</th>
+                                    <th data-tr="th_amount">مبلغ الطفل</th>
+                                    <th class="no-print" data-tr="th_actions">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Marriage Section -->
+                <section id="marriage-section" class="content-section">
+                    <div class="section-header print-header">
+                        <h2 data-tr="marriage"><i class="fa-solid fa-ring"
+                                style="color: var(--primary); margin-left: 10px;"></i>سجل الزواج</h2>
+                        <div class="header-buttons no-print">
+                            <button class="btn-back" onclick="showHome()">
+                                <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
+                            </button>
+                            <button class="btn-secondary" onclick="printSection('marriage')">
+                                <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
+                            </button>
+                            <button class="btn-primary" onclick="openModal('marriage-modal')">
+                                <i class="fa-solid fa-plus"></i> <span data-tr="add_marriage">تسجيل زواج جديد</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-stats no-print" id="marriage-stats"></div>
+                    <div class="table-responsive glass-panel">
+                        <table class="data-table" id="marriage-table">
+                            <thead>
+                                <tr>
+                                    <th data-tr="th_husband">اسم الزوج</th>
+                                    <th data-tr="th_wife">اسم الزوجة</th>
+                                    <th data-tr="th_gender">الجنس</th>
+                                    <th data-tr="th_date">تاريخ الزواج</th>
+                                    <th data-tr="th_arrival">تاريخ الوصول</th>
+                                    <th data-tr="th_amount">مبلغ الزوجة</th>
+                                    <th class="no-print" data-tr="th_actions">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Fines Section -->
+                <section id="fines-section" class="content-section">
+                    <div class="section-header print-header">
+                        <h2 data-tr="fines"><i class="fa-solid fa-book"
+                                style="color: var(--primary); margin-left: 10px;"></i>سجل دفاتر الغرامات</h2>
+                        <div class="header-buttons no-print">
+                            <button class="btn-back" onclick="showHome()">
+                                <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
+                            </button>
+                            <button class="btn-secondary" onclick="printSection('fines')">
+                                <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
+                            </button>
+                            <button class="btn-primary" onclick="openModal('fines-modal')">
+                                <i class="fa-solid fa-plus"></i> <span data-tr="add_fine">إضافة دفتر جديد</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-stats no-print" id="fines-stats"></div>
+                    <div class="table-responsive glass-panel">
+                        <table class="data-table" id="fines-table">
+                            <thead>
+                                <tr>
+                                    <th data-tr="th_type">نوع الدفتر</th>
+                                    <th data-tr="th_holder">اسم الحامل</th>
+                                    <th data-tr="th_book_num">رقم الدفتر</th>
+                                    <th data-tr="th_total">المبلغ الكلي</th>
+                                    <th data-tr="th_date">التاريخ</th>
+                                    <th data-tr="th_location">مكان الإصدار</th>
+                                    <th class="no-print" data-tr="th_actions">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <div class="modal-overlay no-print" id="modal-overlay" onclick="closeAllModals()"></div>
+
+    <!-- Receipts Modal -->
+    <div class="modal glass-panel no-print" id="receipts-modal">
+        <div class="modal-header">
+            <h3 data-tr="add_receipt">إضافة وصل جديد</h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i
+                    class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <form class="custom-form" id="receipts-form">
+                <div class="form-group radio-group-container">
+                    <label data-tr="lbl_receipt_type">نوع الوصل</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="receipt_type" value="مركزي" checked>
+                            <span class="radio-custom"></span>
+                            <span data-tr="lbl_central">مركزي</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="receipt_type" value="لا مركزي">
+                            <span class="radio-custom"></span>
+                            <span data-tr="lbl_decentral">لا مركزي</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-tr="lbl_directorate">اسم المديرية</label>
+                        <input type="text" name="directorate" class="form-control" data-tr="lbl_directorate"
+                            placeholder="أدخل اسم المديرية" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="lbl_department">أقسام المديرية</label>
+                        <input type="text" name="department" class="form-control" data-tr="lbl_department"
+                            placeholder="أدخل اسم القسم" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-tr="lbl_location">مكان الوصل</label>
+                        <input type="text" name="location" class="form-control" data-tr="lbl_location"
+                            placeholder="مكان الوصل" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="lbl_date">تاريخ الوصل</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-tr="lbl_code">الكود</label>
+                        <input type="text" name="code" class="form-control" data-tr="lbl_code" placeholder="أدخل الكود"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="lbl_amount">المبلغ</label>
+                        <input type="number" name="amount" class="form-control" placeholder="0.00" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label data-tr="th_image">صورة الوصل</label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" name="receipt_image" class="file-input" id="receipt-image" accept="image/*">
+                        <label for="receipt-image" class="file-label">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span data-tr="lbl_upload_text">اسحب الصورة هنا أو اضغط للاختيار</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" onclick="closeAllModals()"
+                        data-tr="close_btn">إغلاق</button>
+                    <button type="submit" class="btn-primary" data-tr="save_btn">حفظ البيانات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delegations Modal -->
+    <div class="modal glass-panel no-print" id="delegations-modal">
+        <div class="modal-header">
+            <h3 data-tr="add_delegation">إضافة إيفاد جديد</h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i
+                    class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <form class="custom-form" id="delegations-form">
+                <div class="form-group">
+                    <label data-tr="th_name">الاسم الثلاثي</label>
+                    <input type="text" name="name" class="form-control" data-tr="lbl_name"
+                        placeholder="أدخل الاسم الثلاثي للموفد" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-tr="lbl_month">الشهر</label>
+                        <select name="month" class="form-control" required>
+                            <option value="" data-tr="lbl_choose_month">اختر الشهر</option>
+                            <option value="كانون الثاني" data-tr="m1">كانون الثاني</option>
+                            <option value="شباط" data-tr="m2">شباط</option>
+                            <option value="آذار" data-tr="m3">آذار</option>
+                            <option value="نيسان" data-tr="m4">نيسان</option>
+                            <option value="أيار" data-tr="m5">أيار</option>
+                            <option value="حزيران" data-tr="m6">حزيران</option>
+                            <option value="تموز" data-tr="m7">تموز</option>
+                            <option value="آب" data-tr="m8">آب</option>
+                            <option value="أيلول" data-tr="m9">أيلول</option>
+                            <option value="تشرين الأول" data-tr="m10">تشرين الأول</option>
+                            <option value="تشرين الثاني" data-tr="m11">تشرين الثاني</option>
+                            <option value="كانون الأول" data-tr="m12">كانون الأول</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="lbl_count">عدد الإيفادات</label>
+                        <input type="number" name="count" class="form-control" placeholder="0" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-tr="th_export">مكان الصادر</label>
+                        <input type="text" name="export_num" class="form-control" data-tr="lbl_export_placeholder"
+                            placeholder="مكان الصادر" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="th_import">مكان الوارد</label>
+                        <input type="text" name="import_num" class="form-control" data-tr="lbl_import_placeholder"
+                            placeholder="مكان الوارد" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-tr="lbl_amount">المبلغ</label>
+                        <input type="number" name="amount" class="form-control" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="lbl_total">المبلغ الكلي</label>
+                        <input type="number" name="total" class="form-control" placeholder="0.00" required>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" onclick="closeAllModals()"
+                        data-tr="close_btn">إلغاء</button>
+                    <button type="submit" class="btn-primary" data-tr="save_btn">حفظ البيانات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Children Modal -->
+    <div class="modal glass-panel no-print" id="children-modal">
+        <div class="modal-header">
+            <h3 data-tr="add_child">إضافة طفل جديد</h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i
+                    class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <form class="custom-form" id="children-form">
+                <div class="form-group">
+                    <label data-tr="lbl_father">الاسم الثلاثي للأب</label>
+                    <input type="text" name="father" class="form-control" data-tr="lbl_father"
+                        placeholder="أدخل اسم الأب الثلاثي" required>
+                </div>
+                <div class="form-group">
+                    <label data-tr="lbl_mother">الاسم الثلاثي للأم</label>
+                    <input type="text" name="mother" class="form-control" data-tr="lbl_mother"
+                        placeholder="أدخل اسم الأم الثلاثي" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-tr="lbl_child">الاسم الثلاثي للطفل</label>
+                        <input type="text" name="child" class="form-control" data-tr="lbl_child"
+                            placeholder="أدخل اسم الطفل الثلاثي" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="lbl_gender">الجنس</label>
+                        <select name="gender" class="form-control" required>
+                            <option value="" data-tr="lbl_choose_gender">اختر الجنس</option>
+                            <option value="ذكر" data-tr="lbl_male">ذكر</option>
+                            <option value="أنثى" data-tr="lbl_female">أنثى</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-tr="th_dob">تاريخ ميلاد الطفل</label>
+                        <input type="date" name="dob" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="th_arrival">تاريخ وصوله</label>
+                        <input type="date" name="arrival" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label data-tr="lbl_total">مجموع مبلغ الطفل</label>
+                    <input type="number" name="amount" class="form-control" placeholder="0.00" required>
+                </div>
+                <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" onclick="closeAllModals()"
+                        data-tr="close_btn">إلغاء</button>
+                    <button type="submit" class="btn-primary" data-tr="save_btn">حفظ البيانات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Marriage Modal -->
+    <div class="modal glass-panel no-print" id="marriage-modal">
+        <div class="modal-header">
+            <h3 data-tr="add_marriage">تسجيل عقد زواج</h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i
+                    class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <form class="custom-form" id="marriage-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-tr="lbl_husband">الاسم الثلاثي للزوج</label>
+                        <input type="text" name="husband" class="form-control" data-tr="lbl_husband"
+                            placeholder="أدخل اسم الزوج" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="lbl_wife">الاسم الثلاثي للزوجة</label>
+                        <input type="text" name="wife" class="form-control" data-tr="lbl_wife"
+                            placeholder="أدخل اسم الزوجة" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label data-tr="th_gender">الجنس</label>
+                    <select name="gender" class="form-control" required>
+                        <option value="" data-tr="lbl_choose_gender">اختر الجنس</option>
+                        <option value="ذكر" data-tr="lbl_male">ذكر</option>
+                        <option value="أنثى" data-tr="lbl_female">أنثى</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-tr="th_date">تاريخ الزواج</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="th_arrival">تاريخ واصله</label>
+                        <input type="date" name="arrival" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label data-tr="lbl_total">مجموع مبلغ الزوجة</label>
+                    <input type="number" name="amount" class="form-control" placeholder="0.00" required>
+                </div>
+                <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" onclick="closeAllModals()"
+                        data-tr="close_btn">إلغاء</button>
+                    <button type="submit" class="btn-primary" data-tr="save_btn">حفظ البيانات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Fines Modal -->
+    <div class="modal glass-panel no-print" id="fines-modal">
+        <div class="modal-header">
+            <h3 data-tr="add_fine">إضافة دفتر غرامات</h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i
+                    class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <form class="custom-form" id="fines-form">
+                <div class="form-group radio-group-container">
+                    <label data-tr="lbl_book_type">نوع الدفتر</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="book_type" value="38 أ" checked>
+                            <span class="radio-custom"></span>
+                            38 أ
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="book_type" value="68 أ">
+                            <span class="radio-custom"></span>
+                            68 أ
+                        </label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-tr="lbl_holder">اسم حامل الدفتر</label>
+                        <input type="text" name="holder" class="form-control" data-tr="lbl_holder"
+                            placeholder="الاسم الكامل" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="lbl_book_num">رقم الدفتر</label>
+                        <input type="text" name="book_number" class="form-control" data-tr="lbl_book_num"
+                            placeholder="أدخل رقم الدفتر" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-tr="th_date">تاريخ</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label data-tr="lbl_location">مكان صادر</label>
+                        <input type="text" name="location" class="form-control" data-tr="lbl_location"
+                            placeholder="مكان الإصدار" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label data-tr="lbl_total">المبلغ الكلي للدفتر</label>
+                    <input type="number" name="total" class="form-control" placeholder="0.00" required>
+                </div>
+                <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" onclick="closeAllModals()"
+                        data-tr="close_btn">إلغاء</button>
+                    <button type="submit" class="btn-primary" data-tr="save_btn">حفظ البيانات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Global Print Footer -->
+    <div class="print-only print-document-footer">
+        <div class="print-divider" style="margin-top: 40px; margin-bottom: 20px;"></div>
+        <div class="signatures-row">
+            <div class="sig-box">
+                <p class="sig-title" data-tr="sig_clerk">توقيع الموظف المدقق</p>
+                <p class="sig-line">.....................................</p>
+                <p class="sig-name"><span data-tr="lbl_name_only">الاسم</span>: <span id="print-name-clerk">..........................</span></p>
+            </div>
+            <div class="sig-box">
+                <p class="sig-title" data-tr="sig_officer">توقيع ضابط التدقيق</p>
+                <p class="sig-line">.....................................</p>
+                <p class="sig-name"><span data-tr="lbl_name_only">الاسم</span>: <span id="print-name-officer">..........................</span></p>
+            </div>
+            <div class="sig-box">
+                <p class="sig-title" data-tr="sig_director">مصادقة مدير القسم</p>
+                <p class="sig-line">.....................................</p>
+                <p class="sig-name"><span data-tr="lbl_rank_name">الرتبة والاسم</span>: <span id="print-name-director">.................</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div class="modal glass-panel no-print" id="image-preview-modal" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3 data-tr="th_image">صورة الوصل</h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i
+                    class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="text-align: center;">
+            <img id="preview-img-el" src="" alt="صورة الوصل"
+                style="max-width: 100%; max-height: 70vh; border-radius: 10px;">
+        </div>
+    </div>
+
+    <!-- ===== SIGNATURE NAMES MODAL ===== -->
+    <div class="modal glass-panel no-print" id="signature-modal" style="max-width: 520px;">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-user-pen" style="margin-left:10px; color:var(--primary)"></i><span data-tr="sig_details_title">بيانات التوقيع للطباعة</span></h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="sig-director-name" data-tr="sig_director_label">اسم مدير القسم</label>
+                <input type="text" id="sig-director-name" class="form-control" placeholder="أدخل اسم مدير القسم">
+            </div>
+            <div class="form-group">
+                <label for="sig-clerk-name" data-tr="sig_clerk_label">اسم الموظف المدقق</label>
+                <input type="text" id="sig-clerk-name" class="form-control" placeholder="أدخل اسم الموظف المدقق">
+            </div>
+            <div class="form-group">
+                <label for="sig-officer-name" data-tr="sig_officer_label">اسم ضابط التدقيق</label>
+                <input type="text" id="sig-officer-name" class="form-control" placeholder="أدخل اسم ضابط التدقيق">
+            </div>
+            <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 10px;">
+                <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn">إغلاق</button>
+                <button type="button" class="btn-primary" onclick="saveSignatureNames()" data-tr="sig_save_btn">حفظ الأسماء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BULK PRINT MODAL ===== -->
+    <div class="modal glass-panel no-print" id="bulk-print-modal" style="max-width: 550px;">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-print" style="margin-left:10px; color:var(--primary)"></i><span data-tr="bulk_print">طباعة جماعية</span></h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <p class="bulk-print-desc" data-tr="bulk_print_desc">اختر الأقسام التي تريد طباعتها دفعة واحدة:</p>
+            <div class="bulk-print-options">
+                <label class="bulk-check-item">
+                    <input type="checkbox" id="bp-receipts" checked>
+                    <span class="bulk-check-icon receipts-color"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+                    <span data-tr="receipts">الوصولات</span>
+                    <span class="bulk-count" id="bp-count-receipts"></span>
+                </label>
+                <label class="bulk-check-item">
+                    <input type="checkbox" id="bp-delegations" checked>
+                    <span class="bulk-check-icon delegations-color"><i class="fa-solid fa-plane-departure"></i></span>
+                    <span data-tr="delegations">الإيفادات</span>
+                    <span class="bulk-count" id="bp-count-delegations"></span>
+                </label>
+                <label class="bulk-check-item">
+                    <input type="checkbox" id="bp-children" checked>
+                    <span class="bulk-check-icon children-color"><i class="fa-solid fa-children"></i></span>
+                    <span data-tr="children">الأطفال</span>
+                    <span class="bulk-count" id="bp-count-children"></span>
+                </label>
+                <label class="bulk-check-item">
+                    <input type="checkbox" id="bp-marriage" checked>
+                    <span class="bulk-check-icon marriage-color"><i class="fa-solid fa-ring"></i></span>
+                    <span data-tr="marriage">الزواج</span>
+                    <span class="bulk-count" id="bp-count-marriage"></span>
+                </label>
+                <label class="bulk-check-item">
+                    <input type="checkbox" id="bp-fines" checked>
+                    <span class="bulk-check-icon fines-color"><i class="fa-solid fa-book"></i></span>
+                    <span data-tr="fines">الغرامات</span>
+                    <span class="bulk-count" id="bp-count-fines"></span>
+                </label>
+            </div>
+            <div class="modal-footer" style="padding: 20px 0 0 0; margin-top:15px; gap:10px;">
+                <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn">إغلاق</button>
+                <button type="button" class="btn-primary" onclick="executeBulkPrint()">
+                    <i class="fa-solid fa-print"></i>
+                    <span data-tr="start_print">بدء الطباعة</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SINGLE RECORD PRINT MODAL ===== -->
+    <div class="modal glass-panel no-print" id="single-print-modal" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-file-lines" style="margin-left:10px; color:var(--primary)"></i><span data-tr="single_print">طباعة فردية</span></h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div id="single-print-preview"></div>
+            <div class="modal-footer" style="padding: 20px 0 0 0; margin-top:15px; gap:10px;">
+                <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn">إغلاق</button>
+                <button type="button" class="btn-primary" onclick="executeSinglePrint()">
+                    <i class="fa-solid fa-print"></i>
+                    <span data-tr="print_now">طباعة الآن</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden bulk print container -->
+    <div id="bulk-print-container" style="display:none;"></div>
+
+    <script src="app.js"></script>
+    <!-- Confirmation Modal -->
+    <div class="modal glass-panel no-print" id="confirm-modal" style="max-width: 400px;">
+        <div class="modal-header">
+            <h3 data-tr="confirm_del_title">تأكيد الحذف</h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i
+                    class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="text-align: center; padding: 20px;">
+            <p id="confirm-msg" data-tr="confirm_del">هل أنت متأكد من حذف هذا السجل؟</p>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: center; padding: 20px;">
+            <button class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn">إلغاء</button>
+            <button class="btn-primary" style="background: var(--danger);" onclick="executeDelete()"
+                data-tr="delete_btn">حذف</button>
+        </div>
+    </div>
+
+    <!-- ===== BACKUP & RESTORE MODAL ===== -->
+    <div class="modal glass-panel no-print" id="backup-modal" style="max-width: 520px;">
+        <div class="modal-header">
+            <h3>
+                <i class="fa-solid fa-database" style="margin-left:10px; color:var(--success)"></i>
+                <span data-tr="backup_modal_title">إدارة النسخ الاحتياطي</span>
+            </h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <!-- Default backup action view -->
+            <div id="backup-default-view">
+                <p style="margin-bottom: 20px; font-size: 14px; color: var(--text-muted); line-height: 1.6;" data-tr="backup_desc">
+                    يمكنك تصدير كافة بيانات النظام في ملف JSON للاحتفاظ بنسخة احتياطية، أو استيرادها لاحقاً.
+                </p>
+                
+                <!-- Export Section -->
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--surface-border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;">
+                    <div style="font-size: 32px; color: var(--success); margin-bottom: 5px;">
+                        <i class="fa-solid fa-file-export"></i>
+                    </div>
+                    <button type="button" class="btn-primary" onclick="exportData()" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--success), #059669); border: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                        <i class="fa-solid fa-download"></i>
+                        <span data-tr="export_btn">تصدير البيانات (JSON)</span>
+                    </button>
+                </div>
+                
+                <!-- Import Section -->
+                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--surface-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;">
+                    <div style="font-size: 32px; color: var(--primary); margin-bottom: 5px;">
+                        <i class="fa-solid fa-file-import"></i>
+                    </div>
+                    <div class="file-upload-wrapper" style="width: 100%;">
+                        <input type="file" id="backup-file-input" class="file-input" accept=".json" onchange="handleBackupFileSelect(event)">
+                        <label for="backup-file-input" class="file-label" id="backup-file-label" style="border-style: dashed; padding: 20px;">
+                            <i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i>
+                            <span data-tr="import_btn" id="backup-upload-text">استيراد البيانات (JSON)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Confirm overwrite/restore view -->
+            <div id="backup-confirm-view" style="display: none; flex-direction: column; gap: 15px; text-align: center;">
+                <div style="font-size: 40px; color: var(--danger);">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h4 style="color: var(--danger); font-size: 16px;" data-tr="confirm_import_title">تأكيد استرداد البيانات</h4>
+                <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);" data-tr="confirm_import_warning">
+                    تحذير: هذا الإجراء سيقوم باستبدال كافة البيانات الحالية ببيانات الملف المختار. لا يمكن التراجع عن هذا الإجراء!
+                </p>
+                <!-- Summary of file contents -->
+                <div id="backup-summary-box" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--surface-border); border-radius: 8px; padding: 15px; font-size: 14px; text-align: right; display: flex; flex-direction: column; gap: 8px; color: var(--text);">
+                    <!-- Will be filled by JavaScript -->
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button type="button" class="btn-secondary" onclick="cancelRestore()" style="flex: 1;" data-tr="close_btn">إلغاء</button>
+                    <button type="button" class="btn-primary" onclick="confirmRestore()" style="flex: 1; background: var(--danger); border-color: var(--danger); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);" data-tr="confirm_btn">تأكيد الاسترداد</button>
+                </div>
+            </div>
+            
+            <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 15px;">
+                <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn" style="width: 100%;">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month Details Modal -->
+    <div class="modal glass-panel no-print" id="month-details-modal" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-box-archive" style="margin-left: 10px; color: var(--primary);"></i><span id="month-details-title" data-tr="monthly_archive">أرشيف الشهر</span></h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <div id="month-details-content">
+                <!-- Injected dynamically -->
+            </div>
+            <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 15px;">
+                <button type="button" class="btn-primary" onclick="closeAllModals()" data-tr="close_btn">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

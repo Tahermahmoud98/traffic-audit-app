@@ -1,0 +1,16 @@
+{
+  "name": "traffic-audit-app",
+  "version": "1.0.0",
+  "description": "Traffic Audit Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . traffic-audit-app --platform=win32 --arch=x64 --out=dist --icon=logo.png --overwrite"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^29.1.0",
+    "electron-packager": "^17.1.2"
+  }
+}
