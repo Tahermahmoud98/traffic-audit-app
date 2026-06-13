@@ -17,7 +17,7 @@ function showSection(sectionId) {
     const target = document.getElementById(sectionId);
     if (target) {
         target.classList.add('active');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo(0, 0);
     }
 }
 
@@ -27,7 +27,7 @@ function showHome() {
 
     document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo(0, 0);
 }
 
 // ===== TOAST NOTIFICATIONS =====
@@ -65,7 +65,7 @@ function getSignatureNames() {
 }
 
 function formatSignatureValue(value) {
-    return value && value.trim() ? value.trim() : '..........................';
+    return value && value.trim() ? value.trim() : '';
 }
 
 function renderPrintSignatureNames() {
@@ -107,7 +107,7 @@ function openSignatureModal() {
     openModal('signature-modal');
 }
 
-// ===== LOCALIZATION (Badini Kurdish) =====
+// ===== // ===== LOCALIZATION (Badini Kurdish) =====
 let currentLang = localStorage.getItem('appLang') || 'ku';
 
 const translations = {
@@ -151,6 +151,7 @@ const translations = {
         th_department: 'القسم',
         th_location: 'المكان',
         th_date: 'التاريخ',
+        th_marriage_date: 'تاريخ الزواج',
         th_code: 'الكود',
         th_amount: 'المبلغ',
         th_image: 'صورة الوصل',
@@ -179,7 +180,7 @@ const translations = {
         lbl_location: 'المكان:',
         lbl_date: 'التاريخ:',
         lbl_code: 'رقم الوصل / الكود:',
-        lbl_amount: 'المبلغ (د.ع):',
+        lbl_amount: 'المبلغ:',
         lbl_image: 'تحميل صورة الوصل:',
         lbl_name: 'الاسم الكامل:',
         lbl_month: 'الشهر:',
@@ -217,8 +218,8 @@ const translations = {
         st_total_books: 'إجمالي الدفاتر',
         empty_data: 'لا توجد بيانات',
         sig_clerk: 'توقيع الموظف المدقق',
-        sig_officer: 'توقيع ضابط التدقيق',
-        sig_director: 'مصادقة مدير القسم',
+        sig_officer: 'توقيع مدير قسم التدقيق',
+        sig_director: 'توقيع مدير عام',
         lbl_name_only: 'الاسم',
         lbl_rank_name: 'الرتبة والاسم',
         sig_details_btn: 'أسماء الطباعة',
@@ -226,9 +227,9 @@ const translations = {
         monthly_archive: 'الأرشيف الشهري للإحصائيات',
         view_details: 'عرض التفاصيل',
         th_month: 'الشهر',
-        sig_director_label: 'اسم مدير القسم',
+        sig_director_label: 'اسم المدير العام',
         sig_clerk_label: 'اسم الموظف المدقق',
-        sig_officer_label: 'اسم ضابط التدقيق',
+        sig_officer_label: 'اسم مدير قسم التدقيق',
         sig_save_btn: 'حفظ الأسماء',
         close_btn: 'إغلاق',
         delete_btn: 'حذف',
@@ -277,7 +278,36 @@ const translations = {
         confirm_import_warning: 'تحذير: هذا الإجراء سيقوم باستبدال كافة البيانات الحالية ببيانات الملف المختار. لا يمكن التراجع عن هذا الإجراء!',
         confirm_btn: 'تأكيد الاسترداد',
         import_success: 'تم استرداد النسخة الاحتياطية بنجاح!',
-        invalid_file_error: 'ملف النسخة الاحتياطية غير صالح!'
+        invalid_file_error: 'ملف النسخة الاحتياطية غير صالح!',
+        currency: 'د.ع',
+        lbl_employee_gender: 'جنس الموظف',
+        pl_search: 'ابحث في القسم...',
+        title_search: 'بحث',
+        title_clear: 'مسح',
+        splash_year: '© 2025 - مديرية مرور زاخو',
+        pl_sig_director: 'أدخل اسم المدير العام',
+        pl_sig_clerk: 'أدخل اسم الموظف المدقق',
+        pl_sig_officer: 'أدخل اسم مدير قسم التدقيق',
+        err_select_section: 'الرجاء اختيار قسم واحد على الأقل',
+        err_no_data_sections: 'لا توجد بيانات في الأقسام المحددة',
+        err_no_data_print: 'لا توجد بيانات للطباعة',
+        lbl_section_details: 'التفاصيل حسب الأقسام:',
+        lbl_record_single: 'سجل',
+        stats_breakdown_title: 'الإحصائيات الشاملة للأقسام',
+        lbl_grand_total: 'المجموع الكلي',
+        btn_refresh_stats: 'تحديث الإحصائيات',
+        pl_directorate: 'أدخل اسم المديرية',
+        pl_department: 'أدخل اسم القسم',
+        pl_location: 'أدخل المكان',
+        pl_code: 'أدخل الكود',
+        pl_name: 'أدخل الاسم الثلاثي للموفد',
+        pl_father: 'أدخل اسم الأب الثلاثي',
+        pl_mother: 'أدخل اسم الأم الثلاثي',
+        pl_child: 'أدخل اسم الطفل الثلاثي',
+        pl_husband: 'أدخل اسم الزوج',
+        pl_wife: 'أدخل اسم الزوجة',
+        pl_holder: 'اسم صاحب الدفتر',
+        pl_book_num: 'رقم الدفتر'
     },
     ku: {
         err_image: 'هه‌ڵه‌كا له‌ كاتا پرۆسه‌كرنا وێنەیێ',
@@ -319,6 +349,7 @@ const translations = {
         th_department: 'پشك',
         th_location: 'جهـ',
         th_date: 'مێژوو',
+        th_marriage_date: 'مێژوویا هه‌ڤژينيێ',
         th_code: 'كۆد',
         th_amount: 'كۆژم',
         th_image: 'وێنێ پسوولەیێ',
@@ -334,8 +365,8 @@ const translations = {
         th_child: 'ناڤێ زارۆكى',
         th_gender: 'ڕه‌گه‌ز',
         th_dob: 'رۆژا ژ دايكبوونێ',
-        th_arrival: 'مێژوویا گه‌هشتنێ',
-        th_husband: 'ناڤێ هه‌ڤژينی (زه‌لام)',
+        th_arrival: 'مێژوویا پسوولێ',
+        th_husband: 'ناڤێ هه‌ڤژينى (زه‌لام)',
         th_wife: 'ناڤێ هه‌ڤژینێ (ژن)',
         th_holder: 'خودانێ ده‌فته‌رێ',
         th_book_num: 'هژمارا ده‌فته‌رێ',
@@ -347,7 +378,7 @@ const translations = {
         lbl_location: 'جهـ:',
         lbl_date: 'مێژوو:',
         lbl_code: 'هژمارا پسوولەیێ / كۆد:',
-        lbl_amount: 'كۆژم (د.ع):',
+        lbl_amount: 'كۆژم:',
         lbl_image: 'باركرنا وێنێ پسوولەیێ:',
         lbl_name: 'ناڤێ ته‌مام:',
         lbl_month: 'هه‌یڤ:',
@@ -362,8 +393,8 @@ const translations = {
         lbl_male: 'نێر',
         lbl_female: 'مێ',
         lbl_dob: 'رۆژا ژ دايكبوونێ:',
-        lbl_arrival: 'مێژوویا گه‌هشتنێ:',
-        lbl_husband: 'ناڤێ هه‌ڤژينی يێ ته‌مام:',
+        lbl_arrival: 'مێژوویا پسوولێ:',
+        lbl_husband: 'ناڤێ هه‌ڤژينى يێ ته‌مام:',
         lbl_wife: 'ناڤێ هه‌ڤژینێ يا ته‌مام:',
         lbl_book_type: 'جۆرێ ده‌فته‌رێ:',
         lbl_holder: 'ناڤێ خودانێ ده‌فته‌رێ:',
@@ -371,7 +402,7 @@ const translations = {
         save_btn: 'پاراستنا پێزانینان',
         edit_save_btn: 'پاراستنا دەستكاریێ',
         confirm_del: 'ئه‌رێ تو يێ پشت ڕاستى ژ ژێبرنا ڤێ تۆمارێ؟',
-        success_save: 'پێزانین ب سه‌ركه‌فتيانه‌ هاتنه‌ پاراستن!',
+        success_save: 'پێزانين ب سه‌ركه‌فتيانه‌ هاتنه‌ پاراستن!',
         st_total_receipts: 'كۆما پسوولەیان',
         st_total_amounts: 'كۆژمێ گشتی يێ پاره‌ى',
         st_central: 'ناڤه‌ندی',
@@ -385,8 +416,8 @@ const translations = {
         st_total_books: 'كۆما گشتيا ده‌فته‌ران',
         empty_data: 'پێزانين نینن',
         sig_clerk: 'ئیمزايا فه‌رمانبه‌رێ وردبين',
-        sig_officer: 'ئیمزايا ئه‌فسه‌رێ وردبين',
-        sig_director: 'په‌سه‌ندكرنا ڕێڤه‌به‌رێ پشكێ',
+        sig_officer: 'ئیمزايا ڕێڤه‌به‌رێ پشكا وردبينيێ',
+        sig_director: 'ئیمزايا ڕێڤه‌به‌رێ گشتى',
         lbl_name_only: 'ناڤ',
         lbl_rank_name: 'پله‌ و ناڤ',
         sig_details_btn: 'ناڤا چاپکرنێ',
@@ -394,9 +425,9 @@ const translations = {
         monthly_archive: 'ئەرشیفا هەیڤانە یا ئاماران',
         view_details: 'نیشاندانا هوورکاریا',
         th_month: 'هه‌یڤ',
-        sig_director_label: 'ناڤا بەڕێڤه‌بەری بەش',
+        sig_director_label: 'ناڤێ ڕێڤه‌به‌رێ گشتى',
         sig_clerk_label: 'ناڤا فه‌رمانبه‌رێ وردبين',
-        sig_officer_label: 'ناڤا ئه‌فسه‌رێ وردبين',
+        sig_officer_label: 'ناڤێ ڕێڤه‌به‌رێ پشكا وردبينيێ',
         sig_save_btn: 'هەڵگرتن',
         close_btn: 'داخستن',
         delete_btn: 'ژێبرن',
@@ -426,7 +457,7 @@ const translations = {
         lbl_import_placeholder: 'جهێ هاتى',
         bulk_print: 'چاپكرنا کۆمەلکی',
         bulk_print_desc: 'پشكێن بخازی چاپ بكی هه‌ڤ ده‌مدا هه‌لبژێره‌:',
-        single_print: 'چاپكرنا تاکەکی',
+        single_print: 'چاپكرنا تاکەكي',
         start_print: 'دەستپێكرنا چاپكرنێ',
         print_now: 'ئێسا چاپ بكه‌',
         print_record: 'چاپكرنا تۆمارێ',
@@ -445,7 +476,36 @@ const translations = {
         confirm_import_warning: 'هشیاري: هینانەڤەیا فایلی دێ هەمی پێزانینێن نوكە یێن سیستمى ژێبه‌ت و گوهۆڕیت. پاشگەزبوون نینە!',
         confirm_btn: 'دووپاتكرنا هینانەڤەیێ',
         import_success: 'پێزانین ب سەركەفتیانە هاتنە هینانەڤە!',
-        invalid_file_error: 'فایلێ پشتەڤانیێ یێ دروست نینە!'
+        invalid_file_error: 'فایلێ پشتەڤانیێ یێ دروست نینە!',
+        currency: 'د.ع',
+        lbl_employee_gender: 'ڕه‌گه‌زێ فه‌رمانبه‌رى',
+        pl_search: 'ل ڤى پشكێ بگه‌ڕێ...',
+        title_search: 'گه‌ڕيان',
+        title_clear: 'پاككرن',
+        splash_year: '© 2025 - ڕێڤه‌به‌ريا هاتنوچوونا زاخۆ',
+        pl_sig_director: 'ناڤێ ڕێڤه‌به‌رێ گشتى بنڤیسە',
+        pl_sig_clerk: 'ناڤێ فه‌رمانبه‌رێ وردبين بنڤیسە',
+        pl_sig_officer: 'ناڤێ ڕێڤه‌به‌رێ پشكا وردبينيێ بنڤیسە',
+        err_select_section: 'تكایە لانی کێم یه‌ک پشك هه‌لبژێره‌',
+        err_no_data_sections: 'پێزانين نینن ل پشکێن هه‌لبژارتى',
+        err_no_data_print: 'داتا بۆ چاپ كرنێ نينن',
+        lbl_section_details: 'کورتیا پشکان:',
+        lbl_record_single: 'تۆمار',
+        stats_breakdown_title: 'ئامارێن گشتى یێن پشکان',
+        lbl_grand_total: 'كۆما گشتی',
+        btn_refresh_stats: 'نووكرنا ئاماران',
+        pl_directorate: 'ناڤێ ڕێڤه‌به‌ریێ بنڤیسە',
+        pl_department: 'ناڤێ پشكێ بنڤیسە',
+        pl_location: 'جهى بنڤیسە',
+        pl_code: 'كۆدێ بنڤیسە',
+        pl_name: 'ناڤێ سيانى يێ موفه‌دى بنڤیسە',
+        pl_father: 'ناڤێ سيانى يێ بابى بنڤیسە',
+        pl_mother: 'ناڤێ سيانى يێ دايكێ بنڤیسە',
+        pl_child: 'ناڤێ سيانى يێ زارۆكى بنڤیسە',
+        pl_husband: 'ناڤێ مێرى بنڤیسە',
+        pl_wife: 'ناڤێ ژنێ بنڤیسە',
+        pl_holder: 'ناڤێ خودانێ ده‌فته‌رێ',
+        pl_book_num: 'هژمارا ده‌فته‌رێ'
     }
 };
 
@@ -459,6 +519,8 @@ function toggleLanguage() {
 
 function applyLanguage() {
     const langData = translations[currentLang];
+    
+    // Translate text content
     document.querySelectorAll('[data-tr]').forEach(el => {
         const key = el.getAttribute('data-tr');
         if (langData[key]) {
@@ -469,8 +531,27 @@ function applyLanguage() {
             }
         }
     });
-    const langBtnText = document.getElementById('lang-text');
-    if (langBtnText) langBtnText.textContent = langData.lang_btn;
+
+    // Translate placeholders specifically
+    document.querySelectorAll('[data-tr-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-tr-placeholder');
+        if (langData[key]) {
+            el.placeholder = langData[key];
+        }
+    });
+
+    // Translate titles (tooltips)
+    document.querySelectorAll('[data-tr-title]').forEach(el => {
+        const key = el.getAttribute('data-tr-title');
+        if (langData[key]) {
+            el.title = langData[key];
+        }
+    });
+
+    // Translate all language buttons
+    document.querySelectorAll('.lang-text-el').forEach(el => {
+        el.textContent = langData.lang_btn;
+    });
     
     document.title = langData.app_title;
     document.documentElement.lang = currentLang;
@@ -502,7 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             dataObj[key] = await getBase64(value);
                         } catch(err) {
                             console.error(err);
-                            showToast("حدث خطأ أثناء معالجة الصورة");
+                            showToast(translations[currentLang].err_image);
                             return;
                         }
                     } else if (!(value instanceof File)) {
@@ -618,26 +699,27 @@ function updateOverviewCards() {
     const fines       = JSON.parse(localStorage.getItem('fines')       || '[]');
 
     const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+    const currency    = translations[currentLang].currency;
 
     const rTotal = receipts.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
     set('ov-receipts-count', receipts.length);
-    set('ov-receipts-total', rTotal.toLocaleString() + ' د.ع');
+    set('ov-receipts-total', rTotal.toLocaleString() + ' ' + currency);
 
     const dTotal = delegations.reduce((s,i) => s + (parseFloat(i.total)||0), 0);
     set('ov-delegations-count', delegations.length);
-    set('ov-delegations-total', dTotal.toLocaleString() + ' د.ع');
+    set('ov-delegations-total', dTotal.toLocaleString() + ' ' + currency);
 
     const cTotal = children.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
     set('ov-children-count', children.length);
-    set('ov-children-total', cTotal.toLocaleString() + ' د.ع');
+    set('ov-children-total', cTotal.toLocaleString() + ' ' + currency);
 
     const mTotal = marriage.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
     set('ov-marriage-count', marriage.length);
-    set('ov-marriage-total', mTotal.toLocaleString() + ' د.ع');
+    set('ov-marriage-total', mTotal.toLocaleString() + ' ' + currency);
 
     const fTotal = fines.reduce((s,i) => s + (parseFloat(i.total)||0), 0);
     set('ov-fines-count', fines.length);
-    set('ov-fines-total', fTotal.toLocaleString() + ' د.ع');
+    set('ov-fines-total', fTotal.toLocaleString() + ' ' + currency);
 
     const totalRecords = receipts.length + delegations.length + children.length + marriage.length + fines.length;
     set('ov-total-records', totalRecords);
@@ -656,7 +738,7 @@ function renderReceipts(filter) {
         let decentralCount = data.filter(item => item.receipt_type === 'لا مركزي').length;
         statsDiv.innerHTML = `
             <div class="stat-item"><h4>${lang.st_total_receipts}</h4><div class="stat-value">${data.length}</div></div>
-            <div class="stat-item"><h4>${lang.st_total_amounts}</h4><div class="stat-value">${totalAmount.toLocaleString()} د.ع</div></div>
+            <div class="stat-item"><h4>${lang.st_total_amounts}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
             <div class="stat-item"><h4>${lang.st_central}</h4><div class="stat-value">${centralCount}</div></div>
             <div class="stat-item"><h4>${lang.st_decentral}</h4><div class="stat-value">${decentralCount}</div></div>
         `;
@@ -671,7 +753,7 @@ function renderReceipts(filter) {
             <td>${item.location}</td>
             <td>${item.date}</td>
             <td>${item.code}</td>
-            <td style="font-weight:bold; color:var(--success);">${item.amount} د.ع</td>
+            <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
             <td class="no-print">${item.receipt_image ? `<button class="btn-icon-sm" onclick="viewImage('${item.receipt_image}')"><i class="fa-solid fa-image"></i></button>` : '—'}</td>
             <td class="no-print action-btns">
                 <button class="btn-icon-sm print" onclick="printSingleRecord('receipts',${idx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
@@ -704,7 +786,7 @@ function renderDelegations(filter) {
         statsDiv.innerHTML = `
             <div class="stat-item"><h4>${lang.st_delegation_records}</h4><div class="stat-value">${data.length}</div></div>
             <div class="stat-item"><h4>${lang.st_total_delegations}</h4><div class="stat-value">${totalMissions}</div></div>
-            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} د.ع</div></div>
+            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
         `;
     }
     
@@ -723,8 +805,8 @@ function renderDelegations(filter) {
             <td><span class="badge bg-secondary">${item.count}</span></td>
             <td>${item.export_num}</td>
             <td>${item.import_num}</td>
-            <td>${item.amount} د.ع</td>
-            <td style="font-weight:bold; color:var(--success);">${item.total} د.ع</td>
+            <td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
+            <td style="font-weight:bold; color:var(--success);">${parseFloat(item.total).toLocaleString()} ${lang.currency}</td>
             <td class="no-print action-btns">
                 <button class="btn-icon-sm print" onclick="printSingleRecord('delegations',${idx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
                 <button class="btn-icon-sm edit" onclick="editRecord('delegations',${idx})"><i class="fa-solid fa-pen"></i></button>
@@ -748,7 +830,7 @@ function renderChildren(filter) {
         let females = data.filter(item => item.gender === 'أنثى').length;
         statsDiv.innerHTML = `
             <div class="stat-item"><h4>${lang.st_total_children}</h4><div class="stat-value">${data.length}</div></div>
-            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} د.ع</div></div>
+            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
             <div class="stat-item"><h4>${lang.st_males}</h4><div class="stat-value">${males}</div></div>
             <div class="stat-item"><h4>${lang.st_females}</h4><div class="stat-value">${females}</div></div>
         `;
@@ -763,7 +845,7 @@ function renderChildren(filter) {
             <td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td>
             <td>${item.dob}</td>
             <td>${item.arrival}</td>
-            <td style="font-weight:bold; color:var(--success);">${item.amount} د.ع</td>
+            <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
             <td class="no-print action-btns">
                 <button class="btn-icon-sm print" onclick="printSingleRecord('children',${idx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
                 <button class="btn-icon-sm edit" onclick="editRecord('children',${idx})"><i class="fa-solid fa-pen"></i></button>
@@ -785,7 +867,7 @@ function renderMarriage(filter) {
         let totalAmount = data.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
         statsDiv.innerHTML = `
             <div class="stat-item"><h4>${lang.st_marriage_contracts}</h4><div class="stat-value">${data.length}</div></div>
-            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} د.ع</div></div>
+            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
         `;
     }
     tbody.innerHTML = data.length ? '' : `<tr><td colspan="7" style="text-align:center;">${lang.empty_data}</td></tr>`;
@@ -797,7 +879,7 @@ function renderMarriage(filter) {
             <td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td>
             <td>${item.date}</td>
             <td>${item.arrival}</td>
-            <td style="font-weight:bold; color:var(--success);">${item.amount} د.ع</td>
+            <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
             <td class="no-print action-btns">
                 <button class="btn-icon-sm print" onclick="printSingleRecord('marriage',${idx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
                 <button class="btn-icon-sm edit" onclick="editRecord('marriage',${idx})"><i class="fa-solid fa-pen"></i></button>
@@ -821,7 +903,7 @@ function renderFines(filter) {
         let type68Count = data.filter(item => item.book_type === '68 أ').length;
         statsDiv.innerHTML = `
             <div class="stat-item"><h4>${lang.st_total_books}</h4><div class="stat-value">${data.length}</div></div>
-            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} د.ع</div></div>
+            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
             <div class="stat-item"><h4>38أ</h4><div class="stat-value">${type38Count}</div></div>
             <div class="stat-item"><h4>68أ</h4><div class="stat-value">${type68Count}</div></div>
         `;
@@ -833,7 +915,7 @@ function renderFines(filter) {
             <td><span class="badge ${item.book_type === '38 أ' ? 'bg-primary' : 'bg-warning'}">${item.book_type}</span></td>
             <td>${item.holder}</td>
             <td>${item.book_number}</td>
-            <td style="font-weight:bold; color:var(--danger);">${item.total} د.ع</td>
+            <td style="font-weight:bold; color:var(--danger);">${parseFloat(item.total).toLocaleString()} ${lang.currency}</td>
             <td>${item.date}</td>
             <td>${item.location}</td>
             <td class="no-print action-btns">
@@ -1100,7 +1182,7 @@ function printSingleRecord(key, idx) {
             <tr><th>${lang.lbl_location}</th><td>${item.location}</td></tr>
             <tr><th>${lang.lbl_date}</th><td>${item.date}</td></tr>
             <tr><th>${lang.lbl_code}</th><td>${item.code}</td></tr>
-            <tr class="amount-row"><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} د.ع</td></tr>
+            <tr class="amount-row"><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td></tr>
         `;
     } else if (key === 'delegations') {
         rows = `
@@ -1109,8 +1191,8 @@ function printSingleRecord(key, idx) {
             <tr><th>${lang.lbl_count}</th><td>${item.count}</td></tr>
             <tr><th>${lang.th_export}</th><td>${item.export_num}</td></tr>
             <tr><th>${lang.th_import}</th><td>${item.import_num}</td></tr>
-            <tr><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} د.ع</td></tr>
-            <tr class="amount-row"><th>${lang.lbl_total}</th><td>${parseFloat(item.total).toLocaleString()} د.ع</td></tr>
+            <tr><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td></tr>
+            <tr class="amount-row"><th>${lang.lbl_total}</th><td>${parseFloat(item.total).toLocaleString()} ${lang.currency}</td></tr>
         `;
     } else if (key === 'children') {
         rows = `
@@ -1120,16 +1202,16 @@ function printSingleRecord(key, idx) {
             <tr><th>${lang.lbl_gender}</th><td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td></tr>
             <tr><th>${lang.th_dob}</th><td>${item.dob}</td></tr>
             <tr><th>${lang.th_arrival}</th><td>${item.arrival}</td></tr>
-            <tr class="amount-row"><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} د.ع</td></tr>
+            <tr class="amount-row"><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td></tr>
         `;
     } else if (key === 'marriage') {
         rows = `
             <tr><th>${lang.lbl_husband}</th><td>${item.husband}</td></tr>
             <tr><th>${lang.lbl_wife}</th><td>${item.wife}</td></tr>
-            <tr><th>${lang.lbl_gender}</th><td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td></tr>
-            <tr><th>${lang.th_date}</th><td>${item.date}</td></tr>
+            <tr><th>${lang.lbl_employee_gender || lang.lbl_gender}</th><td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td></tr>
+            <tr><th>${lang.th_marriage_date || lang.th_date}</th><td>${item.date}</td></tr>
             <tr><th>${lang.th_arrival}</th><td>${item.arrival}</td></tr>
-            <tr class="amount-row"><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} د.ع</td></tr>
+            <tr class="amount-row"><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td></tr>
         `;
     } else if (key === 'fines') {
         rows = `
@@ -1138,7 +1220,7 @@ function printSingleRecord(key, idx) {
             <tr><th>${lang.lbl_book_num}</th><td>${item.book_number}</td></tr>
             <tr><th>${lang.th_date}</th><td>${item.date}</td></tr>
             <tr><th>${lang.lbl_location}</th><td>${item.location}</td></tr>
-            <tr class="amount-row"><th>${lang.lbl_total}</th><td>${parseFloat(item.total).toLocaleString()} د.ع</td></tr>
+            <tr class="amount-row"><th>${lang.lbl_total}</th><td>${parseFloat(item.total).toLocaleString()} ${lang.currency}</td></tr>
         `;
     }
 
@@ -1188,9 +1270,9 @@ function printSingleRecord(key, idx) {
             ${bodyContent}
             <div class="spc-divider" style="margin-top:30px;"></div>
             <div class="spc-signatures">
-                <div class="spc-sig"><p>${lang.sig_clerk}</p><p class="spc-sig-line">.......................................</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.clerk)}</p></div>
-                <div class="spc-sig"><p>${lang.sig_officer}</p><p class="spc-sig-line">.......................................</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.officer)}</p></div>
-                <div class="spc-sig"><p>${lang.sig_director}</p><p class="spc-sig-line">.......................................</p><p>${lang.lbl_rank_name}: ${formatSignatureValue(sigNames.director)}</p></div>
+                <div class="spc-sig"><p>${lang.sig_clerk}</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.clerk)}</p></div>
+                <div class="spc-sig"><p>${lang.sig_officer}</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.officer)}</p></div>
+                <div class="spc-sig"><p>${lang.sig_director}</p><p>${lang.lbl_rank_name}: ${formatSignatureValue(sigNames.director)}</p></div>
             </div>
         </div>
     `;
@@ -1283,7 +1365,7 @@ function buildSectionHTML(key, lang) {
         receipts: `<th>${lang.th_type}</th><th>${lang.th_directorate}</th><th>${lang.th_department}</th><th>${lang.th_location}</th><th>${lang.th_date}</th><th>${lang.th_code}</th><th>${lang.th_amount}</th>`,
         delegations: `<th>${lang.th_name}</th><th>${lang.th_month}</th><th>${lang.th_count}</th><th>${lang.th_export}</th><th>${lang.th_import}</th><th>${lang.th_amount}</th><th>${lang.th_total}</th>`,
         children: `<th>${lang.th_father}</th><th>${lang.th_mother}</th><th>${lang.th_child}</th><th>${lang.th_gender}</th><th>${lang.th_dob}</th><th>${lang.th_arrival}</th><th>${lang.th_amount}</th>`,
-        marriage: `<th>${lang.th_husband}</th><th>${lang.th_wife}</th><th>${lang.th_gender}</th><th>${lang.th_date}</th><th>${lang.th_arrival}</th><th>${lang.th_amount}</th>`,
+        marriage: `<th>${lang.th_husband}</th><th>${lang.th_wife}</th><th>${lang.lbl_employee_gender || lang.th_gender}</th><th>${lang.th_marriage_date || lang.th_date}</th><th>${lang.th_arrival}</th><th>${lang.th_amount}</th>`,
         fines: `<th>${lang.th_type}</th><th>${lang.th_holder}</th><th>${lang.th_book_num}</th><th>${lang.th_total}</th><th>${lang.th_date}</th><th>${lang.th_location}</th>`
     };
 
@@ -1295,16 +1377,16 @@ function buildSectionHTML(key, lang) {
     let bodyRows = data.map(item => {
         let cells = '';
         if (key === 'receipts') {
-            cells = `<td>${item.receipt_type === 'مركزي' ? lang.lbl_central : lang.lbl_decentral}</td><td>${item.directorate}</td><td>${item.department}</td><td>${item.location}</td><td>${item.date}</td><td>${item.code}</td><td>${parseFloat(item.amount).toLocaleString()} د.ع</td>`;
+            cells = `<td>${item.receipt_type === 'مركزي' ? lang.lbl_central : lang.lbl_decentral}</td><td>${item.directorate}</td><td>${item.department}</td><td>${item.location}</td><td>${item.date}</td><td>${item.code}</td><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>`;
         } else if (key === 'delegations') {
             const mKey = monthMap[item.month];
-            cells = `<td>${item.name}</td><td>${mKey && lang[mKey] ? lang[mKey] : item.month}</td><td>${item.count}</td><td>${item.export_num}</td><td>${item.import_num}</td><td>${parseFloat(item.amount).toLocaleString()} د.ع</td><td>${parseFloat(item.total).toLocaleString()} د.ع</td>`;
+            cells = `<td>${item.name}</td><td>${mKey && lang[mKey] ? lang[mKey] : item.month}</td><td>${item.count}</td><td>${item.export_num}</td><td>${item.import_num}</td><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td><td>${parseFloat(item.total).toLocaleString()} ${lang.currency}</td>`;
         } else if (key === 'children') {
-            cells = `<td>${item.father}</td><td>${item.mother}</td><td>${item.child}</td><td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td><td>${item.dob}</td><td>${item.arrival}</td><td>${parseFloat(item.amount).toLocaleString()} د.ع</td>`;
+            cells = `<td>${item.father}</td><td>${item.mother}</td><td>${item.child}</td><td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td><td>${item.dob}</td><td>${item.arrival}</td><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>`;
         } else if (key === 'marriage') {
-            cells = `<td>${item.husband}</td><td>${item.wife}</td><td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td><td>${item.date}</td><td>${item.arrival}</td><td>${parseFloat(item.amount).toLocaleString()} د.ع</td>`;
+            cells = `<td>${item.husband}</td><td>${item.wife}</td><td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td><td>${item.date}</td><td>${item.arrival}</td><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>`;
         } else if (key === 'fines') {
-            cells = `<td>${item.book_type}</td><td>${item.holder}</td><td>${item.book_number}</td><td>${parseFloat(item.total).toLocaleString()} د.ع</td><td>${item.date}</td><td>${item.location}</td>`;
+            cells = `<td>${item.book_type}</td><td>${item.holder}</td><td>${item.book_number}</td><td>${parseFloat(item.total).toLocaleString()} ${lang.currency}</td><td>${item.date}</td><td>${item.location}</td>`;
         }
         return `<tr>${cells}</tr>`;
     }).join('');
@@ -1319,7 +1401,7 @@ function buildSectionHTML(key, lang) {
 
     const sigNames = getSignatureNames();
     const colCount = (key==='receipts'||key==='delegations'||key==='children') ? 7 : (key==='marriage' ? 6 : 6);
-    const totalRow = `<tr class="total-row"><td colspan="${colCount-1}" style="text-align:left;">${lang.st_total_amounts || lang.lbl_total}</td><td><strong>${totalAmt.toLocaleString()} د.ع</strong></td></tr>`;
+    const totalRow = `<tr class="total-row"><td colspan="${colCount-1}" style="text-align:left;">${lang.st_total_amounts || lang.lbl_total}</td><td><strong>${totalAmt.toLocaleString()} ${lang.currency}</strong></td></tr>`;
 
     return `
         <div class="bulk-section" style="page-break-after:always;">
@@ -1346,9 +1428,9 @@ function buildSectionHTML(key, lang) {
             </table>
             <div class="bs-divider" style="margin-top:25px;"></div>
             <div class="bs-signatures">
-                <div class="bs-sig"><p style="font-weight:700">${lang.sig_clerk}</p><p class="bs-line">.......................................</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.clerk)}</p></div>
-                <div class="bs-sig"><p style="font-weight:700">${lang.sig_officer}</p><p class="bs-line">.......................................</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.officer)}</p></div>
-                <div class="bs-sig"><p style="font-weight:700">${lang.sig_director}</p><p class="bs-line">.......................................</p><p>${lang.lbl_rank_name}: ${formatSignatureValue(sigNames.director)}</p></div>
+                <div class="bs-sig"><p style="font-weight:700">${lang.sig_clerk}</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.clerk)}</p></div>
+                <div class="bs-sig"><p style="font-weight:700">${lang.sig_officer}</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.officer)}</p></div>
+                <div class="bs-sig"><p style="font-weight:700">${lang.sig_director}</p><p>${lang.lbl_rank_name}: ${formatSignatureValue(sigNames.director)}</p></div>
             </div>
         </div>
     `;
@@ -1365,14 +1447,14 @@ function executeBulkPrint() {
     ].filter(Boolean);
 
     if (!selected.length) {
-        showToast(currentLang === 'ar' ? 'الرجاء اختيار قسم واحد على الأقل' : 'تكایە لانی کێم یه‌ک پشك هه‌لبژێره‌');
+        showToast(lang.err_select_section);
         return;
     }
 
     let content = selected.map(k => buildSectionHTML(k, lang)).filter(Boolean).join('');
 
     if (!content) {
-        showToast(currentLang === 'ar' ? 'لا توجد بيانات في الأقسام المحددة' : 'پێزانين نینن ل پشکێن hilbijartî');
+        showToast(lang.err_no_data_sections);
         return;
     }
 
@@ -1453,7 +1535,7 @@ function printSection(key) {
                     <tr>
                         <td style="font-weight:bold; color:#0D8ABC;">${lang['m' + m]}</td>
                         <td>${breakdown[m].recordsCount}</td>
-                        <td style="font-weight:bold;">${breakdown[m].amount.toLocaleString()} د.ع</td>
+                        <td style="font-weight:bold;">${breakdown[m].amount.toLocaleString()} ${lang.currency}</td>
                     </tr>
                 `;
             }
@@ -1511,32 +1593,32 @@ function printSection(key) {
                         <tr>
                             <td><strong>${lang.receipts}</strong></td>
                             <td>${receipts.length}</td>
-                            <td><strong>${receiptsTotal.toLocaleString()} د.ع</strong></td>
+                            <td><strong>${receiptsTotal.toLocaleString()} ${lang.currency}</strong></td>
                         </tr>
                         <tr>
                             <td><strong>${lang.delegations}</strong></td>
                             <td>${delegations.length}</td>
-                            <td><strong>${delegationsTotal.toLocaleString()} د.ع</strong></td>
+                            <td><strong>${delegationsTotal.toLocaleString()} ${lang.currency}</strong></td>
                         </tr>
                         <tr>
                             <td><strong>${lang.children}</strong></td>
                             <td>${children.length}</td>
-                            <td><strong>${childrenTotal.toLocaleString()} د.ع</strong></td>
+                            <td><strong>${childrenTotal.toLocaleString()} ${lang.currency}</strong></td>
                         </tr>
                         <tr>
                             <td><strong>${lang.marriage}</strong></td>
                             <td>${marriage.length}</td>
-                            <td><strong>${marriageTotal.toLocaleString()} د.ع</strong></td>
+                            <td><strong>${marriageTotal.toLocaleString()} ${lang.currency}</strong></td>
                         </tr>
                         <tr>
                             <td><strong>${lang.fines}</strong></td>
                             <td>${fines.length}</td>
-                            <td><strong>${finesTotal.toLocaleString()} د.ع</strong></td>
+                            <td><strong>${finesTotal.toLocaleString()} ${lang.currency}</strong></td>
                         </tr>
                         <tr class="total-row" style="background:#fff8e1; font-weight:700; color:#b45309;">
                             <td><strong>${currentLang === 'ar' ? 'المجموع الكلي' : 'كۆما گشتی'}</strong></td>
                             <td><strong>${totalRecords}</strong></td>
-                            <td><strong>${totalAmounts.toLocaleString()} د.ع</strong></td>
+                            <td><strong>${totalAmounts.toLocaleString()} ${lang.currency}</strong></td>
                         </tr>
                     </tbody>
                 </table>
@@ -1544,9 +1626,9 @@ function printSection(key) {
                 ${archiveTableHTML}
                 
                 <div class="bs-signatures" style="margin-top:auto; padding-top:10px; border-top:1px solid #333;">
-                    <div class="bs-sig"><p style="font-weight:700">${lang.sig_clerk}</p><p class="bs-line">.......................................</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.clerk)}</p></div>
-                    <div class="bs-sig"><p style="font-weight:700">${lang.sig_officer}</p><p class="bs-line">.......................................</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.officer)}</p></div>
-                    <div class="bs-sig"><p style="font-weight:700">${lang.sig_director}</p><p class="bs-line">.......................................</p><p>${lang.lbl_rank_name}: ${formatSignatureValue(sigNames.director)}</p></div>
+                    <div class="bs-sig"><p style="font-weight:700">${lang.sig_clerk}</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.clerk)}</p></div>
+                    <div class="bs-sig"><p style="font-weight:700">${lang.sig_officer}</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.officer)}</p></div>
+                    <div class="bs-sig"><p style="font-weight:700">${lang.sig_director}</p><p>${lang.lbl_rank_name}: ${formatSignatureValue(sigNames.director)}</p></div>
                 </div>
             </div>
         `;
@@ -1754,7 +1836,7 @@ function showMonthArchiveDetails(m) {
                 </div>
                 <div class="ov-stat-row" style="display:flex; justify-content:space-between; font-size:14px; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:8px;">
                     <span>${lang.st_total_amounts}</span>
-                    <span style="font-weight:700; color:var(--success);">${data.amount.toLocaleString()} د.ع</span>
+                    <span style="font-weight:700; color:var(--success);">${data.amount.toLocaleString()} ${lang.currency}</span>
                 </div>
                 <div style="margin-top:10px;">
                     <h4 style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">${currentLang === 'ar' ? 'التفاصيل حسب الأقسام:' : 'کورتیا پشکان:'}</h4>
@@ -1810,7 +1892,7 @@ function renderStats() {
     contentDiv.innerHTML = `
         <div style="display:flex; gap:12px; flex-wrap:wrap; padding:10px;">
             <div class="stat-item"><h4>${lang.ov_total_records}</h4><div class="stat-value">${totalRecords}</div></div>
-            <div class="stat-item"><h4>${lang.st_total_amounts}</h4><div class="stat-value">${totalAmounts.toLocaleString()} د.ع</div></div>
+            <div class="stat-item"><h4>${lang.st_total_amounts}</h4><div class="stat-value">${totalAmounts.toLocaleString()} ${lang.currency}</div></div>
             <div class="stat-item"><h4>${lang.receipts}</h4><div class="stat-value">${receipts.length}</div></div>
             <div class="stat-item"><h4>${lang.delegations}</h4><div class="stat-value">${delegations.length}</div></div>
             <div class="stat-item"><h4>${lang.children}</h4><div class="stat-value">${children.length}</div></div>
@@ -1828,11 +1910,11 @@ function renderStats() {
 
     panelsDiv.innerHTML = `
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px;">
-            <div class="glass-panel" style="padding:14px;"><h4>${lang.receipts}</h4><p>${lang.lbl_records}: ${receipts.length}</p><p>${lang.lbl_total_sum}: ${receiptsTotal.toLocaleString()} د.ع</p></div>
-            <div class="glass-panel" style="padding:14px;"><h4>${lang.delegations}</h4><p>${lang.lbl_records}: ${delegations.length}</p><p>${lang.lbl_total_sum}: ${delegationsTotal.toLocaleString()} د.ع</p></div>
-            <div class="glass-panel" style="padding:14px;"><h4>${lang.children}</h4><p>${lang.lbl_records}: ${children.length}</p><p>${lang.lbl_total_sum}: ${childrenTotal.toLocaleString()} د.ع</p></div>
-            <div class="glass-panel" style="padding:14px;"><h4>${lang.marriage}</h4><p>${lang.lbl_records}: ${marriage.length}</p><p>${lang.lbl_total_sum}: ${marriageTotal.toLocaleString()} د.ع</p></div>
-            <div class="glass-panel" style="padding:14px;"><h4>${lang.fines}</h4><p>${lang.lbl_records}: ${fines.length}</p><p>${lang.lbl_total_sum}: ${finesTotal.toLocaleString()} د.ع</p></div>
+            <div class="glass-panel" style="padding:14px;"><h4>${lang.receipts}</h4><p>${lang.lbl_records}: ${receipts.length}</p><p>${lang.lbl_total_sum}: ${receiptsTotal.toLocaleString()} ${lang.currency}</p></div>
+            <div class="glass-panel" style="padding:14px;"><h4>${lang.delegations}</h4><p>${lang.lbl_records}: ${delegations.length}</p><p>${lang.lbl_total_sum}: ${delegationsTotal.toLocaleString()} ${lang.currency}</p></div>
+            <div class="glass-panel" style="padding:14px;"><h4>${lang.children}</h4><p>${lang.lbl_records}: ${children.length}</p><p>${lang.lbl_total_sum}: ${childrenTotal.toLocaleString()} ${lang.currency}</p></div>
+            <div class="glass-panel" style="padding:14px;"><h4>${lang.marriage}</h4><p>${lang.lbl_records}: ${marriage.length}</p><p>${lang.lbl_total_sum}: ${marriageTotal.toLocaleString()} ${lang.currency}</p></div>
+            <div class="glass-panel" style="padding:14px;"><h4>${lang.fines}</h4><p>${lang.lbl_records}: ${fines.length}</p><p>${lang.lbl_total_sum}: ${finesTotal.toLocaleString()} ${lang.currency}</p></div>
         </div>
     `;
 
@@ -1858,7 +1940,7 @@ function renderStats() {
                 tr.innerHTML = `
                     <td style="font-weight:bold; color:var(--primary-light);">${lang['m' + m]}</td>
                     <td><span class="badge bg-secondary">${data.recordsCount}</span></td>
-                    <td style="font-weight:bold; color:var(--success);">${data.amount.toLocaleString()} د.ع</td>
+                    <td style="font-weight:bold; color:var(--success);">${data.amount.toLocaleString()} ${lang.currency}</td>
                     <td class="no-print">
                         <button class="btn-icon-sm" onclick="showMonthArchiveDetails(${m})" title="${lang.view_details}">
                             <i class="fa-solid fa-circle-info"></i>

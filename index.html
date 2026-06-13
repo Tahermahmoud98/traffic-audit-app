@@ -18,6 +18,14 @@
 
     <!-- ===== WELCOME SPLASH SCREEN ===== -->
     <div id="splash-screen" class="splash-screen">
+        <!-- Splash language toggle -->
+        <div class="splash-lang-toggle no-print" style="position: absolute; top: 20px; right: 20px; z-index: 10001;">
+            <button class="btn-lang" onclick="toggleLanguage()">
+                <i class="fa-solid fa-globe"></i>
+                <span class="lang-text-el">English</span>
+            </button>
+        </div>
+
         <!-- Animated background blobs -->
         <div class="splash-blob blob-1"></div>
         <div class="splash-blob blob-2"></div>
@@ -51,7 +59,7 @@
                 <span data-tr="enter_btn">دخول النظام</span>
             </button>
 
-            <p class="splash-year">© 2025 - مديرية مرور زاخو</p>
+            <p class="splash-year" data-tr="splash_year">© 2025 - مديرية مرور زاخو</p>
         </div>
     </div>
     <!-- ===== END SPLASH SCREEN ===== -->
@@ -100,23 +108,23 @@
                 </div>
                 <div class="header-actions">
                     <div class="header-search">
-                        <input id="section-search" class="search-input" type="search" placeholder="ابحث في القسم...">
-                        <button class="btn-icon-sm" title="بحث" onclick="performSearch()"><i class="fa-solid fa-magnifying-glass"></i></button>
-                        <button class="btn-icon-sm" title="مسح" onclick="clearSearch()"><i class="fa-solid fa-times"></i></button>
+                        <input id="section-search" class="search-input" type="search" data-tr-placeholder="pl_search" placeholder="ابحث في القسم...">
+                        <button class="btn-icon-sm" data-tr-title="title_search" title="بحث" onclick="performSearch()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        <button class="btn-icon-sm" data-tr-title="title_clear" title="مسح" onclick="clearSearch()"><i class="fa-solid fa-times"></i></button>
                     </div>
                     <button class="btn-lang" onclick="toggleLanguage()">
                         <i class="fa-solid fa-globe"></i>
-                        <span id="lang-text">English</span>
+                        <span id="lang-text" class="lang-text-el">English</span>
                     </button>
-                    <button class="btn-secondary" onclick="openSignatureModal()" title="أسماء الطباعة">
+                    <button class="btn-secondary" onclick="openSignatureModal()" data-tr-title="sig_details_btn" title="أسماء الطباعة">
                         <i class="fa-solid fa-user-pen"></i>
                         <span data-tr="sig_details_btn">أسماء الطباعة</span>
                     </button>
-                    <button class="btn-bulk-print" onclick="openBulkPrintModal()" title="طباعة جماعية">
+                    <button class="btn-bulk-print" onclick="openBulkPrintModal()" data-tr-title="bulk_print" title="طباعة جماعية">
                         <i class="fa-solid fa-print"></i>
                         <span data-tr="bulk_print">طباعة جماعية</span>
                     </button>
-                    <button class="btn-backup" onclick="openBackupModal()" title="النسخ الاحتياطي">
+                    <button class="btn-backup" onclick="openBackupModal()" data-tr-title="backup_btn" title="النسخ الاحتياطي">
                         <i class="fa-solid fa-database"></i>
                         <span data-tr="backup_btn">النسخ الاحتياطي</span>
                     </button>
@@ -247,7 +255,7 @@
                     <!-- Statistics Section -->
                     <section id="stats-section" class="content-section">
                         <div class="section-header print-header">
-                            <h2 data-tr="stats"><i class="fa-solid fa-chart-pie" style="color: var(--primary); margin-left: 10px;"></i>الإحصائيات الشاملة</h2>
+                            <h2><i class="fa-solid fa-chart-pie" style="color: var(--primary); margin-left: 10px;"></i><span data-tr="stats">الإحصائيات الشاملة</span></h2>
                             <div class="header-buttons no-print">
                                 <button class="btn-back" onclick="showHome()">
                                     <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
@@ -256,7 +264,7 @@
                                     <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
                                 </button>
                                 <button class="btn-primary" onclick="renderStats()">
-                                    <i class="fa-solid fa-arrows-rotate"></i> <span>تحديث الإحصائيات</span>
+                                    <i class="fa-solid fa-arrows-rotate"></i> <span data-tr="btn_refresh_stats">تحديث الإحصائيات</span>
                                 </button>
                             </div>
                         </div>
@@ -292,8 +300,8 @@
                 <!-- Receipts Section -->
                 <section id="receipts-section" class="content-section">
                     <div class="section-header print-header">
-                        <h2 data-tr="receipts"><i class="fa-solid fa-file-invoice-dollar"
-                                style="color: var(--primary); margin-left: 10px;"></i>سجل الوصولات</h2>
+                        <h2><i class="fa-solid fa-file-invoice-dollar"
+                                style="color: var(--primary); margin-left: 10px;"></i><span data-tr="print_section_receipt">سجل الوصولات</span></h2>
                         <div class="header-buttons no-print">
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
@@ -333,13 +341,13 @@
                 <section id="delegations-section" class="content-section">
                     <div class="section-header print-header">
                         <h2><i class="fa-solid fa-plane-departure"
-                                style="color: var(--primary); margin-left: 10px;"></i>سجل الإيفادات</h2>
+                                style="color: var(--primary); margin-left: 10px;"></i><span data-tr="print_section_delegation">سجل الإيفادات</span></h2>
                         <div class="header-buttons no-print">
                             <button class="btn-back" onclick="showHome()">
-                                <i class="fa-solid fa-arrow-right"></i> الرجوع
+                                <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
                             </button>
                             <button class="btn-secondary" onclick="printSection('delegations')">
-                                <i class="fa-solid fa-print"></i> طباعة القسم
+                                <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
                             </button>
                             <button class="btn-primary" onclick="openModal('delegations-modal')">
                                 <i class="fa-solid fa-plus"></i> <span data-tr="add_delegation">إضافة إيفاد جديد</span>
@@ -371,11 +379,11 @@
                 <!-- Children Section -->
                 <section id="children-section" class="content-section">
                     <div class="section-header print-header">
-                        <h2 data-tr="children"><i class="fa-solid fa-children"
-                                style="color: var(--primary); margin-left: 10px;"></i>سجل إضافة الأطفال</h2>
+                        <h2><i class="fa-solid fa-children"
+                                style="color: var(--primary); margin-left: 10px;"></i><span data-tr="print_section_children">سجل إضافة الأطفال</span></h2>
                         <div class="header-buttons no-print">
                             <button class="btn-back" onclick="showHome()">
-                                <i class="fa-solid fa-arrow-right"></i> الرجوع
+                                <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
                             </button>
                             <button class="btn-secondary" onclick="printSection('children')">
                                 <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
@@ -410,8 +418,8 @@
                 <!-- Marriage Section -->
                 <section id="marriage-section" class="content-section">
                     <div class="section-header print-header">
-                        <h2 data-tr="marriage"><i class="fa-solid fa-ring"
-                                style="color: var(--primary); margin-left: 10px;"></i>سجل الزواج</h2>
+                        <h2><i class="fa-solid fa-ring"
+                                style="color: var(--primary); margin-left: 10px;"></i><span data-tr="print_section_marriage">سجل الزواج</span></h2>
                         <div class="header-buttons no-print">
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
@@ -431,8 +439,8 @@
                                 <tr>
                                     <th data-tr="th_husband">اسم الزوج</th>
                                     <th data-tr="th_wife">اسم الزوجة</th>
-                                    <th data-tr="th_gender">الجنس</th>
-                                    <th data-tr="th_date">تاريخ الزواج</th>
+                                    <th data-tr="lbl_employee_gender">جنس الموظف</th>
+                                    <th data-tr="th_marriage_date">تاريخ الزواج</th>
                                     <th data-tr="th_arrival">تاريخ الوصول</th>
                                     <th data-tr="th_amount">مبلغ الزوجة</th>
                                     <th class="no-print" data-tr="th_actions">العمليات</th>
@@ -448,8 +456,8 @@
                 <!-- Fines Section -->
                 <section id="fines-section" class="content-section">
                     <div class="section-header print-header">
-                        <h2 data-tr="fines"><i class="fa-solid fa-book"
-                                style="color: var(--primary); margin-left: 10px;"></i>سجل دفاتر الغرامات</h2>
+                        <h2><i class="fa-solid fa-book"
+                                style="color: var(--primary); margin-left: 10px;"></i><span data-tr="print_section_fines">سجل دفاتر الغرامات</span></h2>
                         <div class="header-buttons no-print">
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
@@ -517,19 +525,19 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label data-tr="lbl_directorate">اسم المديرية</label>
-                        <input type="text" name="directorate" class="form-control" data-tr="lbl_directorate"
+                        <input type="text" name="directorate" class="form-control" data-tr-placeholder="pl_directorate"
                             placeholder="أدخل اسم المديرية" required>
                     </div>
                     <div class="form-group">
                         <label data-tr="lbl_department">أقسام المديرية</label>
-                        <input type="text" name="department" class="form-control" data-tr="lbl_department"
+                        <input type="text" name="department" class="form-control" data-tr-placeholder="pl_department"
                             placeholder="أدخل اسم القسم" required>
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label data-tr="lbl_location">مكان الوصل</label>
-                        <input type="text" name="location" class="form-control" data-tr="lbl_location"
+                        <input type="text" name="location" class="form-control" data-tr-placeholder="pl_location"
                             placeholder="مكان الوصل" required>
                     </div>
                     <div class="form-group">
@@ -540,7 +548,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label data-tr="lbl_code">الكود</label>
-                        <input type="text" name="code" class="form-control" data-tr="lbl_code" placeholder="أدخل الكود"
+                        <input type="text" name="code" class="form-control" data-tr-placeholder="pl_code" placeholder="أدخل الكود"
                             required>
                     </div>
                     <div class="form-group">
@@ -578,7 +586,7 @@
             <form class="custom-form" id="delegations-form">
                 <div class="form-group">
                     <label data-tr="th_name">الاسم الثلاثي</label>
-                    <input type="text" name="name" class="form-control" data-tr="lbl_name"
+                    <input type="text" name="name" class="form-control" data-tr-placeholder="pl_name"
                         placeholder="أدخل الاسم الثلاثي للموفد" required>
                 </div>
                 <div class="form-row">
@@ -608,12 +616,12 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label data-tr="th_export">مكان الصادر</label>
-                        <input type="text" name="export_num" class="form-control" data-tr="lbl_export_placeholder"
+                        <input type="text" name="export_num" class="form-control" data-tr-placeholder="pl_export_placeholder"
                             placeholder="مكان الصادر" required>
                     </div>
                     <div class="form-group">
                         <label data-tr="th_import">مكان الوارد</label>
-                        <input type="text" name="import_num" class="form-control" data-tr="lbl_import_placeholder"
+                        <input type="text" name="import_num" class="form-control" data-tr-placeholder="pl_import_placeholder"
                             placeholder="مكان الوارد" required>
                     </div>
                 </div>
@@ -647,18 +655,18 @@
             <form class="custom-form" id="children-form">
                 <div class="form-group">
                     <label data-tr="lbl_father">الاسم الثلاثي للأب</label>
-                    <input type="text" name="father" class="form-control" data-tr="lbl_father"
+                    <input type="text" name="father" class="form-control" data-tr-placeholder="pl_father"
                         placeholder="أدخل اسم الأب الثلاثي" required>
                 </div>
                 <div class="form-group">
                     <label data-tr="lbl_mother">الاسم الثلاثي للأم</label>
-                    <input type="text" name="mother" class="form-control" data-tr="lbl_mother"
+                    <input type="text" name="mother" class="form-control" data-tr-placeholder="pl_mother"
                         placeholder="أدخل اسم الأم الثلاثي" required>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label data-tr="lbl_child">الاسم الثلاثي للطفل</label>
-                        <input type="text" name="child" class="form-control" data-tr="lbl_child"
+                        <input type="text" name="child" class="form-control" data-tr-placeholder="pl_child"
                             placeholder="أدخل اسم الطفل الثلاثي" required>
                     </div>
                     <div class="form-group">
@@ -705,17 +713,17 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label data-tr="lbl_husband">الاسم الثلاثي للزوج</label>
-                        <input type="text" name="husband" class="form-control" data-tr="lbl_husband"
+                        <input type="text" name="husband" class="form-control" data-tr-placeholder="pl_husband"
                             placeholder="أدخل اسم الزوج" required>
                     </div>
                     <div class="form-group">
                         <label data-tr="lbl_wife">الاسم الثلاثي للزوجة</label>
-                        <input type="text" name="wife" class="form-control" data-tr="lbl_wife"
+                        <input type="text" name="wife" class="form-control" data-tr-placeholder="pl_wife"
                             placeholder="أدخل اسم الزوجة" required>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label data-tr="th_gender">الجنس</label>
+                    <label data-tr="lbl_employee_gender">جنس الموظف</label>
                     <select name="gender" class="form-control" required>
                         <option value="" data-tr="lbl_choose_gender">اختر الجنس</option>
                         <option value="ذكر" data-tr="lbl_male">ذكر</option>
@@ -724,7 +732,7 @@
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label data-tr="th_date">تاريخ الزواج</label>
+                        <label data-tr="th_marriage_date">تاريخ الزواج</label>
                         <input type="date" name="date" class="form-control" required>
                     </div>
                     <div class="form-group">
@@ -772,12 +780,12 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label data-tr="lbl_holder">اسم حامل الدفتر</label>
-                        <input type="text" name="holder" class="form-control" data-tr="lbl_holder"
+                        <input type="text" name="holder" class="form-control" data-tr-placeholder="pl_holder"
                             placeholder="الاسم الكامل" required>
                     </div>
                     <div class="form-group">
                         <label data-tr="lbl_book_num">رقم الدفتر</label>
-                        <input type="text" name="book_number" class="form-control" data-tr="lbl_book_num"
+                        <input type="text" name="book_number" class="form-control" data-tr-placeholder="pl_book_num"
                             placeholder="أدخل رقم الدفتر" required>
                     </div>
                 </div>
@@ -788,7 +796,7 @@
                     </div>
                     <div class="form-group">
                         <label data-tr="lbl_location">مكان صادر</label>
-                        <input type="text" name="location" class="form-control" data-tr="lbl_location"
+                        <input type="text" name="location" class="form-control" data-tr-placeholder="pl_location"
                             placeholder="مكان الإصدار" required>
                     </div>
                 </div>
@@ -811,18 +819,15 @@
         <div class="signatures-row">
             <div class="sig-box">
                 <p class="sig-title" data-tr="sig_clerk">توقيع الموظف المدقق</p>
-                <p class="sig-line">.....................................</p>
-                <p class="sig-name"><span data-tr="lbl_name_only">الاسم</span>: <span id="print-name-clerk">..........................</span></p>
+                <p class="sig-name"><span data-tr="lbl_name_only">الاسم</span>: <span id="print-name-clerk"></span></p>
             </div>
             <div class="sig-box">
-                <p class="sig-title" data-tr="sig_officer">توقيع ضابط التدقيق</p>
-                <p class="sig-line">.....................................</p>
-                <p class="sig-name"><span data-tr="lbl_name_only">الاسم</span>: <span id="print-name-officer">..........................</span></p>
+                <p class="sig-title" data-tr="sig_officer">توقيع مدير قسم التدقيق</p>
+                <p class="sig-name"><span data-tr="lbl_name_only">الاسم</span>: <span id="print-name-officer"></span></p>
             </div>
             <div class="sig-box">
-                <p class="sig-title" data-tr="sig_director">مصادقة مدير القسم</p>
-                <p class="sig-line">.....................................</p>
-                <p class="sig-name"><span data-tr="lbl_rank_name">الرتبة والاسم</span>: <span id="print-name-director">.................</span></p>
+                <p class="sig-title" data-tr="sig_director">توقيع مدير عام</p>
+                <p class="sig-name"><span data-tr="lbl_rank_name">الرتبة والاسم</span>: <span id="print-name-director"></span></p>
             </div>
         </div>
     </div>
@@ -849,15 +854,15 @@
         <div class="modal-body">
             <div class="form-group">
                 <label for="sig-director-name" data-tr="sig_director_label">اسم مدير القسم</label>
-                <input type="text" id="sig-director-name" class="form-control" placeholder="أدخل اسم مدير القسم">
+                <input type="text" id="sig-director-name" class="form-control" data-tr-placeholder="pl_sig_director" placeholder="أدخل اسم مدير القسم">
             </div>
             <div class="form-group">
                 <label for="sig-clerk-name" data-tr="sig_clerk_label">اسم الموظف المدقق</label>
-                <input type="text" id="sig-clerk-name" class="form-control" placeholder="أدخل اسم الموظف المدقق">
+                <input type="text" id="sig-clerk-name" class="form-control" data-tr-placeholder="pl_sig_clerk" placeholder="أدخل اسم الموظف المدقق">
             </div>
             <div class="form-group">
                 <label for="sig-officer-name" data-tr="sig_officer_label">اسم ضابط التدقيق</label>
-                <input type="text" id="sig-officer-name" class="form-control" placeholder="أدخل اسم ضابط التدقيق">
+                <input type="text" id="sig-officer-name" class="form-control" data-tr-placeholder="pl_sig_officer" placeholder="أدخل اسم ضابط التدقيق">
             </div>
             <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 10px;">
                 <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn">إغلاق</button>
