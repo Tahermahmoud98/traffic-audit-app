@@ -1,0 +1,23 @@
+{
+  "name": "قسم التدقيق - دائرة المرور",
+  "short_name": "قسم التدقيق",
+  "description": "نظام التدقيق لمديرية مرور زاخو",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d8abc",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

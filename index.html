@@ -12,6 +12,12 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    
+    <!-- PWA Manifest & Icons -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0d8abc">
+    <link rel="icon" href="logo.png" type="image/png">
+    <link rel="apple-touch-icon" href="logo.png">
 </head>
 
 <body>
@@ -115,6 +121,13 @@
                         <button class="btn-icon-sm" data-tr-title="title_clear" title="مسح" onclick="clearSearch()"><i
                                 class="fa-solid fa-times"></i></button>
                     </div>
+                    
+                    <!-- Install App Button -->
+                    <button id="install-app-btn" class="btn-primary d-none" title="تثبيت التطبيق" style="display: none; align-items: center; gap: 5px;" onclick="installPWA()">
+                        <i class="fa-solid fa-download"></i>
+                        <span class="lang-text-el">تثبيت التطبيق</span>
+                    </button>
+
                     <button class="btn-lang" onclick="toggleLanguage()">
                         <i class="fa-solid fa-globe"></i>
                         <span id="lang-text" class="lang-text-el">English</span>
@@ -134,10 +147,6 @@
                         <i class="fa-solid fa-database"></i>
                         <span data-tr="backup_btn">النسخ الاحتياطي</span>
                     </button>
-                    <div class="user-profile">
-                        <img src="https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff" alt="User">
-                        <span data-tr="sys_admin">مدير النظام</span>
-                    </div>
                 </div>
             </header>
 
@@ -1148,6 +1157,57 @@
             </div>
         </div>
     </div>
+
+    <!-- PWA Installability Script -->
+    <script>
+        // 1. Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(registration => {
+                    console.log('SW registered: ', registration.scope);
+                }).catch(err => {
+                    console.log('SW registration failed: ', err);
+                });
+            });
+        }
+
+        // 2. Install Prompt Handling
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-app-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Show the install button
+            if (installBtn) {
+                installBtn.classList.remove('d-none');
+                installBtn.style.display = 'flex';
+            }
+        });
+
+        // The function called when the button is clicked
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                deferredPrompt = null;
+                installBtn.classList.add('d-none');
+                installBtn.style.display = 'none';
+            }
+        }
+
+        window.addEventListener('appinstalled', () => {
+            if (installBtn) {
+                installBtn.classList.add('d-none');
+                installBtn.style.display = 'none';
+            }
+            deferredPrompt = null;
+            console.log('PWA was installed');
+        });
+    </script>
 </body>
 
 </html>
