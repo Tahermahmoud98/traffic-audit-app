@@ -1,3 +1,171 @@
+// ===== DATABASE / CACHE STORE (IndexedDB with LocalStorage Fallback) =====
+const dbStore = {
+    _cache: {},
+    _db: null,
+
+    // Pre-populate cache synchronously from localStorage to prevent timing issues during startup
+    initSync() {
+        const keys = ['receipts', 'delegations', 'children', 'marriage', 'fines', 'sig_director_name', 'sig_clerk_name', 'sig_officer_name', 'appLang'];
+        keys.forEach(k => {
+            try {
+                this._cache[k] = localStorage.getItem(k);
+            } catch (e) {
+                console.error("Error reading localStorage on initSync:", e);
+            }
+        });
+    },
+
+    async init() {
+        this.initSync();
+        return new Promise((resolve) => {
+            if (!window.indexedDB) {
+                console.warn("IndexedDB not supported, using localStorage fallback.");
+                resolve();
+                return;
+            }
+
+            const request = indexedDB.open('TrafficAuditDB', 1);
+
+            request.onerror = (e) => {
+                console.error("IndexedDB error:", e);
+                resolve(); // Fallback to memory/localStorage cache
+            };
+
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('store')) {
+                    db.createObjectStore('store');
+                }
+            };
+
+            request.onsuccess = (e) => {
+                this._db = e.target.result;
+                const tx = this._db.transaction('store', 'readonly');
+                const store = tx.objectStore('store');
+                const keys = ['receipts', 'delegations', 'children', 'marriage', 'fines', 'sig_director_name', 'sig_clerk_name', 'sig_officer_name', 'appLang'];
+
+                let loadedCount = 0;
+                let fallbackUsed = false;
+
+                keys.forEach(k => {
+                    const req = store.get(k);
+                    req.onsuccess = () => {
+                        let val = req.result;
+                        if (val === undefined) {
+                            // If IndexedDB is empty for this key, migrate existing localStorage data
+                            try {
+                                val = localStorage.getItem(k);
+                            } catch (err) {
+                                val = null;
+                            }
+                            if (val !== null) {
+                                fallbackUsed = true;
+                                this._setIndexedDB(k, val);
+                            }
+                        }
+                        if (val !== null && val !== undefined) {
+                            this._cache[k] = val;
+                        }
+                        loadedCount++;
+                        if (loadedCount === keys.length) {
+                            if (fallbackUsed) {
+                                console.log("Successfully migrated data from localStorage to IndexedDB.");
+                            }
+                            resolve();
+                        }
+                    };
+                    req.onerror = () => {
+                        loadedCount++;
+                        if (loadedCount === keys.length) {
+                            resolve();
+                        }
+                    };
+                });
+            };
+        });
+    },
+
+    getItem(key) {
+        return this._cache[key] !== undefined && this._cache[key] !== null ? this._cache[key] : null;
+    },
+
+    setItem(key, value) {
+        const valStr = String(value);
+        this._cache[key] = valStr;
+
+        // Persist to IndexedDB
+        this._setIndexedDB(key, valStr);
+
+        // Also sync to localStorage for settings (small footprint) as additional fallback
+        const settingsKeys = ['sig_director_name', 'sig_clerk_name', 'sig_officer_name', 'appLang'];
+        if (settingsKeys.includes(key)) {
+            try {
+                localStorage.setItem(key, valStr);
+            } catch (e) {
+                // ignore
+            }
+        }
+    },
+
+    removeItem(key) {
+        delete this._cache[key];
+        this._deleteIndexedDB(key);
+        try {
+            localStorage.removeItem(key);
+        } catch (e) {
+            // ignore
+        }
+    },
+
+    _setIndexedDB(key, value) {
+        if (!this._db) {
+            // If DB is not ready yet, try to write directly
+            const request = indexedDB.open('TrafficAuditDB', 1);
+            request.onsuccess = (e) => {
+                const db = e.target.result;
+                try {
+                    const tx = db.transaction('store', 'readwrite');
+                    tx.objectStore('store').put(value, key);
+                } catch (err) {
+                    console.error("Deferred IndexedDB write failed:", err);
+                }
+            };
+            return;
+        }
+        try {
+            const tx = this._db.transaction('store', 'readwrite');
+            tx.objectStore('store').put(value, key);
+        } catch (err) {
+            console.error("IndexedDB write failed:", err);
+        }
+    },
+
+    _deleteIndexedDB(key) {
+        if (!this._db) {
+            const request = indexedDB.open('TrafficAuditDB', 1);
+            request.onsuccess = (e) => {
+                const db = e.target.result;
+                try {
+                    const tx = db.transaction('store', 'readwrite');
+                    tx.objectStore('store').delete(key);
+                } catch (err) {
+                    console.error("Deferred IndexedDB delete failed:", err);
+                }
+            };
+            return;
+        }
+        try {
+            const tx = this._db.transaction('store', 'readwrite');
+            tx.objectStore('store').delete(key);
+        } catch (err) {
+            console.error("IndexedDB delete failed:", err);
+        }
+    }
+};
+
+// Initialize the cache synchronously from localStorage on script load
+dbStore.initSync();
+
 // ===== SPLASH SCREEN =====
 function enterApp() {
     const splash = document.getElementById('splash-screen');
@@ -58,9 +226,9 @@ let pendingDelete = { key: null, idx: null };
 
 function getSignatureNames() {
     return {
-        clerk: localStorage.getItem('sig_clerk_name') || '',
-        officer: localStorage.getItem('sig_officer_name') || '',
-        director: localStorage.getItem('sig_director_name') || ''
+        clerk: dbStore.getItem('sig_clerk_name') || '',
+        officer: dbStore.getItem('sig_officer_name') || '',
+        director: dbStore.getItem('sig_director_name') || ''
     };
 }
 
@@ -84,9 +252,9 @@ function saveSignatureNames() {
     const officerInput = document.getElementById('sig-officer-name');
     if (!directorInput || !clerkInput || !officerInput) return;
 
-    localStorage.setItem('sig_director_name', directorInput.value.trim());
-    localStorage.setItem('sig_clerk_name', clerkInput.value.trim());
-    localStorage.setItem('sig_officer_name', officerInput.value.trim());
+    dbStore.setItem('sig_director_name', directorInput.value.trim());
+    dbStore.setItem('sig_clerk_name', clerkInput.value.trim());
+    dbStore.setItem('sig_officer_name', officerInput.value.trim());
     renderPrintSignatureNames();
     closeAllModals();
     showToast(translations[currentLang].success_save);
@@ -108,7 +276,7 @@ function openSignatureModal() {
 }
 
 // ===== // ===== LOCALIZATION (Badini Kurdish) =====
-let currentLang = localStorage.getItem('appLang') || 'ku';
+let currentLang = dbStore.getItem('appLang') || 'ku';
 
 const translations = {
     ar: {
@@ -125,6 +293,8 @@ const translations = {
         enter_btn: 'دخول النظام',
         app_title: 'قسم التدقيق - مديرية مرور زاخو',
         receipts: 'الوصولات',
+        central_receipts: 'الوصولات المركزية',
+        decentral_receipts: 'الوصولات اللامركزية',
         delegations: 'الإيفادات',
         children: 'إضافة الأطفال',
         marriage: 'الزواج',
@@ -133,6 +303,8 @@ const translations = {
         back: 'الرجوع',
         print: 'طباعة القسم',
         add_receipt: 'إضافة وصل جديد',
+        add_central_receipt: 'إضافة وصل مركزي جديد',
+        add_decentral_receipt: 'إضافة وصل لا مركزي جديد',
         add_delegation: 'إضافة إيفاد جديد',
         add_child: 'إضافة طفل جديد',
         add_marriage: 'تسجيل زواج جديد',
@@ -206,6 +378,8 @@ const translations = {
         confirm_del: 'هل أنت متأكد من حذف هذا السجل؟',
         success_save: 'تم حفظ البيانات بنجاح!',
         st_total_receipts: 'إجمالي الوصولات',
+        st_total_central_receipts: 'إجمالي الوصولات المركزية',
+        st_total_decentral_receipts: 'إجمالي الوصولات اللامركزية',
         st_total_amounts: 'إجمالي المبالغ',
         st_central: 'مركزي',
         st_decentral: 'لا مركزي',
@@ -264,6 +438,8 @@ const translations = {
         print_now: 'طباعة الآن',
         print_record: 'طباعة السجل',
         print_section_receipt: 'سجل الوصولات',
+        print_section_central_receipt: 'سجل الوصولات المركزية',
+        print_section_decentral_receipt: 'سجل الوصولات اللامركزية',
         print_section_delegation: 'سجل الإيفادات',
         print_section_children: 'سجل إضافة الأطفال',
         print_section_marriage: 'سجل الزواج',
@@ -323,6 +499,8 @@ const translations = {
         enter_btn: 'چوونه‌ ژوور',
         app_title: 'پشكا وردبينيێ - ڕێڤه‌به‌ريا هاتنوچوونا زاخۆ',
         receipts: 'پسووله‌',
+        central_receipts: 'پسوولەیێن ناڤه‌ندی',
+        decentral_receipts: 'پسوولەیێن نه‌ ناڤه‌ندی',
         delegations: 'ئیفاد',
         children: 'زارۆك',
         marriage: 'هه‌ڤژينى',
@@ -331,6 +509,8 @@ const translations = {
         back: 'ڤه‌گه‌ڕيان',
         print: 'چاپكرنا پشكێ',
         add_receipt: 'زێده‌كرنا پسووله‌كا نوی',
+        add_central_receipt: 'زێده‌كرنا پسووله‌كا ناڤه‌ندی يا نوی',
+        add_decentral_receipt: 'زێده‌كرنا پسووله‌كا نه‌ ناڤه‌ندی يا نوی',
         add_delegation: 'زێده‌كرنا ئیفاده‌كا نوی',
         add_child: 'زێده‌كرنا زارۆكه‌كێ نوی',
         add_marriage: 'تۆماركرنا هه‌ڤژينيێ',
@@ -404,6 +584,8 @@ const translations = {
         confirm_del: 'ئه‌رێ تو يێ پشت ڕاستى ژ ژێبرنا ڤێ تۆمارێ؟',
         success_save: 'پێزانين ب سه‌ركه‌فتيانه‌ هاتنه‌ پاراستن!',
         st_total_receipts: 'كۆما پسوولەیان',
+        st_total_central_receipts: 'كۆما پسوولەیێن ناڤه‌ندی',
+        st_total_decentral_receipts: 'كۆما پسوولەیێن نه‌ ناڤه‌ندی',
         st_total_amounts: 'كۆژمێ گشتی يێ پاره‌ى',
         st_central: 'ناڤه‌ندی',
         st_decentral: 'نه‌ ناڤه‌ندی',
@@ -462,6 +644,8 @@ const translations = {
         print_now: 'ئێسا چاپ بكه‌',
         print_record: 'چاپكرنا تۆمارێ',
         print_section_receipt: 'تۆمارا پسوولەیان',
+        print_section_central_receipt: 'تۆمارا پسوولەیێن ناڤه‌ندی',
+        print_section_decentral_receipt: 'تۆمارا پسوولەیێن نه‌ ناڤه‌ندی',
         print_section_delegation: 'تۆمارا ئیفادان',
         print_section_children: 'تۆمارا زارۆكان',
         print_section_marriage: 'تۆمارا هه‌ڤژينيێ',
@@ -511,7 +695,7 @@ const translations = {
 
 function toggleLanguage() {
     currentLang = (currentLang === 'ar') ? 'ku' : 'ar';
-    localStorage.setItem('appLang', currentLang);
+    dbStore.setItem('appLang', currentLang);
     applyLanguage();
     initData();
     updateOverviewCards();
@@ -519,7 +703,7 @@ function toggleLanguage() {
 
 function applyLanguage() {
     const langData = translations[currentLang];
-    
+
     // Translate text content
     document.querySelectorAll('[data-tr]').forEach(el => {
         const key = el.getAttribute('data-tr');
@@ -552,12 +736,13 @@ function applyLanguage() {
     document.querySelectorAll('.lang-text-el').forEach(el => {
         el.textContent = langData.lang_btn;
     });
-    
+
     document.title = langData.app_title;
     document.documentElement.lang = currentLang;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await dbStore.init();
     applyLanguage();
     initData();
     updateOverviewCards();
@@ -572,8 +757,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     forms.forEach(formDef => {
         const formEl = document.getElementById(formDef.id);
-        if(formEl) {
-            formEl.addEventListener('submit', async function(e) {
+        if (formEl) {
+            formEl.addEventListener('submit', async function (e) {
                 e.preventDefault();
                 const formData = new FormData(formEl);
                 const dataObj = {};
@@ -581,7 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (value instanceof File && value.name) {
                         try {
                             dataObj[key] = await getBase64(value);
-                        } catch(err) {
+                        } catch (err) {
                             console.error(err);
                             showToast(translations[currentLang].err_image);
                             return;
@@ -590,7 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         dataObj[key] = value;
                     }
                 }
-                let currentData = JSON.parse(localStorage.getItem(formDef.key) || '[]');
+                let currentData = JSON.parse(dbStore.getItem(formDef.key) || '[]');
                 if (editingKey === formDef.key && editingIdx !== null) {
                     if (!dataObj.receipt_image && currentData[editingIdx].receipt_image) {
                         dataObj.receipt_image = currentData[editingIdx].receipt_image;
@@ -599,16 +784,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     currentData.push(dataObj);
                 }
-                
+
                 try {
-                    localStorage.setItem(formDef.key, JSON.stringify(currentData));
-                } catch(e) {
+                    dbStore.setItem(formDef.key, JSON.stringify(currentData));
+                } catch (e) {
                     if (e.name === 'QuotaExceededError') {
                         showToast(translations[currentLang].err_storage);
                         return;
                     }
                 }
-                
+
                 formDef.renderFunc();
                 updateOverviewCards();
                 formEl.reset();
@@ -625,8 +810,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const delCount = document.querySelector('#delegations-form [name="count"]');
     const delAmount = document.querySelector('#delegations-form [name="amount"]');
     const delTotal = document.querySelector('#delegations-form [name="total"]');
-    
-    if(delCount && delAmount && delTotal) {
+
+    if (delCount && delAmount && delTotal) {
         const calcTotal = () => {
             const count = parseFloat(delCount.value) || 0;
             const amount = parseFloat(delAmount.value) || 0;
@@ -634,6 +819,18 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         delCount.addEventListener('input', calcTotal);
         delAmount.addEventListener('input', calcTotal);
+    }
+
+    // Ensure stats are available on load (but don't force display)
+    if (document.getElementById('stats-content')) renderStats();
+    renderPrintSignatureNames();
+
+    // Enable Enter key on search input to trigger search
+    const si = document.getElementById('section-search');
+    if (si) {
+        si.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); performSearch(); }
+        });
     }
 });
 
@@ -662,12 +859,12 @@ function getBase64(file) {
                         height = MAX_HEIGHT;
                     }
                 }
-                
+
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                // Compress image to save localStorage space
+                // Compress image to save dbStore space
                 resolve(canvas.toDataURL('image/jpeg', 0.7));
             };
             img.onerror = () => reject(new Error("Failed to load image"));
@@ -692,32 +889,40 @@ function initData() {
 }
 
 function updateOverviewCards() {
-    const receipts    = JSON.parse(localStorage.getItem('receipts')    || '[]');
-    const delegations = JSON.parse(localStorage.getItem('delegations') || '[]');
-    const children    = JSON.parse(localStorage.getItem('children')    || '[]');
-    const marriage    = JSON.parse(localStorage.getItem('marriage')    || '[]');
-    const fines       = JSON.parse(localStorage.getItem('fines')       || '[]');
+    const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
+    const delegations = JSON.parse(dbStore.getItem('delegations') || '[]');
+    const children = JSON.parse(dbStore.getItem('children') || '[]');
+    const marriage = JSON.parse(dbStore.getItem('marriage') || '[]');
+    const fines = JSON.parse(dbStore.getItem('fines') || '[]');
 
-    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
-    const currency    = translations[currentLang].currency;
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    const currency = translations[currentLang].currency;
 
-    const rTotal = receipts.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
-    set('ov-receipts-count', receipts.length);
-    set('ov-receipts-total', rTotal.toLocaleString() + ' ' + currency);
+    const centralReceipts = receipts.filter(item => item.receipt_type === 'مركزي');
+    const decentralReceipts = receipts.filter(item => item.receipt_type === 'لا مركزي');
 
-    const dTotal = delegations.reduce((s,i) => s + (parseFloat(i.total)||0), 0);
+    const centralTotal = centralReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    const decentralTotal = decentralReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+
+    set('ov-central-receipts-count', centralReceipts.length);
+    set('ov-central-receipts-total', centralTotal.toLocaleString() + ' ' + currency);
+
+    set('ov-decentral-receipts-count', decentralReceipts.length);
+    set('ov-decentral-receipts-total', decentralTotal.toLocaleString() + ' ' + currency);
+
+    const dTotal = delegations.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
     set('ov-delegations-count', delegations.length);
     set('ov-delegations-total', dTotal.toLocaleString() + ' ' + currency);
 
-    const cTotal = children.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
+    const cTotal = children.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
     set('ov-children-count', children.length);
     set('ov-children-total', cTotal.toLocaleString() + ' ' + currency);
 
-    const mTotal = marriage.reduce((s,i) => s + (parseFloat(i.amount)||0), 0);
+    const mTotal = marriage.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
     set('ov-marriage-count', marriage.length);
     set('ov-marriage-total', mTotal.toLocaleString() + ' ' + currency);
 
-    const fTotal = fines.reduce((s,i) => s + (parseFloat(i.total)||0), 0);
+    const fTotal = fines.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
     set('ov-fines-count', fines.length);
     set('ov-fines-total', fTotal.toLocaleString() + ' ' + currency);
 
@@ -726,28 +931,30 @@ function updateOverviewCards() {
 }
 
 function renderReceipts(filter) {
-    let data = JSON.parse(localStorage.getItem('receipts') || '[]');
-    if (filter) data = data.filter(item => matchesFilter(item, filter));
-    const tbody = document.querySelector('#receipts-table tbody');
-    if(!tbody) return;
-    const statsDiv = document.getElementById('receipts-stats');
+    renderCentralReceipts(filter);
+    renderDecentralReceipts(filter);
+}
+
+function renderCentralReceipts(filter) {
+    let data = JSON.parse(dbStore.getItem('receipts') || '[]');
+    data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
+    let centralData = data.filter(item => item.receipt_type === 'مركزي');
+    if (filter) centralData = centralData.filter(item => matchesFilter(item, filter));
+    const tbody = document.querySelector('#central-receipts-table tbody');
+    if (!tbody) return;
+    const statsDiv = document.getElementById('central-receipts-stats');
     const lang = translations[currentLang];
-    if(statsDiv) {
-        let totalAmount = data.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-        let centralCount = data.filter(item => item.receipt_type === 'مركزي').length;
-        let decentralCount = data.filter(item => item.receipt_type === 'لا مركزي').length;
+    if (statsDiv) {
+        let totalAmount = centralData.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
         statsDiv.innerHTML = `
-            <div class="stat-item"><h4>${lang.st_total_receipts}</h4><div class="stat-value">${data.length}</div></div>
+            <div class="stat-item"><h4>${lang.st_total_central_receipts}</h4><div class="stat-value">${centralData.length}</div></div>
             <div class="stat-item"><h4>${lang.st_total_amounts}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
-            <div class="stat-item"><h4>${lang.st_central}</h4><div class="stat-value">${centralCount}</div></div>
-            <div class="stat-item"><h4>${lang.st_decentral}</h4><div class="stat-value">${decentralCount}</div></div>
         `;
     }
-    tbody.innerHTML = data.length ? '' : `<tr><td colspan="9" style="text-align:center;">${lang.empty_data}</td></tr>`;
-    data.forEach((item, idx) => {
+    tbody.innerHTML = centralData.length ? '' : `<tr><td colspan="8" style="text-align:center;">${lang.empty_data}</td></tr>`;
+    centralData.forEach((item) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><span class="badge ${item.receipt_type === 'مركزي' ? 'bg-primary' : 'bg-secondary'}">${item.receipt_type === 'مركزي' ? lang.lbl_central : lang.lbl_decentral}</span></td>
             <td>${item.directorate}</td>
             <td>${item.department}</td>
             <td>${item.location}</td>
@@ -756,9 +963,46 @@ function renderReceipts(filter) {
             <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
             <td class="no-print">${item.receipt_image ? `<button class="btn-icon-sm" onclick="viewImage('${item.receipt_image}')"><i class="fa-solid fa-image"></i></button>` : '—'}</td>
             <td class="no-print action-btns">
-                <button class="btn-icon-sm print" onclick="printSingleRecord('receipts',${idx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
-                <button class="btn-icon-sm edit" onclick="editRecord('receipts',${idx})"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn-icon-sm del" onclick="deleteRecord('receipts',${idx})"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn-icon-sm print" onclick="printSingleRecord('receipts',${item.originalIdx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
+                <button class="btn-icon-sm edit" onclick="editRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-icon-sm del" onclick="deleteRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderDecentralReceipts(filter) {
+    let data = JSON.parse(dbStore.getItem('receipts') || '[]');
+    data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
+    let decentralData = data.filter(item => item.receipt_type === 'لا مركزي');
+    if (filter) decentralData = decentralData.filter(item => matchesFilter(item, filter));
+    const tbody = document.querySelector('#decentral-receipts-table tbody');
+    if (!tbody) return;
+    const statsDiv = document.getElementById('decentral-receipts-stats');
+    const lang = translations[currentLang];
+    if (statsDiv) {
+        let totalAmount = decentralData.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+        statsDiv.innerHTML = `
+            <div class="stat-item"><h4>${lang.st_total_decentral_receipts}</h4><div class="stat-value">${decentralData.length}</div></div>
+            <div class="stat-item"><h4>${lang.st_total_amounts}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
+        `;
+    }
+    tbody.innerHTML = decentralData.length ? '' : `<tr><td colspan="8" style="text-align:center;">${lang.empty_data}</td></tr>`;
+    decentralData.forEach((item) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item.directorate}</td>
+            <td>${item.department}</td>
+            <td>${item.location}</td>
+            <td>${item.date}</td>
+            <td>${item.code}</td>
+            <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
+            <td class="no-print">${item.receipt_image ? `<button class="btn-icon-sm" onclick="viewImage('${item.receipt_image}')"><i class="fa-solid fa-image"></i></button>` : '—'}</td>
+            <td class="no-print action-btns">
+                <button class="btn-icon-sm print" onclick="printSingleRecord('receipts',${item.originalIdx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
+                <button class="btn-icon-sm edit" onclick="editRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-icon-sm del" onclick="deleteRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-trash"></i></button>
             </td>
         `;
         tbody.appendChild(tr);
@@ -767,20 +1011,20 @@ function renderReceipts(filter) {
 
 function viewImage(base64Str) {
     const imgEl = document.getElementById('preview-img-el');
-    if(imgEl) {
+    if (imgEl) {
         imgEl.src = base64Str;
         openModal('image-preview-modal');
     }
 }
 
 function renderDelegations(filter) {
-    let data = JSON.parse(localStorage.getItem('delegations') || '[]');
+    let data = JSON.parse(dbStore.getItem('delegations') || '[]');
     if (filter) data = data.filter(item => matchesFilter(item, filter));
     const tbody = document.querySelector('#delegations-table tbody');
-    if(!tbody) return;
+    if (!tbody) return;
     const statsDiv = document.getElementById('delegations-stats');
     const lang = translations[currentLang];
-    if(statsDiv) {
+    if (statsDiv) {
         let totalAmount = data.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
         let totalMissions = data.reduce((sum, item) => sum + (parseInt(item.count) || 0), 0);
         statsDiv.innerHTML = `
@@ -789,7 +1033,7 @@ function renderDelegations(filter) {
             <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
         `;
     }
-    
+
     const monthMap = {
         'كانون الثاني': 'm1', 'شباط': 'm2', 'آذار': 'm3', 'نيسان': 'm4',
         'أيار': 'm5', 'حزيران': 'm6', 'تموز': 'm7', 'آب': 'm8',
@@ -818,13 +1062,13 @@ function renderDelegations(filter) {
 }
 
 function renderChildren(filter) {
-    let data = JSON.parse(localStorage.getItem('children') || '[]');
+    let data = JSON.parse(dbStore.getItem('children') || '[]');
     if (filter) data = data.filter(item => matchesFilter(item, filter));
     const tbody = document.querySelector('#children-table tbody');
-    if(!tbody) return;
+    if (!tbody) return;
     const statsDiv = document.getElementById('children-stats');
     const lang = translations[currentLang];
-    if(statsDiv) {
+    if (statsDiv) {
         let totalAmount = data.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
         let males = data.filter(item => item.gender === 'ذكر').length;
         let females = data.filter(item => item.gender === 'أنثى').length;
@@ -857,13 +1101,13 @@ function renderChildren(filter) {
 }
 
 function renderMarriage(filter) {
-    let data = JSON.parse(localStorage.getItem('marriage') || '[]');
+    let data = JSON.parse(dbStore.getItem('marriage') || '[]');
     if (filter) data = data.filter(item => matchesFilter(item, filter));
     const tbody = document.querySelector('#marriage-table tbody');
-    if(!tbody) return;
+    if (!tbody) return;
     const statsDiv = document.getElementById('marriage-stats');
     const lang = translations[currentLang];
-    if(statsDiv) {
+    if (statsDiv) {
         let totalAmount = data.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
         statsDiv.innerHTML = `
             <div class="stat-item"><h4>${lang.st_marriage_contracts}</h4><div class="stat-value">${data.length}</div></div>
@@ -891,13 +1135,13 @@ function renderMarriage(filter) {
 }
 
 function renderFines(filter) {
-    let data = JSON.parse(localStorage.getItem('fines') || '[]');
+    let data = JSON.parse(dbStore.getItem('fines') || '[]');
     if (filter) data = data.filter(item => matchesFilter(item, filter));
     const tbody = document.querySelector('#fines-table tbody');
-    if(!tbody) return;
+    if (!tbody) return;
     const statsDiv = document.getElementById('fines-stats');
     const lang = translations[currentLang];
-    if(statsDiv) {
+    if (statsDiv) {
         let totalAmount = data.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
         let type38Count = data.filter(item => item.book_type === '38 أ').length;
         let type68Count = data.filter(item => item.book_type === '68 أ').length;
@@ -955,14 +1199,15 @@ function performSearch() {
     const q = input.value.trim();
     const active = document.querySelector('.content-section.active');
     // If no active section, try to search receipts by default
-    const key = active ? active.id.replace('-section','') : null;
+    const key = active ? active.id.replace('-section', '') : null;
     if (!q) {
         // clear filters
         initData();
         return;
     }
     switch (key) {
-        case 'receipts': renderReceipts(q); break;
+        case 'central-receipts': renderCentralReceipts(q); break;
+        case 'decentral-receipts': renderDecentralReceipts(q); break;
         case 'delegations': renderDelegations(q); break;
         case 'children': renderChildren(q); break;
         case 'marriage': renderMarriage(q); break;
@@ -970,19 +1215,27 @@ function performSearch() {
         case 'stats': renderStats(); break;
         default:
             // search across all and show first matching section
-            const allKeys = ['receipts','delegations','children','marriage','fines'];
+            const allKeys = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
             let found = false;
             for (const k of allKeys) {
-                const arr = JSON.parse(localStorage.getItem(k) || '[]');
+                const arr = JSON.parse(dbStore.getItem(k) || '[]');
                 const match = arr.find(it => matchesFilter(it, q));
                 if (match) {
-                    showSection(k + '-section');
-                    // render with filter
-                    if (k === 'receipts') renderReceipts(q);
-                    if (k === 'delegations') renderDelegations(q);
-                    if (k === 'children') renderChildren(q);
-                    if (k === 'marriage') renderMarriage(q);
-                    if (k === 'fines') renderFines(q);
+                    if (k === 'receipts') {
+                        if (match.receipt_type === 'مركزي') {
+                            showSection('central-receipts-section');
+                            renderCentralReceipts(q);
+                        } else {
+                            showSection('decentral-receipts-section');
+                            renderDecentralReceipts(q);
+                        }
+                    } else {
+                        showSection(k + '-section');
+                        if (k === 'delegations') renderDelegations(q);
+                        if (k === 'children') renderChildren(q);
+                        if (k === 'marriage') renderMarriage(q);
+                        if (k === 'fines') renderFines(q);
+                    }
                     found = true; break;
                 }
             }
@@ -1014,7 +1267,7 @@ const modalKeyMap = {
 };
 
 function editRecord(key, idx) {
-    const data = JSON.parse(localStorage.getItem(key) || '[]');
+    const data = JSON.parse(dbStore.getItem(key) || '[]');
     const item = data[idx];
     if (!item) return;
     editingKey = key;
@@ -1031,9 +1284,30 @@ function editRecord(key, idx) {
             input.value = val;
         }
     });
+    if (key === 'receipts') {
+        const radioContainer = formEl.querySelector('.radio-group-container');
+        if (radioContainer) radioContainer.style.display = 'none';
+    }
     const submitBtn = formEl.querySelector('[type="submit"]');
     if (submitBtn) submitBtn.textContent = translations[currentLang].edit_save_btn;
     openModal(modalKeyMap[key]);
+}
+
+function openAddReceiptModal(type) {
+    const formEl = document.getElementById('receipts-form');
+    if (formEl) {
+        formEl.reset();
+        setDefaultDates();
+        const radio = formEl.querySelector(`input[name="receipt_type"][value="${type}"]`);
+        if (radio) radio.checked = true;
+        const radioContainer = formEl.querySelector('.radio-group-container');
+        if (radioContainer) radioContainer.style.display = 'none';
+    }
+    editingKey = null;
+    editingIdx = null;
+    const submitBtn = formEl ? formEl.querySelector('[type="submit"]') : null;
+    if (submitBtn) submitBtn.textContent = translations[currentLang].save_btn;
+    openModal('receipts-modal');
 }
 
 function deleteRecord(key, idx) {
@@ -1045,9 +1319,9 @@ function executeDelete() {
     const { key, idx } = pendingDelete;
     if (key === null || idx === null) return;
 
-    const data = JSON.parse(localStorage.getItem(key) || '[]');
+    const data = JSON.parse(dbStore.getItem(key) || '[]');
     data.splice(idx, 1);
-    localStorage.setItem(key, JSON.stringify(data));
+    dbStore.setItem(key, JSON.stringify(data));
 
     const renderMap = {
         receipts: renderReceipts,
@@ -1066,7 +1340,7 @@ function executeDelete() {
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     const overlay = document.getElementById('modal-overlay');
-    if(modal && overlay) {
+    if (modal && overlay) {
         document.body.classList.add('modal-open');
         modal.style.display = 'flex';
         overlay.style.display = 'block';
@@ -1085,10 +1359,10 @@ function closeAllModals() {
         modal.style.opacity = '0';
         modal.style.transform = 'translate(-50%, -50%) scale(0.9)';
     });
-    if(overlay) overlay.style.opacity = '0';
+    if (overlay) overlay.style.opacity = '0';
     setTimeout(() => {
         modals.forEach(modal => modal.style.display = 'none');
-        if(overlay) overlay.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
         document.body.classList.remove('modal-open');
     }, 300);
     editingKey = null;
@@ -1107,7 +1381,7 @@ window.addEventListener('beforeprint', () => {
     document.getElementById('print-timestamp').textContent = now.toLocaleTimeString(currentLang === 'ar' ? 'ar-IQ' : 'ku-IQ');
     const activeSection = document.querySelector('.content-section.active');
     const titleElement = document.getElementById('print-section-title');
-    if(activeSection) {
+    if (activeSection) {
         const headerTitle = activeSection.querySelector('.section-header h2');
         titleElement.textContent = headerTitle ? headerTitle.textContent.trim() : 'سجل التدقيق';
     }
@@ -1156,7 +1430,7 @@ let _singlePrintHTML = '';
 
 function printSingleRecord(key, idx) {
     const lang = translations[currentLang];
-    const data = JSON.parse(localStorage.getItem(key) || '[]');
+    const data = JSON.parse(dbStore.getItem(key) || '[]');
     const item = data[idx];
     if (!item) return;
 
@@ -1165,7 +1439,7 @@ function printSingleRecord(key, idx) {
     const timeStr = now.toLocaleTimeString(currentLang === 'ar' ? 'ar-IQ' : 'ku-IQ');
 
     const sectionTitles = {
-        receipts: lang.print_section_receipt,
+        receipts: item.receipt_type === 'مركزي' ? lang.print_section_central_receipt : lang.print_section_decentral_receipt,
         delegations: lang.print_section_delegation,
         children: lang.print_section_children,
         marriage: lang.print_section_marriage,
@@ -1336,25 +1610,41 @@ function executeSinglePrint() {
     `);
     win.document.close();
 }
-
-// ===== BULK PRINT =====
 function openBulkPrintModal() {
     // Update record counts
-    const keys = ['receipts','delegations','children','marriage','fines'];
+    const keys = ['delegations', 'children', 'marriage', 'fines'];
     keys.forEach(key => {
-        const data = JSON.parse(localStorage.getItem(key) || '[]');
+        const data = JSON.parse(dbStore.getItem(key) || '[]');
         const el = document.getElementById(`bp-count-${key}`);
         if (el) el.textContent = `(${data.length})`;
     });
+
+    const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
+    const centralCount = receipts.filter(item => item.receipt_type === 'مركزي').length;
+    const decentralCount = receipts.filter(item => item.receipt_type === 'لا مركزي').length;
+
+    const elCentral = document.getElementById('bp-count-central-receipts');
+    if (elCentral) elCentral.textContent = `(${centralCount})`;
+    const elDecentral = document.getElementById('bp-count-decentral-receipts');
+    if (elDecentral) elDecentral.textContent = `(${decentralCount})`;
+
     openModal('bulk-print-modal');
 }
 
 function buildSectionHTML(key, lang) {
-    const data = JSON.parse(localStorage.getItem(key) || '[]');
+    let data = [];
+    if (key === 'central-receipts') {
+        data = JSON.parse(dbStore.getItem('receipts') || '[]').filter(item => item.receipt_type === 'مركزي');
+    } else if (key === 'decentral-receipts') {
+        data = JSON.parse(dbStore.getItem('receipts') || '[]').filter(item => item.receipt_type === 'لا مركزي');
+    } else {
+        data = JSON.parse(dbStore.getItem(key) || '[]');
+    }
     if (!data.length) return '';
 
     const sectionTitles = {
-        receipts: lang.print_section_receipt,
+        'central-receipts': lang.print_section_central_receipt,
+        'decentral-receipts': lang.print_section_decentral_receipt,
         delegations: lang.print_section_delegation,
         children: lang.print_section_children,
         marriage: lang.print_section_marriage,
@@ -1362,7 +1652,8 @@ function buildSectionHTML(key, lang) {
     };
 
     const headers = {
-        receipts: `<th>${lang.th_type}</th><th>${lang.th_directorate}</th><th>${lang.th_department}</th><th>${lang.th_location}</th><th>${lang.th_date}</th><th>${lang.th_code}</th><th>${lang.th_amount}</th>`,
+        'central-receipts': `<th>${lang.th_directorate}</th><th>${lang.th_department}</th><th>${lang.th_location}</th><th>${lang.th_date}</th><th>${lang.th_code}</th><th>${lang.th_amount}</th>`,
+        'decentral-receipts': `<th>${lang.th_directorate}</th><th>${lang.th_department}</th><th>${lang.th_location}</th><th>${lang.th_date}</th><th>${lang.th_code}</th><th>${lang.th_amount}</th>`,
         delegations: `<th>${lang.th_name}</th><th>${lang.th_month}</th><th>${lang.th_count}</th><th>${lang.th_export}</th><th>${lang.th_import}</th><th>${lang.th_amount}</th><th>${lang.th_total}</th>`,
         children: `<th>${lang.th_father}</th><th>${lang.th_mother}</th><th>${lang.th_child}</th><th>${lang.th_gender}</th><th>${lang.th_dob}</th><th>${lang.th_arrival}</th><th>${lang.th_amount}</th>`,
         marriage: `<th>${lang.th_husband}</th><th>${lang.th_wife}</th><th>${lang.lbl_employee_gender || lang.th_gender}</th><th>${lang.th_marriage_date || lang.th_date}</th><th>${lang.th_arrival}</th><th>${lang.th_amount}</th>`,
@@ -1370,14 +1661,14 @@ function buildSectionHTML(key, lang) {
     };
 
     const monthMap = {
-        'كانون الثاني':'m1','شباط':'m2','آذار':'m3','نيسان':'m4','أيار':'m5','حزيران':'m6',
-        'تموز':'m7','آب':'m8','أيلول':'m9','تشرين الأول':'m10','تشرين الثاني':'m11','كانون الأول':'m12'
+        'كانون الثاني': 'm1', 'شباط': 'm2', 'آذار': 'm3', 'نيسان': 'm4', 'أيار': 'm5', 'حزيران': 'm6',
+        'تموز': 'm7', 'آب': 'm8', 'أيلول': 'm9', 'تشرين الأول': 'm10', 'تشرين الثاني': 'm11', 'كانون الأول': 'm12'
     };
 
     let bodyRows = data.map(item => {
         let cells = '';
-        if (key === 'receipts') {
-            cells = `<td>${item.receipt_type === 'مركزي' ? lang.lbl_central : lang.lbl_decentral}</td><td>${item.directorate}</td><td>${item.department}</td><td>${item.location}</td><td>${item.date}</td><td>${item.code}</td><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>`;
+        if (key === 'central-receipts' || key === 'decentral-receipts') {
+            cells = `<td>${item.directorate}</td><td>${item.department}</td><td>${item.location}</td><td>${item.date}</td><td>${item.code}</td><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>`;
         } else if (key === 'delegations') {
             const mKey = monthMap[item.month];
             cells = `<td>${item.name}</td><td>${mKey && lang[mKey] ? lang[mKey] : item.month}</td><td>${item.count}</td><td>${item.export_num}</td><td>${item.import_num}</td><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td><td>${parseFloat(item.total).toLocaleString()} ${lang.currency}</td>`;
@@ -1391,17 +1682,16 @@ function buildSectionHTML(key, lang) {
         return `<tr>${cells}</tr>`;
     }).join('');
 
-    // Total row
     let totalAmt = 0;
-    if (key === 'receipts') totalAmt = data.reduce((s,i) => s+(parseFloat(i.amount)||0),0);
-    else if (key === 'delegations') totalAmt = data.reduce((s,i) => s+(parseFloat(i.total)||0),0);
-    else if (key === 'children') totalAmt = data.reduce((s,i) => s+(parseFloat(i.amount)||0),0);
-    else if (key === 'marriage') totalAmt = data.reduce((s,i) => s+(parseFloat(i.amount)||0),0);
-    else if (key === 'fines') totalAmt = data.reduce((s,i) => s+(parseFloat(i.total)||0),0);
+    if (key === 'central-receipts' || key === 'decentral-receipts') totalAmt = data.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    else if (key === 'delegations') totalAmt = data.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
+    else if (key === 'children') totalAmt = data.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    else if (key === 'marriage') totalAmt = data.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    else if (key === 'fines') totalAmt = data.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
 
     const sigNames = getSignatureNames();
-    const colCount = (key==='receipts'||key==='delegations'||key==='children') ? 7 : (key==='marriage' ? 6 : 6);
-    const totalRow = `<tr class="total-row"><td colspan="${colCount-1}" style="text-align:left;">${lang.st_total_amounts || lang.lbl_total}</td><td><strong>${totalAmt.toLocaleString()} ${lang.currency}</strong></td></tr>`;
+    const colCount = (key === 'central-receipts' || key === 'decentral-receipts') ? 6 : ((key === 'delegations' || key === 'children') ? 7 : 6);
+    const totalRow = `<tr class="total-row"><td colspan="${colCount - 1}" style="text-align:left;">${lang.st_total_amounts || lang.lbl_total}</td><td><strong>${totalAmt.toLocaleString()} ${lang.currency}</strong></td></tr>`;
 
     return `
         <div class="bulk-section" style="page-break-after:always;">
@@ -1417,7 +1707,7 @@ function buildSectionHTML(key, lang) {
                     <h2>${sectionTitles[key]}</h2>
                 </div>
                 <div class="bs-left">
-                    <p><strong>${lang.lbl_date_print}</strong> ${new Date().toLocaleDateString(currentLang==='ar'?'ar-IQ':'ku-IQ')}</p>
+                    <p><strong>${lang.lbl_date_print}</strong> ${new Date().toLocaleDateString(currentLang === 'ar' ? 'ar-IQ' : 'ku-IQ')}</p>
                     <p><strong>${lang.records_count}:</strong> ${data.length}</p>
                 </div>
             </div>
@@ -1439,11 +1729,12 @@ function buildSectionHTML(key, lang) {
 function executeBulkPrint() {
     const lang = translations[currentLang];
     const selected = [
-        document.getElementById('bp-receipts')?.checked    ? 'receipts'    : null,
+        document.getElementById('bp-central-receipts')?.checked ? 'central-receipts' : null,
+        document.getElementById('bp-decentral-receipts')?.checked ? 'decentral-receipts' : null,
         document.getElementById('bp-delegations')?.checked ? 'delegations' : null,
-        document.getElementById('bp-children')?.checked    ? 'children'    : null,
-        document.getElementById('bp-marriage')?.checked    ? 'marriage'    : null,
-        document.getElementById('bp-fines')?.checked       ? 'fines'       : null
+        document.getElementById('bp-children')?.checked ? 'children' : null,
+        document.getElementById('bp-marriage')?.checked ? 'marriage' : null,
+        document.getElementById('bp-fines')?.checked ? 'fines' : null
     ].filter(Boolean);
 
     if (!selected.length) {
@@ -1476,17 +1767,15 @@ function executeBulkPrint() {
                 .bs-center { flex:0 0 150px; text-align:center; }
                 .bs-center h2 { font-size:14px; font-weight:800; margin-top:5px; }
                 .bs-divider { height:2px; background:linear-gradient(90deg,#0D8ABC,#F59E0B); border-radius:5px; margin:8px 0; }
-                .bs-table { width:100%; border-collapse:collapse; margin-top:6px; font-size:10px; }
-                .bs-table th { background:#f0f7fc; text-align:right; padding:6px 8px; border:1px solid #ccd; font-weight:700; }
-                .bs-table td { padding:5px 8px; border:1px solid #ccd; }
-                .bs-table tr:nth-child(even) td { background:#f9f9f9; }
+                .bs-table { width:100%; border-collapse:collapse; margin-top:6px; font-size:11px; }
+                .bs-table th { background:#f0f7fc; text-align:center; padding:8px 10px; border:1px solid #ccd; font-weight:700; }
+                .bs-table td { padding:6px 10px; border:1px solid #ccd; text-align:center; }
                 .bs-table tr.total-row td { background:#fff8e1; font-weight:700; color:#b45309; }
                 .bs-signatures { display:flex; justify-content:space-between; gap:15px; margin-top:20px; }
                 .bs-sig { text-align:center; flex:1; font-size:10px; }
-                .bs-sig p:first-child { margin-bottom:22px; }
                 .bs-line { border-top:1px solid #333; padding-top:3px; margin-bottom:3px; }
                 @media print {
-                    @page { margin:1.2cm; size:A4 landscape; }
+                    @page { margin:1.2cm; size:A4 portrait; }
                     .bulk-section { min-height:calc(100vh - 2.4cm); page-break-after:always; }
                     .bs-signatures { margin-top:auto; padding-top:10px; border-top:1px solid #333; }
                 }
@@ -1500,31 +1789,33 @@ function executeBulkPrint() {
     closeAllModals();
 }
 
-// ===== PRINT A SINGLE SECTION USING BULK-LIKE LAYOUT =====
 function printSection(key) {
     const lang = translations[currentLang];
     if (key === 'stats') {
-        const receipts    = JSON.parse(localStorage.getItem('receipts')    || '[]');
-        const delegations = JSON.parse(localStorage.getItem('delegations') || '[]');
-        const children    = JSON.parse(localStorage.getItem('children')    || '[]');
-        const marriage    = JSON.parse(localStorage.getItem('marriage')    || '[]');
-        const fines       = JSON.parse(localStorage.getItem('fines')       || '[]');
+        const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
+        const delegations = JSON.parse(dbStore.getItem('delegations') || '[]');
+        const children = JSON.parse(dbStore.getItem('children') || '[]');
+        const marriage = JSON.parse(dbStore.getItem('marriage') || '[]');
+        const fines = JSON.parse(dbStore.getItem('fines') || '[]');
 
         const totalRecords = receipts.length + delegations.length + children.length + marriage.length + fines.length;
-        const totalAmounts = (receipts.reduce((s,i)=>s+(parseFloat(i.amount)||0),0)) +
-                             (delegations.reduce((s,i)=>s+(parseFloat(i.total)||0),0)) +
-                             (children.reduce((s,i)=>s+(parseFloat(i.amount)||0),0)) +
-                             (marriage.reduce((s,i)=>s+(parseFloat(i.amount)||0),0)) +
-                             (fines.reduce((s,i)=>s+(parseFloat(i.total)||0),0));
+        const totalAmounts = (receipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)) +
+            (delegations.reduce((s, i) => s + (parseFloat(i.total) || 0), 0)) +
+            (children.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)) +
+            (marriage.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)) +
+            (fines.reduce((s, i) => s + (parseFloat(i.total) || 0), 0));
 
-        const receiptsTotal = receipts.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
-        const delegationsTotal = delegations.reduce((s,i)=>s+(parseFloat(i.total)||0),0);
-        const childrenTotal = children.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
-        const marriageTotal = marriage.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
-        const finesTotal = fines.reduce((s,i)=>s+(parseFloat(i.total)||0),0);
+        const centralReceipts = receipts.filter(item => item.receipt_type === 'مركزي');
+        const decentralReceipts = receipts.filter(item => item.receipt_type === 'لا مركزي');
+        const centralReceiptsTotal = centralReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+        const decentralReceiptsTotal = decentralReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+
+        const delegationsTotal = delegations.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
+        const childrenTotal = children.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+        const marriageTotal = marriage.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+        const finesTotal = fines.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
 
         const sigNames = getSignatureNames();
-        // Build monthly breakdown rows
         const breakdown = getMonthlyBreakdown();
         let archiveRows = '';
         let hasArchiveData = false;
@@ -1573,7 +1864,7 @@ function printSection(key) {
                         <h2 style="font-size:16px; font-weight:800; margin-top:5px;">${lang.stats}</h2>
                     </div>
                     <div class="bs-left">
-                        <p><strong>${lang.lbl_date_print}</strong> ${new Date().toLocaleDateString(currentLang==='ar'?'ar-IQ':'ku-IQ')}</p>
+                        <p><strong>${lang.lbl_date_print}</strong> ${new Date().toLocaleDateString(currentLang === 'ar' ? 'ar-IQ' : 'ku-IQ')}</p>
                     </div>
                 </div>
                 <div class="bs-divider"></div>
@@ -1591,9 +1882,14 @@ function printSection(key) {
                     </thead>
                     <tbody>
                         <tr>
-                            <td><strong>${lang.receipts}</strong></td>
-                            <td>${receipts.length}</td>
-                            <td><strong>${receiptsTotal.toLocaleString()} ${lang.currency}</strong></td>
+                            <td><strong>${lang.central_receipts}</strong></td>
+                            <td>${centralReceipts.length}</td>
+                            <td><strong>${centralReceiptsTotal.toLocaleString()} ${lang.currency}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>${lang.decentral_receipts}</strong></td>
+                            <td>${decentralReceipts.length}</td>
+                            <td><strong>${decentralReceiptsTotal.toLocaleString()} ${lang.currency}</strong></td>
                         </tr>
                         <tr>
                             <td><strong>${lang.delegations}</strong></td>
@@ -1666,8 +1962,8 @@ function printSection(key) {
                 .bs-center h2 { font-size:14px; font-weight:800; margin-top:5px; }
                 .bs-divider { height:2px; background:linear-gradient(90deg,#0D8ABC,#F59E0B); border-radius:5px; margin:8px 0; }
                 .bs-table { width:100%; border-collapse:collapse; margin-top:6px; font-size:11px; }
-                .bs-table th { background:#f0f7fc; text-align:right; padding:8px 10px; border:1px solid #ccd; font-weight:700; }
-                .bs-table td { padding:6px 10px; border:1px solid #ccd; }
+                .bs-table th { background:#f0f7fc; text-align:center; padding:8px 10px; border:1px solid #ccd; font-weight:700; }
+                .bs-table td { padding:6px 10px; border:1px solid #ccd; text-align:center; }
                 .bs-table tr.total-row td { background:#fff8e1; font-weight:700; color:#b45309; }
                 .bs-signatures { display:flex; justify-content:space-between; gap:15px; margin-top:20px; }
                 .bs-sig { text-align:center; flex:1; font-size:10px; }
@@ -1734,18 +2030,19 @@ function buildPrintPage(content, lang, title) {
 
 // ===== MONTHLY ARCHIVE SYSTEM =====
 function getMonthlyBreakdown() {
-    const receipts    = JSON.parse(localStorage.getItem('receipts')    || '[]');
-    const delegations = JSON.parse(localStorage.getItem('delegations') || '[]');
-    const children    = JSON.parse(localStorage.getItem('children')    || '[]');
-    const marriage    = JSON.parse(localStorage.getItem('marriage')    || '[]');
-    const fines       = JSON.parse(localStorage.getItem('fines')       || '[]');
+    const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
+    const delegations = JSON.parse(dbStore.getItem('delegations') || '[]');
+    const children = JSON.parse(dbStore.getItem('children') || '[]');
+    const marriage = JSON.parse(dbStore.getItem('marriage') || '[]');
+    const fines = JSON.parse(dbStore.getItem('fines') || '[]');
 
     const monthlyData = {};
     for (let m = 1; m <= 12; m++) {
         monthlyData[m] = {
             recordsCount: 0,
             amount: 0,
-            receipts: 0,
+            centralReceipts: 0,
+            decentralReceipts: 0,
             delegations: 0,
             children: 0,
             marriage: 0,
@@ -1771,7 +2068,11 @@ function getMonthlyBreakdown() {
         if (m >= 1 && m <= 12) {
             monthlyData[m].recordsCount++;
             monthlyData[m].amount += (parseFloat(item.amount) || 0);
-            monthlyData[m].receipts++;
+            if (item.receipt_type === 'مركزي') {
+                monthlyData[m].centralReceipts++;
+            } else {
+                monthlyData[m].decentralReceipts++;
+            }
         }
     });
 
@@ -1842,8 +2143,12 @@ function showMonthArchiveDetails(m) {
                     <h4 style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">${currentLang === 'ar' ? 'التفاصيل حسب الأقسام:' : 'کورتیا پشکان:'}</h4>
                     <div style="display:grid; grid-template-columns:1fr; gap:8px;">
                         <div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 10px; border-bottom:1px solid rgba(255,255,255,0.05);">
-                            <span>${lang.receipts}</span>
-                            <span>${data.receipts} (${currentLang === 'ar' ? 'سجل' : 'تۆمار'})</span>
+                            <span>${lang.central_receipts}</span>
+                            <span>${data.centralReceipts} (${currentLang === 'ar' ? 'سجل' : 'تۆمار'})</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 10px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <span>${lang.decentral_receipts}</span>
+                            <span>${data.decentralReceipts} (${currentLang === 'ar' ? 'سجل' : 'تۆمار'})</span>
                         </div>
                         <div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 10px; border-bottom:1px solid rgba(255,255,255,0.05);">
                             <span>${lang.delegations}</span>
@@ -1871,18 +2176,21 @@ function showMonthArchiveDetails(m) {
 
 // ===== STATISTICS RENDERING =====
 function renderStats() {
-    const receipts    = JSON.parse(localStorage.getItem('receipts')    || '[]');
-    const delegations = JSON.parse(localStorage.getItem('delegations') || '[]');
-    const children    = JSON.parse(localStorage.getItem('children')    || '[]');
-    const marriage    = JSON.parse(localStorage.getItem('marriage')    || '[]');
-    const fines       = JSON.parse(localStorage.getItem('fines')       || '[]');
+    const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
+    const delegations = JSON.parse(dbStore.getItem('delegations') || '[]');
+    const children = JSON.parse(dbStore.getItem('children') || '[]');
+    const marriage = JSON.parse(dbStore.getItem('marriage') || '[]');
+    const fines = JSON.parse(dbStore.getItem('fines') || '[]');
+
+    const centralReceipts = receipts.filter(item => item.receipt_type === 'مركزي');
+    const decentralReceipts = receipts.filter(item => item.receipt_type === 'لا مركزي');
 
     const totalRecords = receipts.length + delegations.length + children.length + marriage.length + fines.length;
-    const totalAmounts = (receipts.reduce((s,i)=>s+(parseFloat(i.amount)||0),0)) +
-                         (delegations.reduce((s,i)=>s+(parseFloat(i.total)||0),0)) +
-                         (children.reduce((s,i)=>s+(parseFloat(i.amount)||0),0)) +
-                         (marriage.reduce((s,i)=>s+(parseFloat(i.amount)||0),0)) +
-                         (fines.reduce((s,i)=>s+(parseFloat(i.total)||0),0));
+    const totalAmounts = (receipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)) +
+        (delegations.reduce((s, i) => s + (parseFloat(i.total) || 0), 0)) +
+        (children.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)) +
+        (marriage.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)) +
+        (fines.reduce((s, i) => s + (parseFloat(i.total) || 0), 0));
 
     const lang = translations[currentLang];
     const contentDiv = document.getElementById('stats-content');
@@ -1893,7 +2201,8 @@ function renderStats() {
         <div style="display:flex; gap:12px; flex-wrap:wrap; padding:10px;">
             <div class="stat-item"><h4>${lang.ov_total_records}</h4><div class="stat-value">${totalRecords}</div></div>
             <div class="stat-item"><h4>${lang.st_total_amounts}</h4><div class="stat-value">${totalAmounts.toLocaleString()} ${lang.currency}</div></div>
-            <div class="stat-item"><h4>${lang.receipts}</h4><div class="stat-value">${receipts.length}</div></div>
+            <div class="stat-item"><h4>${lang.central_receipts}</h4><div class="stat-value">${centralReceipts.length}</div></div>
+            <div class="stat-item"><h4>${lang.decentral_receipts}</h4><div class="stat-value">${decentralReceipts.length}</div></div>
             <div class="stat-item"><h4>${lang.delegations}</h4><div class="stat-value">${delegations.length}</div></div>
             <div class="stat-item"><h4>${lang.children}</h4><div class="stat-value">${children.length}</div></div>
             <div class="stat-item"><h4>${lang.marriage}</h4><div class="stat-value">${marriage.length}</div></div>
@@ -1902,15 +2211,17 @@ function renderStats() {
     `;
 
     // Panels: breakdowns for each section
-    const receiptsTotal = receipts.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
-    const delegationsTotal = delegations.reduce((s,i)=>s+(parseFloat(i.total)||0),0);
-    const childrenTotal = children.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
-    const marriageTotal = marriage.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
-    const finesTotal = fines.reduce((s,i)=>s+(parseFloat(i.total)||0),0);
+    const centralTotal = centralReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    const decentralTotal = decentralReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    const delegationsTotal = delegations.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
+    const childrenTotal = children.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    const marriageTotal = marriage.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    const finesTotal = fines.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
 
     panelsDiv.innerHTML = `
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px;">
-            <div class="glass-panel" style="padding:14px;"><h4>${lang.receipts}</h4><p>${lang.lbl_records}: ${receipts.length}</p><p>${lang.lbl_total_sum}: ${receiptsTotal.toLocaleString()} ${lang.currency}</p></div>
+            <div class="glass-panel" style="padding:14px;"><h4>${lang.central_receipts}</h4><p>${lang.lbl_records}: ${centralReceipts.length}</p><p>${lang.lbl_total_sum}: ${centralTotal.toLocaleString()} ${lang.currency}</p></div>
+            <div class="glass-panel" style="padding:14px;"><h4>${lang.decentral_receipts}</h4><p>${lang.lbl_records}: ${decentralReceipts.length}</p><p>${lang.lbl_total_sum}: ${decentralTotal.toLocaleString()} ${lang.currency}</p></div>
             <div class="glass-panel" style="padding:14px;"><h4>${lang.delegations}</h4><p>${lang.lbl_records}: ${delegations.length}</p><p>${lang.lbl_total_sum}: ${delegationsTotal.toLocaleString()} ${lang.currency}</p></div>
             <div class="glass-panel" style="padding:14px;"><h4>${lang.children}</h4><p>${lang.lbl_records}: ${children.length}</p><p>${lang.lbl_total_sum}: ${childrenTotal.toLocaleString()} ${lang.currency}</p></div>
             <div class="glass-panel" style="padding:14px;"><h4>${lang.marriage}</h4><p>${lang.lbl_records}: ${marriage.length}</p><p>${lang.lbl_total_sum}: ${marriageTotal.toLocaleString()} ${lang.currency}</p></div>
@@ -1953,21 +2264,7 @@ function renderStats() {
     }
 }
 
-// Ensure stats are available on load (but don't force display)
-document.addEventListener('DOMContentLoaded', () => {
-    if(document.getElementById('stats-content')) renderStats();
-    renderPrintSignatureNames();
-});
 
-// Enable Enter key on search input to trigger search
-document.addEventListener('DOMContentLoaded', () => {
-    const si = document.getElementById('section-search');
-    if (si) {
-        si.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); performSearch(); }
-        });
-    }
-});
 
 // ===== BACKUP & RESTORE MODULE =====
 let pendingBackupData = null;
@@ -1978,15 +2275,15 @@ function openBackupModal() {
     const confirmView = document.getElementById('backup-confirm-view');
     if (defaultView) defaultView.style.display = 'block';
     if (confirmView) confirmView.style.display = 'none';
-    
+
     // Clear file input
     const fileInput = document.getElementById('backup-file-input');
     if (fileInput) fileInput.value = '';
-    
+
     // Reset label text
     const uploadText = document.getElementById('backup-upload-text');
     if (uploadText) uploadText.textContent = translations[currentLang].import_btn;
-    
+
     openModal('backup-modal');
 }
 
@@ -1994,30 +2291,30 @@ function exportData() {
     const backup = {
         backup_version: 1,
         timestamp: new Date().toISOString(),
-        receipts: JSON.parse(localStorage.getItem('receipts') || '[]'),
-        delegations: JSON.parse(localStorage.getItem('delegations') || '[]'),
-        children: JSON.parse(localStorage.getItem('children') || '[]'),
-        marriage: JSON.parse(localStorage.getItem('marriage') || '[]'),
-        fines: JSON.parse(localStorage.getItem('fines') || '[]'),
-        sig_director_name: localStorage.getItem('sig_director_name') || '',
-        sig_clerk_name: localStorage.getItem('sig_clerk_name') || '',
-        sig_officer_name: localStorage.getItem('sig_officer_name') || '',
-        appLang: localStorage.getItem('appLang') || 'ku'
+        receipts: JSON.parse(dbStore.getItem('receipts') || '[]'),
+        delegations: JSON.parse(dbStore.getItem('delegations') || '[]'),
+        children: JSON.parse(dbStore.getItem('children') || '[]'),
+        marriage: JSON.parse(dbStore.getItem('marriage') || '[]'),
+        fines: JSON.parse(dbStore.getItem('fines') || '[]'),
+        sig_director_name: dbStore.getItem('sig_director_name') || '',
+        sig_clerk_name: dbStore.getItem('sig_clerk_name') || '',
+        sig_officer_name: dbStore.getItem('sig_officer_name') || '',
+        appLang: dbStore.getItem('appLang') || 'ku'
     };
-    
+
     const jsonStr = JSON.stringify(backup, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    
+
     const downloadAnchor = document.createElement('a');
     const dateStr = new Date().toISOString().split('T')[0];
     const timeStr = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
-    
+
     downloadAnchor.href = url;
     downloadAnchor.download = `traffic_audit_backup_${dateStr}_${timeStr}.json`;
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
-    
+
     // Cleanup
     setTimeout(() => {
         document.body.removeChild(downloadAnchor);
@@ -2029,43 +2326,43 @@ function exportData() {
 function handleBackupFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         try {
             const data = JSON.parse(e.target.result);
-            
+
             // Validation: check for expected tables or configurations
-            const hasRequiredKeys = Array.isArray(data.receipts) || 
-                                    Array.isArray(data.delegations) || 
-                                    Array.isArray(data.children) || 
-                                    Array.isArray(data.marriage) || 
-                                    Array.isArray(data.fines);
-                                    
+            const hasRequiredKeys = Array.isArray(data.receipts) ||
+                Array.isArray(data.delegations) ||
+                Array.isArray(data.children) ||
+                Array.isArray(data.marriage) ||
+                Array.isArray(data.fines);
+
             if (!hasRequiredKeys) {
                 showToast(translations[currentLang].invalid_file_error);
                 return;
             }
-            
+
             pendingBackupData = data;
-            
+
             // Switch to confirmation view and show summary
             const defaultView = document.getElementById('backup-default-view');
             const confirmView = document.getElementById('backup-confirm-view');
             const summaryBox = document.getElementById('backup-summary-box');
-            
+
             if (defaultView && confirmView && summaryBox) {
                 defaultView.style.display = 'none';
                 confirmView.style.display = 'flex';
-                
+
                 const lang = translations[currentLang];
-                
+
                 const receiptsCount = data.receipts ? data.receipts.length : 0;
                 const delegationsCount = data.delegations ? data.delegations.length : 0;
                 const childrenCount = data.children ? data.children.length : 0;
                 const marriageCount = data.marriage ? data.marriage.length : 0;
                 const finesCount = data.fines ? data.fines.length : 0;
-                
+
                 summaryBox.innerHTML = `
                     <div style="display:flex; justify-content:space-between; direction: rtl;"><span>${lang.receipts}:</span> <strong>${receiptsCount}</strong></div>
                     <div style="display:flex; justify-content:space-between; direction: rtl;"><span>${lang.delegations}:</span> <strong>${delegationsCount}</strong></div>
@@ -2074,7 +2371,7 @@ function handleBackupFileSelect(event) {
                     <div style="display:flex; justify-content:space-between; direction: rtl;"><span>${lang.fines}:</span> <strong>${finesCount}</strong></div>
                 `;
             }
-            
+
         } catch (err) {
             console.error(err);
             showToast(translations[currentLang].invalid_file_error);
@@ -2089,7 +2386,7 @@ function cancelRestore() {
     const confirmView = document.getElementById('backup-confirm-view');
     if (defaultView) defaultView.style.display = 'block';
     if (confirmView) confirmView.style.display = 'none';
-    
+
     // Clear input
     const fileInput = document.getElementById('backup-file-input');
     if (fileInput) fileInput.value = '';
@@ -2097,39 +2394,39 @@ function cancelRestore() {
 
 function confirmRestore() {
     if (!pendingBackupData) return;
-    
+
     try {
         const data = pendingBackupData;
-        
-        // Restore all keys to localStorage if they exist in the backup file
-        if (Array.isArray(data.receipts)) localStorage.setItem('receipts', JSON.stringify(data.receipts));
-        if (Array.isArray(data.delegations)) localStorage.setItem('delegations', JSON.stringify(data.delegations));
-        if (Array.isArray(data.children)) localStorage.setItem('children', JSON.stringify(data.children));
-        if (Array.isArray(data.marriage)) localStorage.setItem('marriage', JSON.stringify(data.marriage));
-        if (Array.isArray(data.fines)) localStorage.setItem('fines', JSON.stringify(data.fines));
-        
-        if (data.sig_director_name !== undefined) localStorage.setItem('sig_director_name', data.sig_director_name);
-        if (data.sig_clerk_name !== undefined) localStorage.setItem('sig_clerk_name', data.sig_clerk_name);
-        if (data.sig_officer_name !== undefined) localStorage.setItem('sig_officer_name', data.sig_officer_name);
-        if (data.appLang !== undefined) localStorage.setItem('appLang', data.appLang);
-        
+
+        // Restore all keys to dbStore if they exist in the backup file
+        if (Array.isArray(data.receipts)) dbStore.setItem('receipts', JSON.stringify(data.receipts));
+        if (Array.isArray(data.delegations)) dbStore.setItem('delegations', JSON.stringify(data.delegations));
+        if (Array.isArray(data.children)) dbStore.setItem('children', JSON.stringify(data.children));
+        if (Array.isArray(data.marriage)) dbStore.setItem('marriage', JSON.stringify(data.marriage));
+        if (Array.isArray(data.fines)) dbStore.setItem('fines', JSON.stringify(data.fines));
+
+        if (data.sig_director_name !== undefined) dbStore.setItem('sig_director_name', data.sig_director_name);
+        if (data.sig_clerk_name !== undefined) dbStore.setItem('sig_clerk_name', data.sig_clerk_name);
+        if (data.sig_officer_name !== undefined) dbStore.setItem('sig_officer_name', data.sig_officer_name);
+        if (data.appLang !== undefined) dbStore.setItem('appLang', data.appLang);
+
         // Reset state
         pendingBackupData = null;
         closeAllModals();
-        
+
         // Refresh app state
-        currentLang = localStorage.getItem('appLang') || 'ku';
+        currentLang = dbStore.getItem('appLang') || 'ku';
         applyLanguage();
         initData();
         updateOverviewCards();
         renderPrintSignatureNames();
-        
+
         // If on stats section, update stats
         const statsSec = document.getElementById('stats-section');
         if (statsSec && statsSec.classList.contains('active')) {
             renderStats();
         }
-        
+
         showToast(translations[currentLang].import_success);
     } catch (err) {
         console.error(err);

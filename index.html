@@ -108,23 +108,29 @@
                 </div>
                 <div class="header-actions">
                     <div class="header-search">
-                        <input id="section-search" class="search-input" type="search" data-tr-placeholder="pl_search" placeholder="ابحث في القسم...">
-                        <button class="btn-icon-sm" data-tr-title="title_search" title="بحث" onclick="performSearch()"><i class="fa-solid fa-magnifying-glass"></i></button>
-                        <button class="btn-icon-sm" data-tr-title="title_clear" title="مسح" onclick="clearSearch()"><i class="fa-solid fa-times"></i></button>
+                        <input id="section-search" class="search-input" type="search" data-tr-placeholder="pl_search"
+                            placeholder="ابحث في القسم...">
+                        <button class="btn-icon-sm" data-tr-title="title_search" title="بحث"
+                            onclick="performSearch()"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        <button class="btn-icon-sm" data-tr-title="title_clear" title="مسح" onclick="clearSearch()"><i
+                                class="fa-solid fa-times"></i></button>
                     </div>
                     <button class="btn-lang" onclick="toggleLanguage()">
                         <i class="fa-solid fa-globe"></i>
                         <span id="lang-text" class="lang-text-el">English</span>
                     </button>
-                    <button class="btn-secondary" onclick="openSignatureModal()" data-tr-title="sig_details_btn" title="أسماء الطباعة">
+                    <button class="btn-secondary" onclick="openSignatureModal()" data-tr-title="sig_details_btn"
+                        title="أسماء الطباعة">
                         <i class="fa-solid fa-user-pen"></i>
                         <span data-tr="sig_details_btn">أسماء الطباعة</span>
                     </button>
-                    <button class="btn-bulk-print" onclick="openBulkPrintModal()" data-tr-title="bulk_print" title="طباعة جماعية">
+                    <button class="btn-bulk-print" onclick="openBulkPrintModal()" data-tr-title="bulk_print"
+                        title="طباعة جماعية">
                         <i class="fa-solid fa-print"></i>
                         <span data-tr="bulk_print">طباعة جماعية</span>
                     </button>
-                    <button class="btn-backup" onclick="openBackupModal()" data-tr-title="backup_btn" title="النسخ الاحتياطي">
+                    <button class="btn-backup" onclick="openBackupModal()" data-tr-title="backup_btn"
+                        title="النسخ الاحتياطي">
                         <i class="fa-solid fa-database"></i>
                         <span data-tr="backup_btn">النسخ الاحتياطي</span>
                     </button>
@@ -143,20 +149,38 @@
                     <p class="overview-subtitle" data-tr="ov_subtitle">مديرية مرور زاخو - قسم التدقيق</p>
 
                     <div class="overview-cards-grid">
-                        <!-- Receipts Card -->
-                        <div class="overview-card" onclick="showSection('receipts-section')">
+                        <!-- Central Receipts Card -->
+                        <div class="overview-card" onclick="showSection('central-receipts-section')">
                             <div class="ov-icon-wrap receipts-color">
                                 <i class="fa-solid fa-file-invoice-dollar"></i>
                             </div>
-                            <h3 class="ov-title" data-tr="receipts">الوصولات</h3>
+                            <h3 class="ov-title" data-tr="central_receipts">الوصولات المركزية</h3>
                             <div class="ov-stats">
                                 <div class="ov-stat-row">
                                     <span class="ov-label" data-tr="ov_receipts_count">عدد الوصولات:</span>
-                                    <span class="ov-value" id="ov-receipts-count">0</span>
+                                    <span class="ov-value" id="ov-central-receipts-count">0</span>
                                 </div>
                                 <div class="ov-stat-row">
                                     <span class="ov-label" data-tr="ov_receipts_total">إجمالي المبالغ:</span>
-                                    <span class="ov-value accent" id="ov-receipts-total">0 د.ع</span>
+                                    <span class="ov-value accent" id="ov-central-receipts-total">0 د.ع</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Decentral Receipts Card -->
+                        <div class="overview-card" onclick="showSection('decentral-receipts-section')">
+                            <div class="ov-icon-wrap receipts-decentral-color" style="background: rgba(13, 171, 209, 0.15); color: #0dabcf;">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <h3 class="ov-title" data-tr="decentral_receipts">الوصولات اللامركزية</h3>
+                            <div class="ov-stats">
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_receipts_count">عدد الوصولات:</span>
+                                    <span class="ov-value" id="ov-decentral-receipts-count">0</span>
+                                </div>
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_receipts_total">إجمالي المبالغ:</span>
+                                    <span class="ov-value accent" id="ov-decentral-receipts-total">0 د.ع</span>
                                 </div>
                             </div>
                         </div>
@@ -252,74 +276,117 @@
 
                 <hr class="section-divider no-print">
 
-                    <!-- Statistics Section -->
-                    <section id="stats-section" class="content-section">
-                        <div class="section-header print-header">
-                            <h2><i class="fa-solid fa-chart-pie" style="color: var(--primary); margin-left: 10px;"></i><span data-tr="stats">الإحصائيات الشاملة</span></h2>
-                            <div class="header-buttons no-print">
-                                <button class="btn-back" onclick="showHome()">
-                                    <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
-                                </button>
-                                <button class="btn-secondary" onclick="printSection('stats')">
-                                    <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
-                                </button>
-                                <button class="btn-primary" onclick="renderStats()">
-                                    <i class="fa-solid fa-arrows-rotate"></i> <span data-tr="btn_refresh_stats">تحديث الإحصائيات</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="section-stats" id="stats-content"></div>
-                        <div class="table-responsive glass-panel">
-                            <div id="stats-panels" class="stats-panels"></div>
-                        </div>
-                        
-                        <!-- Monthly Archive -->
-                        <div class="glass-panel" style="margin-top: 20px; padding: 20px;" id="stats-archive-panel">
-                            <h3 style="margin-bottom: 15px; color: var(--primary); display: flex; align-items: center; gap: 8px;">
-                                <i class="fa-solid fa-box-archive"></i>
-                                <span data-tr="monthly_archive">الأرشيف الشهري للإحصائيات</span>
-                            </h3>
-                            <div class="table-responsive" style="padding: 0;">
-                                <table class="data-table" id="archive-table">
-                                    <thead>
-                                        <tr>
-                                            <th data-tr="th_month">الشهر</th>
-                                            <th data-tr="ov_total_records">عدد السجلات</th>
-                                            <th data-tr="st_total_amounts">إجمالي المبالغ</th>
-                                            <th class="no-print" data-tr="th_actions">العمليات</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="archive-table-body">
-                                        <!-- Injected dynamically -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </section>
-
-                <!-- Receipts Section -->
-                <section id="receipts-section" class="content-section">
+                <!-- Statistics Section -->
+                <section id="stats-section" class="content-section">
                     <div class="section-header print-header">
-                        <h2><i class="fa-solid fa-file-invoice-dollar"
-                                style="color: var(--primary); margin-left: 10px;"></i><span data-tr="print_section_receipt">سجل الوصولات</span></h2>
+                        <h2><i class="fa-solid fa-chart-pie" style="color: var(--primary); margin-left: 10px;"></i><span
+                                data-tr="stats">الإحصائيات الشاملة</span></h2>
                         <div class="header-buttons no-print">
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
                             </button>
-                            <button class="btn-secondary" onclick="printSection('receipts')">
+                            <button class="btn-secondary" onclick="printSection('stats')">
                                 <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
                             </button>
-                            <button class="btn-primary" onclick="openModal('receipts-modal')">
-                                <i class="fa-solid fa-plus"></i> <span data-tr="add_receipt">إضافة وصل جديد</span>
+                            <button class="btn-primary" onclick="renderStats()">
+                                <i class="fa-solid fa-arrows-rotate"></i> <span data-tr="btn_refresh_stats">تحديث
+                                    الإحصائيات</span>
                             </button>
                         </div>
                     </div>
-                    <div class="section-stats no-print" id="receipts-stats"></div>
+                    <div class="section-stats" id="stats-content"></div>
                     <div class="table-responsive glass-panel">
-                        <table class="data-table" id="receipts-table">
+                        <div id="stats-panels" class="stats-panels"></div>
+                    </div>
+
+                    <!-- Monthly Archive -->
+                    <div class="glass-panel" style="margin-top: 20px; padding: 20px;" id="stats-archive-panel">
+                        <h3
+                            style="margin-bottom: 15px; color: var(--primary); display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-box-archive"></i>
+                            <span data-tr="monthly_archive">الأرشيف الشهري للإحصائيات</span>
+                        </h3>
+                        <div class="table-responsive" style="padding: 0;">
+                            <table class="data-table" id="archive-table">
+                                <thead>
+                                    <tr>
+                                        <th data-tr="th_month">الشهر</th>
+                                        <th data-tr="ov_total_records">عدد السجلات</th>
+                                        <th data-tr="st_total_amounts">إجمالي المبالغ</th>
+                                        <th class="no-print" data-tr="th_actions">العمليات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="archive-table-body">
+                                    <!-- Injected dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Central Receipts Section -->
+                <section id="central-receipts-section" class="content-section">
+                    <div class="section-header print-header">
+                        <h2><i class="fa-solid fa-file-invoice-dollar"
+                                style="color: var(--primary); margin-left: 10px;"></i><span
+                                data-tr="print_section_central_receipt">سجل الوصولات المركزية</span></h2>
+                        <div class="header-buttons no-print">
+                            <button class="btn-back" onclick="showHome()">
+                                <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
+                            </button>
+                            <button class="btn-secondary" onclick="printSection('central-receipts')">
+                                <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
+                            </button>
+                            <button class="btn-primary" onclick="openAddReceiptModal('مركزي')">
+                                <i class="fa-solid fa-plus"></i> <span data-tr="add_central_receipt">إضافة وصل مركزي جديد</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-stats no-print" id="central-receipts-stats"></div>
+                    <div class="table-responsive glass-panel">
+                        <table class="data-table" id="central-receipts-table">
                             <thead>
                                 <tr>
-                                    <th data-tr="th_type">النوع</th>
+                                    <th data-tr="th_directorate">المديرية</th>
+                                    <th data-tr="th_department">القسم</th>
+                                    <th data-tr="th_location">المكان</th>
+                                    <th data-tr="th_date">التاريخ</th>
+                                    <th data-tr="th_code">الكود</th>
+                                    <th data-tr="th_amount">المبلغ</th>
+                                    <th class="no-print" data-tr="th_image">صورة الوصل</th>
+                                    <th class="no-print" data-tr="th_actions">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Decentral Receipts Section -->
+                <section id="decentral-receipts-section" class="content-section">
+                    <div class="section-header print-header">
+                        <h2><i class="fa-solid fa-receipt"
+                                style="color: var(--primary); margin-left: 10px;"></i><span
+                                data-tr="print_section_decentral_receipt">سجل الوصولات اللامركزية</span></h2>
+                        <div class="header-buttons no-print">
+                            <button class="btn-back" onclick="showHome()">
+                                <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
+                            </button>
+                            <button class="btn-secondary" onclick="printSection('decentral-receipts')">
+                                <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
+                            </button>
+                            <button class="btn-primary" onclick="openAddReceiptModal('لا مركزي')">
+                                <i class="fa-solid fa-plus"></i> <span data-tr="add_decentral_receipt">إضافة وصل لا مركزي جديد</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-stats no-print" id="decentral-receipts-stats"></div>
+                    <div class="table-responsive glass-panel">
+                        <table class="data-table" id="decentral-receipts-table">
+                            <thead>
+                                <tr>
                                     <th data-tr="th_directorate">المديرية</th>
                                     <th data-tr="th_department">القسم</th>
                                     <th data-tr="th_location">المكان</th>
@@ -341,7 +408,8 @@
                 <section id="delegations-section" class="content-section">
                     <div class="section-header print-header">
                         <h2><i class="fa-solid fa-plane-departure"
-                                style="color: var(--primary); margin-left: 10px;"></i><span data-tr="print_section_delegation">سجل الإيفادات</span></h2>
+                                style="color: var(--primary); margin-left: 10px;"></i><span
+                                data-tr="print_section_delegation">سجل الإيفادات</span></h2>
                         <div class="header-buttons no-print">
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
@@ -379,8 +447,8 @@
                 <!-- Children Section -->
                 <section id="children-section" class="content-section">
                     <div class="section-header print-header">
-                        <h2><i class="fa-solid fa-children"
-                                style="color: var(--primary); margin-left: 10px;"></i><span data-tr="print_section_children">سجل إضافة الأطفال</span></h2>
+                        <h2><i class="fa-solid fa-children" style="color: var(--primary); margin-left: 10px;"></i><span
+                                data-tr="print_section_children">سجل إضافة الأطفال</span></h2>
                         <div class="header-buttons no-print">
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
@@ -418,8 +486,8 @@
                 <!-- Marriage Section -->
                 <section id="marriage-section" class="content-section">
                     <div class="section-header print-header">
-                        <h2><i class="fa-solid fa-ring"
-                                style="color: var(--primary); margin-left: 10px;"></i><span data-tr="print_section_marriage">سجل الزواج</span></h2>
+                        <h2><i class="fa-solid fa-ring" style="color: var(--primary); margin-left: 10px;"></i><span
+                                data-tr="print_section_marriage">سجل الزواج</span></h2>
                         <div class="header-buttons no-print">
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
@@ -456,8 +524,8 @@
                 <!-- Fines Section -->
                 <section id="fines-section" class="content-section">
                     <div class="section-header print-header">
-                        <h2><i class="fa-solid fa-book"
-                                style="color: var(--primary); margin-left: 10px;"></i><span data-tr="print_section_fines">سجل دفاتر الغرامات</span></h2>
+                        <h2><i class="fa-solid fa-book" style="color: var(--primary); margin-left: 10px;"></i><span
+                                data-tr="print_section_fines">سجل دفاتر الغرامات</span></h2>
                         <div class="header-buttons no-print">
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
@@ -548,8 +616,8 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label data-tr="lbl_code">الكود</label>
-                        <input type="text" name="code" class="form-control" data-tr-placeholder="pl_code" placeholder="أدخل الكود"
-                            required>
+                        <input type="text" name="code" class="form-control" data-tr-placeholder="pl_code"
+                            placeholder="أدخل الكود" required>
                     </div>
                     <div class="form-group">
                         <label data-tr="lbl_amount">المبلغ</label>
@@ -616,13 +684,13 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label data-tr="th_export">مكان الصادر</label>
-                        <input type="text" name="export_num" class="form-control" data-tr-placeholder="pl_export_placeholder"
-                            placeholder="مكان الصادر" required>
+                        <input type="text" name="export_num" class="form-control"
+                            data-tr-placeholder="pl_export_placeholder" placeholder="مكان الصادر" required>
                     </div>
                     <div class="form-group">
                         <label data-tr="th_import">مكان الوارد</label>
-                        <input type="text" name="import_num" class="form-control" data-tr-placeholder="pl_import_placeholder"
-                            placeholder="مكان الوارد" required>
+                        <input type="text" name="import_num" class="form-control"
+                            data-tr-placeholder="pl_import_placeholder" placeholder="مكان الوارد" required>
                     </div>
                 </div>
                 <div class="form-row">
@@ -823,11 +891,13 @@
             </div>
             <div class="sig-box">
                 <p class="sig-title" data-tr="sig_officer">توقيع مدير قسم التدقيق</p>
-                <p class="sig-name"><span data-tr="lbl_name_only">الاسم</span>: <span id="print-name-officer"></span></p>
+                <p class="sig-name"><span data-tr="lbl_name_only">الاسم</span>: <span id="print-name-officer"></span>
+                </p>
             </div>
             <div class="sig-box">
                 <p class="sig-title" data-tr="sig_director">توقيع مدير عام</p>
-                <p class="sig-name"><span data-tr="lbl_rank_name">الرتبة والاسم</span>: <span id="print-name-director"></span></p>
+                <p class="sig-name"><span data-tr="lbl_rank_name">الرتبة والاسم</span>: <span
+                        id="print-name-director"></span></p>
             </div>
         </div>
     </div>
@@ -848,25 +918,32 @@
     <!-- ===== SIGNATURE NAMES MODAL ===== -->
     <div class="modal glass-panel no-print" id="signature-modal" style="max-width: 520px;">
         <div class="modal-header">
-            <h3><i class="fa-solid fa-user-pen" style="margin-left:10px; color:var(--primary)"></i><span data-tr="sig_details_title">بيانات التوقيع للطباعة</span></h3>
-            <button class="close-btn" type="button" onclick="closeAllModals()"><i class="fa-solid fa-times"></i></button>
+            <h3><i class="fa-solid fa-user-pen" style="margin-left:10px; color:var(--primary)"></i><span
+                    data-tr="sig_details_title">بيانات التوقيع للطباعة</span></h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i
+                    class="fa-solid fa-times"></i></button>
         </div>
         <div class="modal-body">
             <div class="form-group">
                 <label for="sig-director-name" data-tr="sig_director_label">اسم مدير القسم</label>
-                <input type="text" id="sig-director-name" class="form-control" data-tr-placeholder="pl_sig_director" placeholder="أدخل اسم مدير القسم">
+                <input type="text" id="sig-director-name" class="form-control" data-tr-placeholder="pl_sig_director"
+                    placeholder="أدخل اسم مدير القسم">
             </div>
             <div class="form-group">
                 <label for="sig-clerk-name" data-tr="sig_clerk_label">اسم الموظف المدقق</label>
-                <input type="text" id="sig-clerk-name" class="form-control" data-tr-placeholder="pl_sig_clerk" placeholder="أدخل اسم الموظف المدقق">
+                <input type="text" id="sig-clerk-name" class="form-control" data-tr-placeholder="pl_sig_clerk"
+                    placeholder="أدخل اسم الموظف المدقق">
             </div>
             <div class="form-group">
                 <label for="sig-officer-name" data-tr="sig_officer_label">اسم ضابط التدقيق</label>
-                <input type="text" id="sig-officer-name" class="form-control" data-tr-placeholder="pl_sig_officer" placeholder="أدخل اسم ضابط التدقيق">
+                <input type="text" id="sig-officer-name" class="form-control" data-tr-placeholder="pl_sig_officer"
+                    placeholder="أدخل اسم ضابط التدقيق">
             </div>
             <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 10px;">
-                <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn">إغلاق</button>
-                <button type="button" class="btn-primary" onclick="saveSignatureNames()" data-tr="sig_save_btn">حفظ الأسماء</button>
+                <button type="button" class="btn-secondary" onclick="closeAllModals()"
+                    data-tr="close_btn">إغلاق</button>
+                <button type="button" class="btn-primary" onclick="saveSignatureNames()" data-tr="sig_save_btn">حفظ
+                    الأسماء</button>
             </div>
         </div>
     </div>
@@ -874,17 +951,25 @@
     <!-- ===== BULK PRINT MODAL ===== -->
     <div class="modal glass-panel no-print" id="bulk-print-modal" style="max-width: 550px;">
         <div class="modal-header">
-            <h3><i class="fa-solid fa-print" style="margin-left:10px; color:var(--primary)"></i><span data-tr="bulk_print">طباعة جماعية</span></h3>
-            <button class="close-btn" type="button" onclick="closeAllModals()"><i class="fa-solid fa-times"></i></button>
+            <h3><i class="fa-solid fa-print" style="margin-left:10px; color:var(--primary)"></i><span
+                    data-tr="bulk_print">طباعة جماعية</span></h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i
+                    class="fa-solid fa-times"></i></button>
         </div>
         <div class="modal-body">
             <p class="bulk-print-desc" data-tr="bulk_print_desc">اختر الأقسام التي تريد طباعتها دفعة واحدة:</p>
             <div class="bulk-print-options">
                 <label class="bulk-check-item">
-                    <input type="checkbox" id="bp-receipts" checked>
+                    <input type="checkbox" id="bp-central-receipts" checked>
                     <span class="bulk-check-icon receipts-color"><i class="fa-solid fa-file-invoice-dollar"></i></span>
-                    <span data-tr="receipts">الوصولات</span>
-                    <span class="bulk-count" id="bp-count-receipts"></span>
+                    <span data-tr="central_receipts">الوصولات المركزية</span>
+                    <span class="bulk-count" id="bp-count-central-receipts"></span>
+                </label>
+                <label class="bulk-check-item">
+                    <input type="checkbox" id="bp-decentral-receipts" checked>
+                    <span class="bulk-check-icon receipts-decentral-color" style="background: rgba(13, 171, 209, 0.15); color: #0dabcf;"><i class="fa-solid fa-receipt"></i></span>
+                    <span data-tr="decentral_receipts">الوصولات اللامركزية</span>
+                    <span class="bulk-count" id="bp-count-decentral-receipts"></span>
                 </label>
                 <label class="bulk-check-item">
                     <input type="checkbox" id="bp-delegations" checked>
@@ -912,7 +997,8 @@
                 </label>
             </div>
             <div class="modal-footer" style="padding: 20px 0 0 0; margin-top:15px; gap:10px;">
-                <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn">إغلاق</button>
+                <button type="button" class="btn-secondary" onclick="closeAllModals()"
+                    data-tr="close_btn">إغلاق</button>
                 <button type="button" class="btn-primary" onclick="executeBulkPrint()">
                     <i class="fa-solid fa-print"></i>
                     <span data-tr="start_print">بدء الطباعة</span>
@@ -924,13 +1010,16 @@
     <!-- ===== SINGLE RECORD PRINT MODAL ===== -->
     <div class="modal glass-panel no-print" id="single-print-modal" style="max-width: 700px;">
         <div class="modal-header">
-            <h3><i class="fa-solid fa-file-lines" style="margin-left:10px; color:var(--primary)"></i><span data-tr="single_print">طباعة فردية</span></h3>
-            <button class="close-btn" type="button" onclick="closeAllModals()"><i class="fa-solid fa-times"></i></button>
+            <h3><i class="fa-solid fa-file-lines" style="margin-left:10px; color:var(--primary)"></i><span
+                    data-tr="single_print">طباعة فردية</span></h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i
+                    class="fa-solid fa-times"></i></button>
         </div>
         <div class="modal-body">
             <div id="single-print-preview"></div>
             <div class="modal-footer" style="padding: 20px 0 0 0; margin-top:15px; gap:10px;">
-                <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn">إغلاق</button>
+                <button type="button" class="btn-secondary" onclick="closeAllModals()"
+                    data-tr="close_btn">إغلاق</button>
                 <button type="button" class="btn-primary" onclick="executeSinglePrint()">
                     <i class="fa-solid fa-print"></i>
                     <span data-tr="print_now">طباعة الآن</span>
@@ -967,62 +1056,77 @@
                 <i class="fa-solid fa-database" style="margin-left:10px; color:var(--success)"></i>
                 <span data-tr="backup_modal_title">إدارة النسخ الاحتياطي</span>
             </h3>
-            <button class="close-btn" type="button" onclick="closeAllModals()"><i class="fa-solid fa-times"></i></button>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i
+                    class="fa-solid fa-times"></i></button>
         </div>
         <div class="modal-body">
             <!-- Default backup action view -->
             <div id="backup-default-view">
-                <p style="margin-bottom: 20px; font-size: 14px; color: var(--text-muted); line-height: 1.6;" data-tr="backup_desc">
+                <p style="margin-bottom: 20px; font-size: 14px; color: var(--text-muted); line-height: 1.6;"
+                    data-tr="backup_desc">
                     يمكنك تصدير كافة بيانات النظام في ملف JSON للاحتفاظ بنسخة احتياطية، أو استيرادها لاحقاً.
                 </p>
-                
+
                 <!-- Export Section -->
-                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--surface-border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;">
+                <div
+                    style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--surface-border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;">
                     <div style="font-size: 32px; color: var(--success); margin-bottom: 5px;">
                         <i class="fa-solid fa-file-export"></i>
                     </div>
-                    <button type="button" class="btn-primary" onclick="exportData()" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--success), #059669); border: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                    <button type="button" class="btn-primary" onclick="exportData()"
+                        style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--success), #059669); border: none; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
                         <i class="fa-solid fa-download"></i>
                         <span data-tr="export_btn">تصدير البيانات (JSON)</span>
                     </button>
                 </div>
-                
+
                 <!-- Import Section -->
-                <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--surface-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;">
+                <div
+                    style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--surface-border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;">
                     <div style="font-size: 32px; color: var(--primary); margin-bottom: 5px;">
                         <i class="fa-solid fa-file-import"></i>
                     </div>
                     <div class="file-upload-wrapper" style="width: 100%;">
-                        <input type="file" id="backup-file-input" class="file-input" accept=".json" onchange="handleBackupFileSelect(event)">
-                        <label for="backup-file-input" class="file-label" id="backup-file-label" style="border-style: dashed; padding: 20px;">
+                        <input type="file" id="backup-file-input" class="file-input" accept=".json"
+                            onchange="handleBackupFileSelect(event)">
+                        <label for="backup-file-input" class="file-label" id="backup-file-label"
+                            style="border-style: dashed; padding: 20px;">
                             <i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary);"></i>
                             <span data-tr="import_btn" id="backup-upload-text">استيراد البيانات (JSON)</span>
                         </label>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Confirm overwrite/restore view -->
             <div id="backup-confirm-view" style="display: none; flex-direction: column; gap: 15px; text-align: center;">
                 <div style="font-size: 40px; color: var(--danger);">
                     <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
-                <h4 style="color: var(--danger); font-size: 16px;" data-tr="confirm_import_title">تأكيد استرداد البيانات</h4>
-                <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);" data-tr="confirm_import_warning">
-                    تحذير: هذا الإجراء سيقوم باستبدال كافة البيانات الحالية ببيانات الملف المختار. لا يمكن التراجع عن هذا الإجراء!
+                <h4 style="color: var(--danger); font-size: 16px;" data-tr="confirm_import_title">تأكيد استرداد البيانات
+                </h4>
+                <p style="font-size: 14px; line-height: 1.6; color: var(--text-muted);"
+                    data-tr="confirm_import_warning">
+                    تحذير: هذا الإجراء سيقوم باستبدال كافة البيانات الحالية ببيانات الملف المختار. لا يمكن التراجع عن
+                    هذا الإجراء!
                 </p>
                 <!-- Summary of file contents -->
-                <div id="backup-summary-box" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--surface-border); border-radius: 8px; padding: 15px; font-size: 14px; text-align: right; display: flex; flex-direction: column; gap: 8px; color: var(--text);">
+                <div id="backup-summary-box"
+                    style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--surface-border); border-radius: 8px; padding: 15px; font-size: 14px; text-align: right; display: flex; flex-direction: column; gap: 8px; color: var(--text);">
                     <!-- Will be filled by JavaScript -->
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button type="button" class="btn-secondary" onclick="cancelRestore()" style="flex: 1;" data-tr="close_btn">إلغاء</button>
-                    <button type="button" class="btn-primary" onclick="confirmRestore()" style="flex: 1; background: var(--danger); border-color: var(--danger); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);" data-tr="confirm_btn">تأكيد الاسترداد</button>
+                    <button type="button" class="btn-secondary" onclick="cancelRestore()" style="flex: 1;"
+                        data-tr="close_btn">إلغاء</button>
+                    <button type="button" class="btn-primary" onclick="confirmRestore()"
+                        style="flex: 1; background: var(--danger); border-color: var(--danger); box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);"
+                        data-tr="confirm_btn">تأكيد الاسترداد</button>
                 </div>
             </div>
-            
+
             <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 15px;">
-                <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn" style="width: 100%;">إغلاق</button>
+                <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn"
+                    style="width: 100%;">إغلاق</button>
             </div>
         </div>
     </div>
@@ -1030,8 +1134,10 @@
     <!-- Month Details Modal -->
     <div class="modal glass-panel no-print" id="month-details-modal" style="max-width: 500px;">
         <div class="modal-header">
-            <h3><i class="fa-solid fa-box-archive" style="margin-left: 10px; color: var(--primary);"></i><span id="month-details-title" data-tr="monthly_archive">أرشيف الشهر</span></h3>
-            <button class="close-btn" type="button" onclick="closeAllModals()"><i class="fa-solid fa-times"></i></button>
+            <h3><i class="fa-solid fa-box-archive" style="margin-left: 10px; color: var(--primary);"></i><span
+                    id="month-details-title" data-tr="monthly_archive">أرشيف الشهر</span></h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i
+                    class="fa-solid fa-times"></i></button>
         </div>
         <div class="modal-body">
             <div id="month-details-content">
