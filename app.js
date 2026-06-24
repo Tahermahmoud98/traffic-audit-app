@@ -483,7 +483,8 @@ const translations = {
         pl_husband: 'أدخل اسم الزوج',
         pl_wife: 'أدخل اسم الزوجة',
         pl_holder: 'اسم صاحب الدفتر',
-        pl_book_num: 'رقم الدفتر'
+        pl_book_num: 'رقم الدفتر',
+        all_months: 'جميع الأشهر'
     },
     ku: {
         err_image: 'هه‌ڵه‌كا له‌ كاتا پرۆسه‌كرنا وێنەیێ',
@@ -689,7 +690,8 @@ const translations = {
         pl_husband: 'ناڤێ مێرى بنڤیسە',
         pl_wife: 'ناڤێ ژنێ بنڤیسە',
         pl_holder: 'ناڤێ خودانێ ده‌فته‌رێ',
-        pl_book_num: 'هژمارا ده‌فته‌رێ'
+        pl_book_num: 'هژمارا ده‌فته‌رێ',
+        all_months: 'هه‌می هه‌يڤ'
     }
 };
 
@@ -746,6 +748,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     applyLanguage();
     initData();
     updateOverviewCards();
+    updateAutocompletes();
 
     const forms = [
         { id: 'receipts-form', key: 'receipts', renderFunc: renderReceipts },
@@ -796,6 +799,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 formDef.renderFunc();
                 updateOverviewCards();
+                updateAutocompletes();
                 formEl.reset();
                 setDefaultDates();
                 closeAllModals();
@@ -939,6 +943,12 @@ function renderCentralReceipts(filter) {
     let data = JSON.parse(dbStore.getItem('receipts') || '[]');
     data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
     let centralData = data.filter(item => item.receipt_type === 'مركزي');
+    
+    const monthFilterEl = document.getElementById('filter-central-receipts');
+    if (monthFilterEl && monthFilterEl.value) {
+        centralData = centralData.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
+    }
+
     if (filter) centralData = centralData.filter(item => matchesFilter(item, filter));
     const tbody = document.querySelector('#central-receipts-table tbody');
     if (!tbody) return;
@@ -976,6 +986,12 @@ function renderDecentralReceipts(filter) {
     let data = JSON.parse(dbStore.getItem('receipts') || '[]');
     data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
     let decentralData = data.filter(item => item.receipt_type === 'لا مركزي');
+    
+    const monthFilterEl = document.getElementById('filter-decentral-receipts');
+    if (monthFilterEl && monthFilterEl.value) {
+        decentralData = decentralData.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
+    }
+
     if (filter) decentralData = decentralData.filter(item => matchesFilter(item, filter));
     const tbody = document.querySelector('#decentral-receipts-table tbody');
     if (!tbody) return;
@@ -1019,6 +1035,17 @@ function viewImage(base64Str) {
 
 function renderDelegations(filter) {
     let data = JSON.parse(dbStore.getItem('delegations') || '[]');
+    
+    const monthFilterEl = document.getElementById('filter-delegations');
+    if (monthFilterEl && monthFilterEl.value) {
+        const monthMapToNum = {
+            'كانون الثاني': '01', 'شباط': '02', 'آذار': '03', 'نيسان': '04',
+            'أيار': '05', 'حزيران': '06', 'تموز': '07', 'آب': '08',
+            'أيلول': '09', 'تشرين الأول': '10', 'تشرين الثاني': '11', 'كانون الأول': '12'
+        };
+        data = data.filter(item => item.month && monthMapToNum[item.month] === monthFilterEl.value);
+    }
+
     if (filter) data = data.filter(item => matchesFilter(item, filter));
     const tbody = document.querySelector('#delegations-table tbody');
     if (!tbody) return;
@@ -1063,6 +1090,12 @@ function renderDelegations(filter) {
 
 function renderChildren(filter) {
     let data = JSON.parse(dbStore.getItem('children') || '[]');
+    
+    const monthFilterEl = document.getElementById('filter-children');
+    if (monthFilterEl && monthFilterEl.value) {
+        data = data.filter(item => item.arrival && item.arrival.split('-')[1] === monthFilterEl.value);
+    }
+
     if (filter) data = data.filter(item => matchesFilter(item, filter));
     const tbody = document.querySelector('#children-table tbody');
     if (!tbody) return;
@@ -1102,6 +1135,15 @@ function renderChildren(filter) {
 
 function renderMarriage(filter) {
     let data = JSON.parse(dbStore.getItem('marriage') || '[]');
+    
+    const monthFilterEl = document.getElementById('filter-marriage');
+    if (monthFilterEl && monthFilterEl.value) {
+        data = data.filter(item => {
+            const d = item.date || item.arrival;
+            return d && d.split('-')[1] === monthFilterEl.value;
+        });
+    }
+
     if (filter) data = data.filter(item => matchesFilter(item, filter));
     const tbody = document.querySelector('#marriage-table tbody');
     if (!tbody) return;
@@ -1136,6 +1178,12 @@ function renderMarriage(filter) {
 
 function renderFines(filter) {
     let data = JSON.parse(dbStore.getItem('fines') || '[]');
+    
+    const monthFilterEl = document.getElementById('filter-fines');
+    if (monthFilterEl && monthFilterEl.value) {
+        data = data.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
+    }
+
     if (filter) data = data.filter(item => matchesFilter(item, filter));
     const tbody = document.querySelector('#fines-table tbody');
     if (!tbody) return;
@@ -1333,6 +1381,7 @@ function executeDelete() {
 
     if (renderMap[key]) renderMap[key]();
     updateOverviewCards();
+    updateAutocompletes();
     closeAllModals();
     showToast(translations[currentLang].success_save); // Re-use success toast or add specific one
 }
@@ -1540,13 +1589,23 @@ function printSingleRecord(key, idx) {
                     <p><strong>${lang.records_count}:</strong> 1</p>
                 </div>
             </div>
-            <div class="spc-divider"></div>
             ${bodyContent}
-            <div class="spc-divider" style="margin-top:30px;"></div>
             <div class="spc-signatures">
-                <div class="spc-sig"><p>${lang.sig_clerk}</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.clerk)}</p></div>
-                <div class="spc-sig"><p>${lang.sig_officer}</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.officer)}</p></div>
-                <div class="spc-sig"><p>${lang.sig_director}</p><p>${lang.lbl_rank_name}: ${formatSignatureValue(sigNames.director)}</p></div>
+                <div class="spc-sig">
+                    <div style="height: 50px;"></div>
+                    <p class="sig-title">${lang.sig_clerk}</p>
+                    <p class="sig-name">${formatSignatureValue(sigNames.clerk)}</p>
+                </div>
+                <div class="spc-sig">
+                    <div style="height: 50px;"></div>
+                    <p class="sig-title">${lang.sig_officer}</p>
+                    <p class="sig-name">${formatSignatureValue(sigNames.officer)}</p>
+                </div>
+                <div class="spc-sig">
+                    <div style="height: 50px;"></div>
+                    <p class="sig-title">${lang.sig_director}</p>
+                    <p class="sig-name">${formatSignatureValue(sigNames.director)}</p>
+                </div>
             </div>
         </div>
     `;
@@ -1581,15 +1640,17 @@ function executeSinglePrint() {
                 .spc-logo { width:80px; height:80px; object-fit:contain; margin-bottom:6px; }
                 .spc-title { font-size:16px; font-weight:800; color:#1a1a2e; }
                 .spc-badge { display:inline-block; background:#0D8ABC; color:#fff; font-size:10px; padding:3px 10px; border-radius:20px; margin-top:4px; }
-                .spc-divider { height:2px; background:linear-gradient(90deg,#0D8ABC,#F59E0B); border-radius:5px; margin:12px 0; }
+                .spc-divider { display: none; }
                 .spc-table { width:100%; border-collapse:collapse; margin-top:8px; }
                 .spc-table th { background:#f0f7fc; color:#1a1a2e; text-align:right; padding:9px 14px; font-size:12px; width:35%; border:1px solid #dde; }
                 .spc-table td { padding:9px 14px; font-size:13px; border:1px solid #dde; }
                 .spc-table tr.amount-row th, .spc-table tr.amount-row td { background:#fff8e1; font-weight:700; color:#b45309; font-size:14px; }
                 .spc-signatures { display:flex; justify-content:space-between; gap:20px; margin-top:20px; }
                 .spc-sig { text-align:center; flex:1; font-size:11px; }
-                .spc-sig p:first-child { font-weight:700; margin-bottom:28px; }
-                .spc-sig-line { border-top:1px solid #333; padding-top:4px; margin-bottom:4px; }
+                .spc-sig p { margin: 0; }
+                .spc-sig p.sig-title { font-weight:700; margin-bottom:2px; }
+                .spc-sig p.sig-name { margin: 0; }
+                .spc-sig-line { display: none; }
                 .spc-body-row { display:flex; gap:20px; align-items:flex-start; margin-top:10px; width:100%; }
                 .spc-info-side { flex:1 1 55%; }
                 .spc-image-side { flex:1 1 45%; text-align:center; }
@@ -1598,9 +1659,9 @@ function executeSinglePrint() {
                 .spc-image-title { font-weight:600; margin-bottom:8px; color:#555; font-size:11px; text-align:center; }
                 @media print {
                     @page { margin:1.5cm; }
-                    body { display:flex; flex-direction:column; min-height:calc(100vh - 3cm); }
-                    .single-print-card { flex:1; display:flex; flex-direction:column; min-height:calc(100vh - 3cm); }
-                    .spc-signatures { margin-top:auto; padding-top:20px; }
+                    body { display:block; }
+                    .single-print-card { display:block; }
+                    .spc-signatures { margin-top:100px !important; padding-top:20px; }
                 }
             </style>
         </head>
@@ -1639,6 +1700,27 @@ function buildSectionHTML(key, lang) {
         data = JSON.parse(dbStore.getItem('receipts') || '[]').filter(item => item.receipt_type === 'لا مركزي');
     } else {
         data = JSON.parse(dbStore.getItem(key) || '[]');
+    }
+
+    const monthFilterEl = document.getElementById(`filter-${key}`);
+    if (monthFilterEl && monthFilterEl.value) {
+        if (key === 'central-receipts' || key === 'decentral-receipts' || key === 'fines') {
+            data = data.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
+        } else if (key === 'children') {
+            data = data.filter(item => item.arrival && item.arrival.split('-')[1] === monthFilterEl.value);
+        } else if (key === 'marriage') {
+            data = data.filter(item => {
+                const d = item.date || item.arrival;
+                return d && d.split('-')[1] === monthFilterEl.value;
+            });
+        } else if (key === 'delegations') {
+            const monthMapToNum = {
+                'كانون الثاني': '01', 'شباط': '02', 'آذار': '03', 'نيسان': '04',
+                'أيار': '05', 'حزيران': '06', 'تموز': '07', 'آب': '08',
+                'أيلول': '09', 'تشرين الأول': '10', 'تشرين الثاني': '11', 'كانون الأول': '12'
+            };
+            data = data.filter(item => item.month && monthMapToNum[item.month] === monthFilterEl.value);
+        }
     }
     if (!data.length) return '';
 
@@ -1711,16 +1793,26 @@ function buildSectionHTML(key, lang) {
                     <p><strong>${lang.records_count}:</strong> ${data.length}</p>
                 </div>
             </div>
-            <div class="bs-divider"></div>
             <table class="bs-table">
                 <thead><tr>${headers[key]}</tr></thead>
                 <tbody>${bodyRows}${totalRow}</tbody>
             </table>
-            <div class="bs-divider" style="margin-top:25px;"></div>
             <div class="bs-signatures">
-                <div class="bs-sig"><p style="font-weight:700">${lang.sig_clerk}</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.clerk)}</p></div>
-                <div class="bs-sig"><p style="font-weight:700">${lang.sig_officer}</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.officer)}</p></div>
-                <div class="bs-sig"><p style="font-weight:700">${lang.sig_director}</p><p>${lang.lbl_rank_name}: ${formatSignatureValue(sigNames.director)}</p></div>
+                <div class="bs-sig">
+                    <div style="height: 50px;"></div>
+                    <p class="sig-title">${lang.sig_clerk}</p>
+                    <p class="sig-name">${formatSignatureValue(sigNames.clerk)}</p>
+                </div>
+                <div class="bs-sig">
+                    <div style="height: 50px;"></div>
+                    <p class="sig-title">${lang.sig_officer}</p>
+                    <p class="sig-name">${formatSignatureValue(sigNames.officer)}</p>
+                </div>
+                <div class="bs-sig">
+                    <div style="height: 50px;"></div>
+                    <p class="sig-title">${lang.sig_director}</p>
+                    <p class="sig-name">${formatSignatureValue(sigNames.director)}</p>
+                </div>
             </div>
         </div>
     `;
@@ -1766,18 +1858,21 @@ function executeBulkPrint() {
                 .bs-left { text-align:left; }
                 .bs-center { flex:0 0 150px; text-align:center; }
                 .bs-center h2 { font-size:14px; font-weight:800; margin-top:5px; }
-                .bs-divider { height:2px; background:linear-gradient(90deg,#0D8ABC,#F59E0B); border-radius:5px; margin:8px 0; }
+                .bs-divider { display: none; }
                 .bs-table { width:100%; border-collapse:collapse; margin-top:6px; font-size:11px; }
                 .bs-table th { background:#f0f7fc; text-align:center; padding:8px 10px; border:1px solid #ccd; font-weight:700; }
                 .bs-table td { padding:6px 10px; border:1px solid #ccd; text-align:center; }
                 .bs-table tr.total-row td { background:#fff8e1; font-weight:700; color:#b45309; }
-                .bs-signatures { display:flex; justify-content:space-between; gap:15px; margin-top:20px; }
-                .bs-sig { text-align:center; flex:1; font-size:10px; }
-                .bs-line { border-top:1px solid #333; padding-top:3px; margin-bottom:3px; }
+                .bs-signatures { display:flex; justify-content:space-between; gap:15px; margin-top:30px; }
+                .bs-sig { text-align:center; flex:1; font-size:11px; }
+                .bs-sig p { margin: 0; }
+                .bs-sig p.sig-title { font-weight:700; margin-bottom:2px; }
+                .bs-sig p.sig-name { margin: 0; }
+                .bs-line { display: none; }
                 @media print {
                     @page { margin:1.2cm; size:A4 portrait; }
-                    .bulk-section { min-height:calc(100vh - 2.4cm); page-break-after:always; }
-                    .bs-signatures { margin-top:auto; padding-top:10px; border-top:1px solid #333; }
+                    .bulk-section { display:block; page-break-after:always; }
+                    .bs-signatures { margin-top:100px !important; padding-top:10px; }
                 }
             </style>
         </head>
@@ -1792,11 +1887,26 @@ function executeBulkPrint() {
 function printSection(key) {
     const lang = translations[currentLang];
     if (key === 'stats') {
-        const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
-        const delegations = JSON.parse(dbStore.getItem('delegations') || '[]');
-        const children = JSON.parse(dbStore.getItem('children') || '[]');
-        const marriage = JSON.parse(dbStore.getItem('marriage') || '[]');
-        const fines = JSON.parse(dbStore.getItem('fines') || '[]');
+        let receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
+        let delegations = JSON.parse(dbStore.getItem('delegations') || '[]');
+        let children = JSON.parse(dbStore.getItem('children') || '[]');
+        let marriage = JSON.parse(dbStore.getItem('marriage') || '[]');
+        let fines = JSON.parse(dbStore.getItem('fines') || '[]');
+
+        const monthFilterEl = document.getElementById('filter-stats');
+        if (monthFilterEl && monthFilterEl.value) {
+            const mv = monthFilterEl.value;
+            receipts = receipts.filter(item => item.date && item.date.split('-')[1] === mv);
+            children = children.filter(item => item.arrival && item.arrival.split('-')[1] === mv);
+            marriage = marriage.filter(item => { const d = item.date || item.arrival; return d && d.split('-')[1] === mv; });
+            fines = fines.filter(item => item.date && item.date.split('-')[1] === mv);
+            const monthMapToNum = {
+                'كانون الثاني': '01', 'شباط': '02', 'آذار': '03', 'نيسان': '04',
+                'أيار': '05', 'حزيران': '06', 'تموز': '07', 'آب': '08',
+                'أيلول': '09', 'تشرين الأول': '10', 'تشرين الثاني': '11', 'كانون الأول': '12'
+            };
+            delegations = delegations.filter(item => item.month && monthMapToNum[item.month] === mv);
+        }
 
         const totalRecords = receipts.length + delegations.length + children.length + marriage.length + fines.length;
         const totalAmounts = (receipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)) +
@@ -1921,10 +2031,22 @@ function printSection(key) {
                 
                 ${archiveTableHTML}
                 
-                <div class="bs-signatures" style="margin-top:auto; padding-top:10px; border-top:1px solid #333;">
-                    <div class="bs-sig"><p style="font-weight:700">${lang.sig_clerk}</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.clerk)}</p></div>
-                    <div class="bs-sig"><p style="font-weight:700">${lang.sig_officer}</p><p>${lang.lbl_name_only}: ${formatSignatureValue(sigNames.officer)}</p></div>
-                    <div class="bs-sig"><p style="font-weight:700">${lang.sig_director}</p><p>${lang.lbl_rank_name}: ${formatSignatureValue(sigNames.director)}</p></div>
+                <div class="bs-signatures" style="margin-top:auto; padding-top:10px;">
+                    <div class="bs-sig">
+                        <div style="height: 50px;"></div>
+                        <p class="sig-title">${lang.sig_clerk}</p>
+                        <p class="sig-name">${formatSignatureValue(sigNames.clerk)}</p>
+                    </div>
+                    <div class="bs-sig">
+                        <div style="height: 50px;"></div>
+                        <p class="sig-title">${lang.sig_officer}</p>
+                        <p class="sig-name">${formatSignatureValue(sigNames.officer)}</p>
+                    </div>
+                    <div class="bs-sig">
+                        <div style="height: 50px;"></div>
+                        <p class="sig-title">${lang.sig_director}</p>
+                        <p class="sig-name">${formatSignatureValue(sigNames.director)}</p>
+                    </div>
                 </div>
             </div>
         `;
@@ -1960,18 +2082,21 @@ function printSection(key) {
                 .bs-left { text-align:left; }
                 .bs-center { flex:0 0 150px; text-align:center; }
                 .bs-center h2 { font-size:14px; font-weight:800; margin-top:5px; }
-                .bs-divider { height:2px; background:linear-gradient(90deg,#0D8ABC,#F59E0B); border-radius:5px; margin:8px 0; }
+                .bs-divider { display: none; }
                 .bs-table { width:100%; border-collapse:collapse; margin-top:6px; font-size:11px; }
                 .bs-table th { background:#f0f7fc; text-align:center; padding:8px 10px; border:1px solid #ccd; font-weight:700; }
                 .bs-table td { padding:6px 10px; border:1px solid #ccd; text-align:center; }
                 .bs-table tr.total-row td { background:#fff8e1; font-weight:700; color:#b45309; }
                 .bs-signatures { display:flex; justify-content:space-between; gap:15px; margin-top:20px; }
                 .bs-sig { text-align:center; flex:1; font-size:10px; }
-                .bs-line { border-top:1px solid #333; padding-top:3px; margin-bottom:3px; }
+                .bs-sig p { margin: 0; }
+                .bs-sig p.sig-title { font-weight:700; margin-bottom:2px; }
+                .bs-sig p.sig-name { margin: 0; }
+                .bs-line { display: none; }
                 @media print {
                     @page { margin:1.2cm; size:A4 portrait; }
                     .bulk-section { min-height:calc(100vh - 2.4cm); }
-                    .bs-signatures { margin-top:auto; padding-top:10px; border-top:1px solid #333; }
+                    .bs-signatures { margin-top:auto; padding-top:10px; border-top: none; }
                 }
             </style>
         </head>
@@ -2012,14 +2137,15 @@ function buildPrintPage(content, lang, title) {
                 .bs-table th { background:#f0f7fc; text-align:center; padding:8px 10px; border:1px solid #ccd; font-weight:700; }
                 .bs-table td { padding:8px 10px; border:1px solid #ccd; text-align:center; }
                 .bs-table tr.total-row td { background:#fff8e1; font-weight:700; color:#b45309; }
-                .bs-signatures { display:flex; justify-content:space-between; gap:15px; margin-top:20px; }
-                .bs-sig { text-align:center; flex:1; font-size:10px; }
+                .bs-signatures { display:flex; justify-content:space-between; gap:15px; margin-top:30px; }
+                .bs-sig { text-align:center; flex:1; font-size:11px; }
+                .bs-sig p:first-child { font-weight:700; margin-bottom:50px; }
                 .bs-line { border-top:1px solid #333; padding-top:3px; margin-bottom:3px; }
                 .no-print { display:none !important; }
                 @media print {
                     @page { margin:1.2cm; size:A4 portrait; }
-                    .bulk-section { min-height:calc(100vh - 2.4cm); }
-                    .bs-signatures { margin-top:auto; padding-top:10px; border-top:1px solid #333; }
+                    .bulk-section { display:block; }
+                    .bs-signatures { margin-top:100px !important; padding-top:10px; }
                 }
             </style>
         </head>
@@ -2176,11 +2302,26 @@ function showMonthArchiveDetails(m) {
 
 // ===== STATISTICS RENDERING =====
 function renderStats() {
-    const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
-    const delegations = JSON.parse(dbStore.getItem('delegations') || '[]');
-    const children = JSON.parse(dbStore.getItem('children') || '[]');
-    const marriage = JSON.parse(dbStore.getItem('marriage') || '[]');
-    const fines = JSON.parse(dbStore.getItem('fines') || '[]');
+    let receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
+    let delegations = JSON.parse(dbStore.getItem('delegations') || '[]');
+    let children = JSON.parse(dbStore.getItem('children') || '[]');
+    let marriage = JSON.parse(dbStore.getItem('marriage') || '[]');
+    let fines = JSON.parse(dbStore.getItem('fines') || '[]');
+
+    const monthFilterEl = document.getElementById('filter-stats');
+    if (monthFilterEl && monthFilterEl.value) {
+        const mv = monthFilterEl.value;
+        receipts = receipts.filter(item => item.date && item.date.split('-')[1] === mv);
+        children = children.filter(item => item.arrival && item.arrival.split('-')[1] === mv);
+        marriage = marriage.filter(item => { const d = item.date || item.arrival; return d && d.split('-')[1] === mv; });
+        fines = fines.filter(item => item.date && item.date.split('-')[1] === mv);
+        const monthMapToNum = {
+            'كانون الثاني': '01', 'شباط': '02', 'آذار': '03', 'نيسان': '04',
+            'أيار': '05', 'حزيران': '06', 'تموز': '07', 'آب': '08',
+            'أيلول': '09', 'تشرين الأول': '10', 'تشرين الثاني': '11', 'كانون الأول': '12'
+        };
+        delegations = delegations.filter(item => item.month && monthMapToNum[item.month] === mv);
+    }
 
     const centralReceipts = receipts.filter(item => item.receipt_type === 'مركزي');
     const decentralReceipts = receipts.filter(item => item.receipt_type === 'لا مركزي');
@@ -2420,6 +2561,7 @@ function confirmRestore() {
         initData();
         updateOverviewCards();
         renderPrintSignatureNames();
+        updateAutocompletes();
 
         // If on stats section, update stats
         const statsSec = document.getElementById('stats-section');
@@ -2433,3 +2575,65 @@ function confirmRestore() {
         showToast(translations[currentLang].invalid_file_error);
     }
 }
+
+// ===== AUTOCOMPLETE SUGGESTIONS FOR MODAL FORMS =====
+function updateAutocompletes() {
+    const formsList = [
+        { id: 'receipts-form', key: 'receipts' },
+        { id: 'delegations-form', key: 'delegations' },
+        { id: 'children-form', key: 'children' },
+        { id: 'marriage-form', key: 'marriage' },
+        { id: 'fines-form', key: 'fines' }
+    ];
+
+    formsList.forEach(formDef => {
+        const formEl = document.getElementById(formDef.id);
+        if (!formEl) return;
+
+        // Retrieve data from DB
+        const data = JSON.parse(dbStore.getItem(formDef.key) || '[]');
+        if (!Array.isArray(data)) return;
+
+        // Find all text inputs inside this form
+        const textInputs = formEl.querySelectorAll('input[type="text"]');
+        textInputs.forEach(input => {
+            const fieldName = input.name;
+            if (!fieldName) return;
+
+            // Generate unique datalist ID
+            const datalistId = `datalist-${formDef.id}-${fieldName}`;
+            
+            // Set list attribute on input if not already set
+            if (input.getAttribute('list') !== datalistId) {
+                input.setAttribute('list', datalistId);
+            }
+
+            // Find or create datalist element
+            let datalistEl = document.getElementById(datalistId);
+            if (!datalistEl) {
+                datalistEl = document.createElement('datalist');
+                datalistEl.id = datalistId;
+                // Append next to the input
+                input.parentNode.appendChild(datalistEl);
+            }
+
+            // Collect unique non-empty values for this field from previous records
+            const uniqueValues = new Set();
+            data.forEach(item => {
+                const val = item[fieldName];
+                if (val && typeof val === 'string' && val.trim() !== '') {
+                    uniqueValues.add(val.trim());
+                }
+            });
+
+            // Populate the datalist options
+            datalistEl.innerHTML = '';
+            uniqueValues.forEach(val => {
+                const option = document.createElement('option');
+                option.value = val;
+                datalistEl.appendChild(option);
+            });
+        });
+    });
+}
+

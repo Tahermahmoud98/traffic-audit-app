@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-packager . traffic-audit-app --platform=win32 --arch=x64 --out=dist --icon=logo.png --overwrite"
+    "build": "electron-packager . traffic-audit-app --platform=win32 --arch=x64 --out=dist --icon=logo.ico --overwrite"
   },
   "author": "",
   "license": "ISC",

@@ -233,18 +233,15 @@ body {
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 10px;
+    margin-top: 30px; /* مساحة فوق الكتابتين */
+    margin-bottom: 0px; /* إزالة المسافة بين الكتابتين */
     letter-spacing: 0;
     font-feature-settings: "kern" 1, "liga" 1;
     direction: rtl;
 }
 
 .splash-divider-line {
-    width: 80px;
-    height: 3px;
-    background: linear-gradient(90deg, var(--primary), var(--accent));
-    border-radius: 10px;
-    margin: 0 auto 10px;
+    display: none;
 }
 
 .splash-sub {
@@ -1102,8 +1099,10 @@ select.form-control {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
-    background-position: left 15px center;
-    background-size: 20px;
+    background-position: left 12px center;
+    background-size: 16px;
+    padding-left: 36px !important; /* منع تداخل النص مع السهم على اليسار */
+    padding-right: 15px !important; /* حشوة للنص على اليمين */
 }
 
 /* Radio Buttons */
@@ -1903,11 +1902,10 @@ select.form-control {
         break-inside: avoid;
         page-break-inside: avoid;
     }
-
     .print-document-footer .print-divider {
-        margin-top: 2mm !important;
-        margin-bottom: 2mm !important;
-        border-top: 1px solid #000;
+        margin-top: 15mm !important; /* مساحة للتوقيع */
+        margin-bottom: 0mm !important;
+        border-top: none !important; /* لا يظهر خط */
     }
 
     .signatures-row {
@@ -1925,7 +1923,7 @@ select.form-control {
 
     .sig-title {
         font-weight: 700;
-        margin: 0 0 5mm;
+        margin: 0 0 1mm; /* تقريب الكلمتين */
         font-size: 7.2pt;
         line-height: 1.2;
     }
@@ -1933,7 +1931,7 @@ select.form-control {
     .sig-line {
         width: 70%;
         height: 0;
-        border-top: 1px solid #000;
+        border: none !important;
         margin: 0 auto 1mm !important;
         color: transparent;
         font-size: 0;
@@ -1944,7 +1942,6 @@ select.form-control {
         font-size: 6.8pt;
         line-height: 1.2;
     }
-
     body.print-extra-compact {
         font-size: 7pt !important;
     }
@@ -1970,7 +1967,7 @@ select.form-control {
     }
 
     body.print-extra-compact .sig-title {
-        margin-bottom: 3.5mm;
+        margin-bottom: 1mm;
     }
 }
 
@@ -2514,6 +2511,7 @@ select.form-control {
 
     .section-header {
         align-items: center;
+        flex-wrap: nowrap; /* منع نزول الأزرار لسطر جديد */
     }
 
     .section-header h2 {
@@ -2523,6 +2521,7 @@ select.form-control {
         min-width: 0;
         line-height: 1.35;
         overflow-wrap: anywhere;
+        white-space: nowrap; /* منع انقسام العنوان */
     }
 
     .section-header h2 i {
@@ -2534,11 +2533,13 @@ select.form-control {
         width: auto;
         max-width: 100%;
         flex: 0 1 auto;
+        flex-wrap: nowrap; /* منع نزول الأزرار لسطر جديد */
     }
 
     .header-buttons button {
-        flex: 0 1 auto;
-        min-width: clamp(128px, 14vw, 180px);
+        flex: 0 0 auto; /* منع التمدد غير المتناسق */
+        min-width: auto; /* حجم تلقائي حسب النص */
+        padding-inline: clamp(10px, 1.2vw, 16px);
     }
 
     .section-stats {

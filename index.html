@@ -12,7 +12,7 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    
+
     <!-- PWA Manifest & Icons -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d8abc">
@@ -50,7 +50,7 @@
                 <p class="splash-gov" data-tr="gov_name">حكومة إقليم كوردستان - العراق</p>
                 <p class="splash-ministry" data-tr="ministry">وزارة الداخلية</p>
                 <h1 class="splash-main" data-tr="dept_name">مديرية مرور زاخو</h1>
-                <div class="splash-divider-line"></div>
+                <!-- <div class="splash-divider-line"></div> -->
                 <h2 class="splash-sub" data-tr="audit_system">نظام قسم التدقيق</h2>
             </div>
 
@@ -121,12 +121,8 @@
                         <button class="btn-icon-sm" data-tr-title="title_clear" title="مسح" onclick="clearSearch()"><i
                                 class="fa-solid fa-times"></i></button>
                     </div>
-                    
-                    <!-- Install App Button -->
-                    <button id="install-app-btn" class="btn-primary d-none" title="تثبيت التطبيق" style="display: none; align-items: center; gap: 5px;" onclick="installPWA()">
-                        <i class="fa-solid fa-download"></i>
-                        <span class="lang-text-el">تثبيت التطبيق</span>
-                    </button>
+
+
 
                     <button class="btn-lang" onclick="toggleLanguage()">
                         <i class="fa-solid fa-globe"></i>
@@ -178,7 +174,8 @@
 
                         <!-- Decentral Receipts Card -->
                         <div class="overview-card" onclick="showSection('decentral-receipts-section')">
-                            <div class="ov-icon-wrap receipts-decentral-color" style="background: rgba(13, 171, 209, 0.15); color: #0dabcf;">
+                            <div class="ov-icon-wrap receipts-decentral-color"
+                                style="background: rgba(13, 171, 209, 0.15); color: #0dabcf;">
                                 <i class="fa-solid fa-receipt"></i>
                             </div>
                             <h3 class="ov-title" data-tr="decentral_receipts">الوصولات اللامركزية</h3>
@@ -291,6 +288,22 @@
                         <h2><i class="fa-solid fa-chart-pie" style="color: var(--primary); margin-left: 10px;"></i><span
                                 data-tr="stats">الإحصائيات الشاملة</span></h2>
                         <div class="header-buttons no-print">
+                            <select id="filter-stats" class="form-control"
+                                style="width: auto; display: inline-block; margin-left: 10px;" onchange="renderStats()">
+                                <option value="" data-tr="all_months">جميع الأشهر</option>
+                                <option value="01">1</option>
+                                <option value="02">2</option>
+                                <option value="03">3</option>
+                                <option value="04">4</option>
+                                <option value="05">5</option>
+                                <option value="06">6</option>
+                                <option value="07">7</option>
+                                <option value="08">8</option>
+                                <option value="09">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
                             </button>
@@ -340,6 +353,23 @@
                                 style="color: var(--primary); margin-left: 10px;"></i><span
                                 data-tr="print_section_central_receipt">سجل الوصولات المركزية</span></h2>
                         <div class="header-buttons no-print">
+                            <select id="filter-central-receipts" class="form-control"
+                                style="width: auto; display: inline-block; margin-left: 10px;"
+                                onchange="renderCentralReceipts()">
+                                <option value="" data-tr="all_months">جميع الأشهر</option>
+                                <option value="01">1</option>
+                                <option value="02">2</option>
+                                <option value="03">3</option>
+                                <option value="04">4</option>
+                                <option value="05">5</option>
+                                <option value="06">6</option>
+                                <option value="07">7</option>
+                                <option value="08">8</option>
+                                <option value="09">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
                             </button>
@@ -347,7 +377,8 @@
                                 <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
                             </button>
                             <button class="btn-primary" onclick="openAddReceiptModal('مركزي')">
-                                <i class="fa-solid fa-plus"></i> <span data-tr="add_central_receipt">إضافة وصل مركزي جديد</span>
+                                <i class="fa-solid fa-plus"></i> <span data-tr="add_central_receipt">إضافة وصل مركزي
+                                    جديد</span>
                             </button>
                         </div>
                     </div>
@@ -376,10 +407,26 @@
                 <!-- Decentral Receipts Section -->
                 <section id="decentral-receipts-section" class="content-section">
                     <div class="section-header print-header">
-                        <h2><i class="fa-solid fa-receipt"
-                                style="color: var(--primary); margin-left: 10px;"></i><span
+                        <h2><i class="fa-solid fa-receipt" style="color: var(--primary); margin-left: 10px;"></i><span
                                 data-tr="print_section_decentral_receipt">سجل الوصولات اللامركزية</span></h2>
                         <div class="header-buttons no-print">
+                            <select id="filter-decentral-receipts" class="form-control"
+                                style="width: auto; display: inline-block; margin-left: 10px;"
+                                onchange="renderDecentralReceipts()">
+                                <option value="" data-tr="all_months">جميع الأشهر</option>
+                                <option value="01">1</option>
+                                <option value="02">2</option>
+                                <option value="03">3</option>
+                                <option value="04">4</option>
+                                <option value="05">5</option>
+                                <option value="06">6</option>
+                                <option value="07">7</option>
+                                <option value="08">8</option>
+                                <option value="09">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
                             </button>
@@ -387,7 +434,8 @@
                                 <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
                             </button>
                             <button class="btn-primary" onclick="openAddReceiptModal('لا مركزي')">
-                                <i class="fa-solid fa-plus"></i> <span data-tr="add_decentral_receipt">إضافة وصل لا مركزي جديد</span>
+                                <i class="fa-solid fa-plus"></i> <span data-tr="add_decentral_receipt">إضافة وصل لا
+                                    مركزي جديد</span>
                             </button>
                         </div>
                     </div>
@@ -420,6 +468,23 @@
                                 style="color: var(--primary); margin-left: 10px;"></i><span
                                 data-tr="print_section_delegation">سجل الإيفادات</span></h2>
                         <div class="header-buttons no-print">
+                            <select id="filter-delegations" class="form-control"
+                                style="width: auto; display: inline-block; margin-left: 10px;"
+                                onchange="renderDelegations()">
+                                <option value="" data-tr="all_months">جميع الأشهر</option>
+                                <option value="01">1</option>
+                                <option value="02">2</option>
+                                <option value="03">3</option>
+                                <option value="04">4</option>
+                                <option value="05">5</option>
+                                <option value="06">6</option>
+                                <option value="07">7</option>
+                                <option value="08">8</option>
+                                <option value="09">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
                             </button>
@@ -459,6 +524,23 @@
                         <h2><i class="fa-solid fa-children" style="color: var(--primary); margin-left: 10px;"></i><span
                                 data-tr="print_section_children">سجل إضافة الأطفال</span></h2>
                         <div class="header-buttons no-print">
+                            <select id="filter-children" class="form-control"
+                                style="width: auto; display: inline-block; margin-left: 10px;"
+                                onchange="renderChildren()">
+                                <option value="" data-tr="all_months">جميع الأشهر</option>
+                                <option value="01">1</option>
+                                <option value="02">2</option>
+                                <option value="03">3</option>
+                                <option value="04">4</option>
+                                <option value="05">5</option>
+                                <option value="06">6</option>
+                                <option value="07">7</option>
+                                <option value="08">8</option>
+                                <option value="09">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
                             </button>
@@ -498,6 +580,23 @@
                         <h2><i class="fa-solid fa-ring" style="color: var(--primary); margin-left: 10px;"></i><span
                                 data-tr="print_section_marriage">سجل الزواج</span></h2>
                         <div class="header-buttons no-print">
+                            <select id="filter-marriage" class="form-control"
+                                style="width: auto; display: inline-block; margin-left: 10px;"
+                                onchange="renderMarriage()">
+                                <option value="" data-tr="all_months">جميع الأشهر</option>
+                                <option value="01">1</option>
+                                <option value="02">2</option>
+                                <option value="03">3</option>
+                                <option value="04">4</option>
+                                <option value="05">5</option>
+                                <option value="06">6</option>
+                                <option value="07">7</option>
+                                <option value="08">8</option>
+                                <option value="09">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
                             </button>
@@ -536,6 +635,22 @@
                         <h2><i class="fa-solid fa-book" style="color: var(--primary); margin-left: 10px;"></i><span
                                 data-tr="print_section_fines">سجل دفاتر الغرامات</span></h2>
                         <div class="header-buttons no-print">
+                            <select id="filter-fines" class="form-control"
+                                style="width: auto; display: inline-block; margin-left: 10px;" onchange="renderFines()">
+                                <option value="" data-tr="all_months">جميع الأشهر</option>
+                                <option value="01">1</option>
+                                <option value="02">2</option>
+                                <option value="03">3</option>
+                                <option value="04">4</option>
+                                <option value="05">5</option>
+                                <option value="06">6</option>
+                                <option value="07">7</option>
+                                <option value="08">8</option>
+                                <option value="09">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
                             <button class="btn-back" onclick="showHome()">
                                 <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
                             </button>
@@ -976,7 +1091,9 @@
                 </label>
                 <label class="bulk-check-item">
                     <input type="checkbox" id="bp-decentral-receipts" checked>
-                    <span class="bulk-check-icon receipts-decentral-color" style="background: rgba(13, 171, 209, 0.15); color: #0dabcf;"><i class="fa-solid fa-receipt"></i></span>
+                    <span class="bulk-check-icon receipts-decentral-color"
+                        style="background: rgba(13, 171, 209, 0.15); color: #0dabcf;"><i
+                            class="fa-solid fa-receipt"></i></span>
                     <span data-tr="decentral_receipts">الوصولات اللامركزية</span>
                     <span class="bulk-count" id="bp-count-decentral-receipts"></span>
                 </label>
@@ -1172,41 +1289,7 @@
         }
 
         // 2. Install Prompt Handling
-        let deferredPrompt;
-        const installBtn = document.getElementById('install-app-btn');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            // Show the install button
-            if (installBtn) {
-                installBtn.classList.remove('d-none');
-                installBtn.style.display = 'flex';
-            }
-        });
-
-        // The function called when the button is clicked
-        async function installPWA() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                }
-                deferredPrompt = null;
-                installBtn.classList.add('d-none');
-                installBtn.style.display = 'none';
-            }
-        }
-
-        window.addEventListener('appinstalled', () => {
-            if (installBtn) {
-                installBtn.classList.add('d-none');
-                installBtn.style.display = 'none';
-            }
-            deferredPrompt = null;
-            console.log('PWA was installed');
-        });
+        // Browser natively handles the PWA install prompt in the address bar.
     </script>
 </body>
 
