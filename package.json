@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "dev": "python -m http.server 8000",
     "build": "electron-packager . traffic-audit-app --platform=win32 --arch=x64 --out=dist --icon=logo.ico --overwrite"
   },
   "author": "",

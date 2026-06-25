@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ku" dir="rtl">
+<html lang="ku" dir="rtl" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -16,8 +16,10 @@
     <!-- PWA Manifest & Icons -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0d8abc">
-    <link rel="icon" href="logo.png" type="image/png">
-    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="shortcut icon" href="logo.ico" type="image/x-icon">
+    <link rel="icon" href="logo-192.png" type="image/png" sizes="192x192">
+    <link rel="icon" href="logo-512.png" type="image/png" sizes="512x512">
+    <link rel="apple-touch-icon" href="logo-192.png">
 </head>
 
 <body>
@@ -39,11 +41,7 @@
 
         <div class="splash-content">
             <!-- Logo emblem -->
-            <div class="splash-logo-ring">
-                <div class="splash-logo-inner">
-                    <img src="logo.png" alt="شعار الإقليم" class="splash-emblem">
-                </div>
-            </div>
+            <img src="logo.png" alt="شعار المراجعة" class="splash-emblem" style="width: 130px; height: 130px; margin: 0 auto 20px auto; display: block;">
 
             <!-- Title block -->
             <div class="splash-titles">
@@ -124,6 +122,10 @@
 
 
 
+                    <button id="theme-toggle-btn" class="btn-lang" onclick="toggleTheme()" title="تغيير المظهر">
+                        <i id="theme-icon" class="fa-solid fa-sun"></i>
+                        <span id="theme-text" class="lang-text-el" data-tr="theme_light">فاتح</span>
+                    </button>
                     <button class="btn-lang" onclick="toggleLanguage()">
                         <i class="fa-solid fa-globe"></i>
                         <span id="lang-text" class="lang-text-el">English</span>
@@ -190,6 +192,26 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Special Receipts Card -->
+                        <div class="overview-card" onclick="showSection('special-receipts-section')">
+                            <div class="ov-icon-wrap receipts-special-color"
+                                style="background: rgba(156, 39, 176, 0.15); color: #9c27b0;">
+                                <i class="fa-solid fa-file-signature"></i>
+                            </div>
+                            <h3 class="ov-title" data-tr="special_receipts">الوصولات الخاصة</h3>
+                            <div class="ov-stats">
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_receipts_count">عدد الوصولات:</span>
+                                    <span class="ov-value" id="ov-special-receipts-count">0</span>
+                                </div>
+                                <div class="ov-stat-row">
+                                    <span class="ov-label" data-tr="ov_receipts_total">إجمالي المبالغ:</span>
+                                    <span class="ov-value accent" id="ov-special-receipts-total">0 د.ع</span>
+                                </div>
+                            </div>
+                        </div>
+
 
                         <!-- Delegations Card -->
                         <div class="overview-card" onclick="showSection('delegations-section')">
@@ -461,6 +483,63 @@
                     </div>
                 </section>
 
+                <!-- Special Receipts Section -->
+                <section id="special-receipts-section" class="content-section">
+                    <div class="section-header print-header">
+                        <h2><i class="fa-solid fa-file-signature" style="color: #9c27b0; margin-left: 10px;"></i><span
+                                data-tr="print_section_special_receipt">سجل الوصولات الخاصة</span></h2>
+                        <div class="header-buttons no-print">
+                            <select id="filter-special-receipts" class="form-control"
+                                style="width: auto; display: inline-block; margin-left: 10px;"
+                                onchange="renderSpecialReceipts()">
+                                <option value="" data-tr="all_months">جميع الأشهر</option>
+                                <option value="01">1</option>
+                                <option value="02">2</option>
+                                <option value="03">3</option>
+                                <option value="04">4</option>
+                                <option value="05">5</option>
+                                <option value="06">6</option>
+                                <option value="07">7</option>
+                                <option value="08">8</option>
+                                <option value="09">9</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
+                            <button class="btn-back" onclick="showHome()">
+                                <i class="fa-solid fa-arrow-right"></i> <span data-tr="back">الرجوع</span>
+                            </button>
+                            <button class="btn-secondary" onclick="printSection('special-receipts')">
+                                <i class="fa-solid fa-print"></i> <span data-tr="print">طباعة القسم</span>
+                            </button>
+                            <button class="btn-primary" onclick="openAddReceiptModal('خاصه')">
+                                <i class="fa-solid fa-plus"></i> <span data-tr="add_special_receipt">إضافة وصل خاص
+                                    جديد</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="section-stats no-print" id="special-receipts-stats"></div>
+                    <div class="table-responsive glass-panel">
+                        <table class="data-table" id="special-receipts-table">
+                            <thead>
+                                <tr>
+                                    <th data-tr="th_directorate">المديرية</th>
+                                    <th data-tr="th_department">القسم</th>
+                                    <th data-tr="th_location">المكان</th>
+                                    <th data-tr="th_date">التاريخ</th>
+                                    <th data-tr="th_code">الكود</th>
+                                    <th data-tr="th_amount">المبلغ</th>
+                                    <th class="no-print" data-tr="th_image">صورة الوصل</th>
+                                    <th class="no-print" data-tr="th_actions">العمليات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
                 <!-- Delegations Section -->
                 <section id="delegations-section" class="content-section">
                     <div class="section-header print-header">
@@ -711,6 +790,11 @@
                             <input type="radio" name="receipt_type" value="لا مركزي">
                             <span class="radio-custom"></span>
                             <span data-tr="lbl_decentral">لا مركزي</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="receipt_type" value="خاصه">
+                            <span class="radio-custom"></span>
+                            <span data-tr="lbl_special">خاصه</span>
                         </label>
                     </div>
                 </div>
@@ -1096,6 +1180,14 @@
                             class="fa-solid fa-receipt"></i></span>
                     <span data-tr="decentral_receipts">الوصولات اللامركزية</span>
                     <span class="bulk-count" id="bp-count-decentral-receipts"></span>
+                </label>
+                <label class="bulk-check-item">
+                    <input type="checkbox" id="bp-special-receipts" checked>
+                    <span class="bulk-check-icon receipts-special-color"
+                        style="background: rgba(156, 39, 176, 0.15); color: #9c27b0;"><i
+                            class="fa-solid fa-file-signature"></i></span>
+                    <span data-tr="special_receipts">الوصولات الخاصة</span>
+                    <span class="bulk-count" id="bp-count-special-receipts"></span>
                 </label>
                 <label class="bulk-check-item">
                     <input type="checkbox" id="bp-delegations" checked>

@@ -185,7 +185,6 @@ function showSection(sectionId) {
     const target = document.getElementById(sectionId);
     if (target) {
         target.classList.add('active');
-        window.scrollTo(0, 0);
     }
 }
 
@@ -194,8 +193,6 @@ function showHome() {
     if (homeCards) homeCards.style.display = '';
 
     document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-
-    window.scrollTo(0, 0);
 }
 
 // ===== TOAST NOTIFICATIONS =====
@@ -295,6 +292,7 @@ const translations = {
         receipts: 'الوصولات',
         central_receipts: 'الوصولات المركزية',
         decentral_receipts: 'الوصولات اللامركزية',
+        special_receipts: 'الوصولات الخاصة',
         delegations: 'الإيفادات',
         children: 'إضافة الأطفال',
         marriage: 'الزواج',
@@ -305,6 +303,7 @@ const translations = {
         add_receipt: 'إضافة وصل جديد',
         add_central_receipt: 'إضافة وصل مركزي جديد',
         add_decentral_receipt: 'إضافة وصل لا مركزي جديد',
+        add_special_receipt: 'إضافة وصل خاص جديد',
         add_delegation: 'إضافة إيفاد جديد',
         add_child: 'إضافة طفل جديد',
         add_marriage: 'تسجيل زواج جديد',
@@ -347,6 +346,7 @@ const translations = {
         lbl_receipt_type: 'نوع الوصل:',
         lbl_central: 'مركزي',
         lbl_decentral: 'لا مركزي',
+        lbl_special: 'خاصه',
         lbl_directorate: 'المديرية:',
         lbl_department: 'القسم:',
         lbl_location: 'المكان:',
@@ -380,9 +380,11 @@ const translations = {
         st_total_receipts: 'إجمالي الوصولات',
         st_total_central_receipts: 'إجمالي الوصولات المركزية',
         st_total_decentral_receipts: 'إجمالي الوصولات اللامركزية',
+        st_total_special_receipts: 'إجمالي الوصولات الخاصة',
         st_total_amounts: 'إجمالي المبالغ',
         st_central: 'مركزي',
         st_decentral: 'لا مركزي',
+        st_special: 'خاصه',
         st_delegation_records: 'سجلات الإيفاد',
         st_total_delegations: 'مجموع الإيفادات',
         st_total_children: 'إجمالي الأطفال',
@@ -440,6 +442,7 @@ const translations = {
         print_section_receipt: 'سجل الوصولات',
         print_section_central_receipt: 'سجل الوصولات المركزية',
         print_section_decentral_receipt: 'سجل الوصولات اللامركزية',
+        print_section_special_receipt: 'سجل الوصولات الخاصة',
         print_section_delegation: 'سجل الإيفادات',
         print_section_children: 'سجل إضافة الأطفال',
         print_section_marriage: 'سجل الزواج',
@@ -484,7 +487,9 @@ const translations = {
         pl_wife: 'أدخل اسم الزوجة',
         pl_holder: 'اسم صاحب الدفتر',
         pl_book_num: 'رقم الدفتر',
-        all_months: 'جميع الأشهر'
+        all_months: 'جميع الأشهر',
+        theme_light: 'الوضع الفاتح',
+        theme_dark: 'الوضع الداكن'
     },
     ku: {
         err_image: 'هه‌ڵه‌كا له‌ كاتا پرۆسه‌كرنا وێنەیێ',
@@ -502,6 +507,7 @@ const translations = {
         receipts: 'پسووله‌',
         central_receipts: 'پسوولەیێن ناڤه‌ندی',
         decentral_receipts: 'پسوولەیێن نه‌ ناڤه‌ندی',
+        special_receipts: 'پسوولەیێن تایبەت',
         delegations: 'ئیفاد',
         children: 'زارۆك',
         marriage: 'هه‌ڤژينى',
@@ -512,6 +518,7 @@ const translations = {
         add_receipt: 'زێده‌كرنا پسووله‌كا نوی',
         add_central_receipt: 'زێده‌كرنا پسووله‌كا ناڤه‌ندی يا نوی',
         add_decentral_receipt: 'زێده‌كرنا پسووله‌كا نه‌ ناڤه‌ندی يا نوی',
+        add_special_receipt: 'زێده‌كرنا پسووله‌كا تایبەت يا نوی',
         add_delegation: 'زێده‌كرنا ئیفاده‌كا نوی',
         add_child: 'زێده‌كرنا زارۆكه‌كێ نوی',
         add_marriage: 'تۆماركرنا هه‌ڤژينيێ',
@@ -554,6 +561,7 @@ const translations = {
         lbl_receipt_type: 'جۆرێ پسوولەیێ:',
         lbl_central: 'ناڤه‌ندی',
         lbl_decentral: 'نه‌ ناڤه‌ندی',
+        lbl_special: 'تایبەت',
         lbl_directorate: 'ڕێڤه‌به‌ریا:',
         lbl_department: 'پشك:',
         lbl_location: 'جهـ:',
@@ -587,9 +595,11 @@ const translations = {
         st_total_receipts: 'كۆما پسوولەیان',
         st_total_central_receipts: 'كۆما پسوولەیێن ناڤه‌ندی',
         st_total_decentral_receipts: 'كۆما پسوولەیێن نه‌ ناڤه‌ندی',
+        st_total_special_receipts: 'كۆما پسوولەیێن تایبەت',
         st_total_amounts: 'كۆژمێ گشتی يێ پاره‌ى',
         st_central: 'ناڤه‌ندی',
         st_decentral: 'نه‌ ناڤه‌ندی',
+        st_special: 'تایبەت',
         st_delegation_records: 'تۆمارێن ئیفادان',
         st_total_delegations: 'كۆما گشتيا ئیفادان',
         st_total_children: 'كۆما گشتيا زارۆكان',
@@ -647,6 +657,7 @@ const translations = {
         print_section_receipt: 'تۆمارا پسوولەیان',
         print_section_central_receipt: 'تۆمارا پسوولەیێن ناڤه‌ندی',
         print_section_decentral_receipt: 'تۆمارا پسوولەیێن نه‌ ناڤه‌ندی',
+        print_section_special_receipt: 'تۆمارا پسوولەیێن تایبەت',
         print_section_delegation: 'تۆمارا ئیفادان',
         print_section_children: 'تۆمارا زارۆكان',
         print_section_marriage: 'تۆمارا هه‌ڤژينيێ',
@@ -691,14 +702,46 @@ const translations = {
         pl_wife: 'ناڤێ ژنێ بنڤیسە',
         pl_holder: 'ناڤێ خودانێ ده‌فته‌رێ',
         pl_book_num: 'هژمارا ده‌فته‌رێ',
-        all_months: 'هه‌می هه‌يڤ'
+        all_months: 'هه‌می هه‌يڤ',
+        theme_light: 'ڕوون',
+        theme_dark: 'تاری'
     }
 };
+
+let currentTheme = dbStore.getItem('appTheme') || 'light';
+
+function applyTheme() {
+    if (currentTheme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
+    const themeIcon = document.getElementById('theme-icon');
+    const themeText = document.getElementById('theme-text');
+    if (themeIcon && themeText) {
+        if (currentTheme === 'light') {
+            themeIcon.className = 'fa-solid fa-moon';
+            themeText.setAttribute('data-tr', 'theme_dark');
+            themeText.textContent = translations[currentLang].theme_dark || 'داكن';
+        } else {
+            themeIcon.className = 'fa-solid fa-sun';
+            themeText.setAttribute('data-tr', 'theme_light');
+            themeText.textContent = translations[currentLang].theme_light || 'فاتح';
+        }
+    }
+}
+
+function toggleTheme() {
+    currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+    dbStore.setItem('appTheme', currentTheme);
+    applyTheme();
+}
 
 function toggleLanguage() {
     currentLang = (currentLang === 'ar') ? 'ku' : 'ar';
     dbStore.setItem('appLang', currentLang);
     applyLanguage();
+    applyTheme(); // Update theme text translation
     initData();
     updateOverviewCards();
 }
@@ -746,6 +789,7 @@ function applyLanguage() {
 document.addEventListener('DOMContentLoaded', async () => {
     await dbStore.init();
     applyLanguage();
+    applyTheme();
     initData();
     updateOverviewCards();
     updateAutocompletes();
@@ -904,15 +948,20 @@ function updateOverviewCards() {
 
     const centralReceipts = receipts.filter(item => item.receipt_type === 'مركزي');
     const decentralReceipts = receipts.filter(item => item.receipt_type === 'لا مركزي');
+    const specialReceipts = receipts.filter(item => item.receipt_type === 'خاصه');
 
     const centralTotal = centralReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
     const decentralTotal = decentralReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    const specialTotal = specialReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
 
     set('ov-central-receipts-count', centralReceipts.length);
     set('ov-central-receipts-total', centralTotal.toLocaleString() + ' ' + currency);
 
     set('ov-decentral-receipts-count', decentralReceipts.length);
     set('ov-decentral-receipts-total', decentralTotal.toLocaleString() + ' ' + currency);
+
+    set('ov-special-receipts-count', specialReceipts.length);
+    set('ov-special-receipts-total', specialTotal.toLocaleString() + ' ' + currency);
 
     const dTotal = delegations.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
     set('ov-delegations-count', delegations.length);
@@ -937,6 +986,7 @@ function updateOverviewCards() {
 function renderReceipts(filter) {
     renderCentralReceipts(filter);
     renderDecentralReceipts(filter);
+    renderSpecialReceipts(filter);
 }
 
 function renderCentralReceipts(filter) {
@@ -1006,6 +1056,49 @@ function renderDecentralReceipts(filter) {
     }
     tbody.innerHTML = decentralData.length ? '' : `<tr><td colspan="8" style="text-align:center;">${lang.empty_data}</td></tr>`;
     decentralData.forEach((item) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item.directorate}</td>
+            <td>${item.department}</td>
+            <td>${item.location}</td>
+            <td>${item.date}</td>
+            <td>${item.code}</td>
+            <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
+            <td class="no-print">${item.receipt_image ? `<button class="btn-icon-sm" onclick="viewImage('${item.receipt_image}')"><i class="fa-solid fa-image"></i></button>` : '—'}</td>
+            <td class="no-print action-btns">
+                <button class="btn-icon-sm print" onclick="printSingleRecord('receipts',${item.originalIdx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
+                <button class="btn-icon-sm edit" onclick="editRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-icon-sm del" onclick="deleteRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderSpecialReceipts(filter) {
+    let data = JSON.parse(dbStore.getItem('receipts') || '[]');
+    data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
+    let specialData = data.filter(item => item.receipt_type === 'خاصه');
+    
+    const monthFilterEl = document.getElementById('filter-special-receipts');
+    if (monthFilterEl && monthFilterEl.value) {
+        specialData = specialData.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
+    }
+
+    if (filter) specialData = specialData.filter(item => matchesFilter(item, filter));
+    const tbody = document.querySelector('#special-receipts-table tbody');
+    if (!tbody) return;
+    const statsDiv = document.getElementById('special-receipts-stats');
+    const lang = translations[currentLang];
+    if (statsDiv) {
+        let totalAmount = specialData.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+        statsDiv.innerHTML = `
+            <div class="stat-item"><h4>${lang.st_total_special_receipts}</h4><div class="stat-value">${specialData.length}</div></div>
+            <div class="stat-item"><h4>${lang.st_total_amounts}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
+        `;
+    }
+    tbody.innerHTML = specialData.length ? '' : `<tr><td colspan="8" style="text-align:center;">${lang.empty_data}</td></tr>`;
+    specialData.forEach((item) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${item.directorate}</td>
@@ -1256,6 +1349,7 @@ function performSearch() {
     switch (key) {
         case 'central-receipts': renderCentralReceipts(q); break;
         case 'decentral-receipts': renderDecentralReceipts(q); break;
+        case 'special-receipts': renderSpecialReceipts(q); break;
         case 'delegations': renderDelegations(q); break;
         case 'children': renderChildren(q); break;
         case 'marriage': renderMarriage(q); break;
@@ -1273,9 +1367,12 @@ function performSearch() {
                         if (match.receipt_type === 'مركزي') {
                             showSection('central-receipts-section');
                             renderCentralReceipts(q);
-                        } else {
+                        } else if (match.receipt_type === 'لا مركزي') {
                             showSection('decentral-receipts-section');
                             renderDecentralReceipts(q);
+                        } else {
+                            showSection('special-receipts-section');
+                            renderSpecialReceipts(q);
                         }
                     } else {
                         showSection(k + '-section');
@@ -1683,11 +1780,14 @@ function openBulkPrintModal() {
     const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
     const centralCount = receipts.filter(item => item.receipt_type === 'مركزي').length;
     const decentralCount = receipts.filter(item => item.receipt_type === 'لا مركزي').length;
+    const specialCount = receipts.filter(item => item.receipt_type === 'خاصه').length;
 
     const elCentral = document.getElementById('bp-count-central-receipts');
     if (elCentral) elCentral.textContent = `(${centralCount})`;
     const elDecentral = document.getElementById('bp-count-decentral-receipts');
     if (elDecentral) elDecentral.textContent = `(${decentralCount})`;
+    const elSpecial = document.getElementById('bp-count-special-receipts');
+    if (elSpecial) elSpecial.textContent = `(${specialCount})`;
 
     openModal('bulk-print-modal');
 }
@@ -1698,13 +1798,15 @@ function buildSectionHTML(key, lang) {
         data = JSON.parse(dbStore.getItem('receipts') || '[]').filter(item => item.receipt_type === 'مركزي');
     } else if (key === 'decentral-receipts') {
         data = JSON.parse(dbStore.getItem('receipts') || '[]').filter(item => item.receipt_type === 'لا مركزي');
+    } else if (key === 'special-receipts') {
+        data = JSON.parse(dbStore.getItem('receipts') || '[]').filter(item => item.receipt_type === 'خاصه');
     } else {
         data = JSON.parse(dbStore.getItem(key) || '[]');
     }
 
     const monthFilterEl = document.getElementById(`filter-${key}`);
     if (monthFilterEl && monthFilterEl.value) {
-        if (key === 'central-receipts' || key === 'decentral-receipts' || key === 'fines') {
+        if (key === 'central-receipts' || key === 'decentral-receipts' || key === 'special-receipts' || key === 'fines') {
             data = data.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
         } else if (key === 'children') {
             data = data.filter(item => item.arrival && item.arrival.split('-')[1] === monthFilterEl.value);
@@ -1727,6 +1829,7 @@ function buildSectionHTML(key, lang) {
     const sectionTitles = {
         'central-receipts': lang.print_section_central_receipt,
         'decentral-receipts': lang.print_section_decentral_receipt,
+        'special-receipts': lang.print_section_special_receipt,
         delegations: lang.print_section_delegation,
         children: lang.print_section_children,
         marriage: lang.print_section_marriage,
@@ -1736,6 +1839,7 @@ function buildSectionHTML(key, lang) {
     const headers = {
         'central-receipts': `<th>${lang.th_directorate}</th><th>${lang.th_department}</th><th>${lang.th_location}</th><th>${lang.th_date}</th><th>${lang.th_code}</th><th>${lang.th_amount}</th>`,
         'decentral-receipts': `<th>${lang.th_directorate}</th><th>${lang.th_department}</th><th>${lang.th_location}</th><th>${lang.th_date}</th><th>${lang.th_code}</th><th>${lang.th_amount}</th>`,
+        'special-receipts': `<th>${lang.th_directorate}</th><th>${lang.th_department}</th><th>${lang.th_location}</th><th>${lang.th_date}</th><th>${lang.th_code}</th><th>${lang.th_amount}</th>`,
         delegations: `<th>${lang.th_name}</th><th>${lang.th_month}</th><th>${lang.th_count}</th><th>${lang.th_export}</th><th>${lang.th_import}</th><th>${lang.th_amount}</th><th>${lang.th_total}</th>`,
         children: `<th>${lang.th_father}</th><th>${lang.th_mother}</th><th>${lang.th_child}</th><th>${lang.th_gender}</th><th>${lang.th_dob}</th><th>${lang.th_arrival}</th><th>${lang.th_amount}</th>`,
         marriage: `<th>${lang.th_husband}</th><th>${lang.th_wife}</th><th>${lang.lbl_employee_gender || lang.th_gender}</th><th>${lang.th_marriage_date || lang.th_date}</th><th>${lang.th_arrival}</th><th>${lang.th_amount}</th>`,
@@ -1749,7 +1853,7 @@ function buildSectionHTML(key, lang) {
 
     let bodyRows = data.map(item => {
         let cells = '';
-        if (key === 'central-receipts' || key === 'decentral-receipts') {
+        if (key === 'central-receipts' || key === 'decentral-receipts' || key === 'special-receipts') {
             cells = `<td>${item.directorate}</td><td>${item.department}</td><td>${item.location}</td><td>${item.date}</td><td>${item.code}</td><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>`;
         } else if (key === 'delegations') {
             const mKey = monthMap[item.month];
@@ -1765,14 +1869,14 @@ function buildSectionHTML(key, lang) {
     }).join('');
 
     let totalAmt = 0;
-    if (key === 'central-receipts' || key === 'decentral-receipts') totalAmt = data.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    if (key === 'central-receipts' || key === 'decentral-receipts' || key === 'special-receipts') totalAmt = data.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
     else if (key === 'delegations') totalAmt = data.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
     else if (key === 'children') totalAmt = data.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
     else if (key === 'marriage') totalAmt = data.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
     else if (key === 'fines') totalAmt = data.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
 
     const sigNames = getSignatureNames();
-    const colCount = (key === 'central-receipts' || key === 'decentral-receipts') ? 6 : ((key === 'delegations' || key === 'children') ? 7 : 6);
+    const colCount = (key === 'central-receipts' || key === 'decentral-receipts' || key === 'special-receipts') ? 6 : ((key === 'delegations' || key === 'children') ? 7 : 6);
     const totalRow = `<tr class="total-row"><td colspan="${colCount - 1}" style="text-align:left;">${lang.st_total_amounts || lang.lbl_total}</td><td><strong>${totalAmt.toLocaleString()} ${lang.currency}</strong></td></tr>`;
 
     return `
@@ -1823,6 +1927,7 @@ function executeBulkPrint() {
     const selected = [
         document.getElementById('bp-central-receipts')?.checked ? 'central-receipts' : null,
         document.getElementById('bp-decentral-receipts')?.checked ? 'decentral-receipts' : null,
+        document.getElementById('bp-special-receipts')?.checked ? 'special-receipts' : null,
         document.getElementById('bp-delegations')?.checked ? 'delegations' : null,
         document.getElementById('bp-children')?.checked ? 'children' : null,
         document.getElementById('bp-marriage')?.checked ? 'marriage' : null,
@@ -1917,8 +2022,10 @@ function printSection(key) {
 
         const centralReceipts = receipts.filter(item => item.receipt_type === 'مركزي');
         const decentralReceipts = receipts.filter(item => item.receipt_type === 'لا مركزي');
+        const specialReceipts = receipts.filter(item => item.receipt_type === 'خاصه');
         const centralReceiptsTotal = centralReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
         const decentralReceiptsTotal = decentralReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+        const specialReceiptsTotal = specialReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
 
         const delegationsTotal = delegations.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
         const childrenTotal = children.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
@@ -2000,6 +2107,11 @@ function printSection(key) {
                             <td><strong>${lang.decentral_receipts}</strong></td>
                             <td>${decentralReceipts.length}</td>
                             <td><strong>${decentralReceiptsTotal.toLocaleString()} ${lang.currency}</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong>${lang.special_receipts}</strong></td>
+                            <td>${specialReceipts.length}</td>
+                            <td><strong>${specialReceiptsTotal.toLocaleString()} ${lang.currency}</strong></td>
                         </tr>
                         <tr>
                             <td><strong>${lang.delegations}</strong></td>
@@ -2325,6 +2437,7 @@ function renderStats() {
 
     const centralReceipts = receipts.filter(item => item.receipt_type === 'مركزي');
     const decentralReceipts = receipts.filter(item => item.receipt_type === 'لا مركزي');
+    const specialReceipts = receipts.filter(item => item.receipt_type === 'خاصه');
 
     const totalRecords = receipts.length + delegations.length + children.length + marriage.length + fines.length;
     const totalAmounts = (receipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)) +
@@ -2344,6 +2457,7 @@ function renderStats() {
             <div class="stat-item"><h4>${lang.st_total_amounts}</h4><div class="stat-value">${totalAmounts.toLocaleString()} ${lang.currency}</div></div>
             <div class="stat-item"><h4>${lang.central_receipts}</h4><div class="stat-value">${centralReceipts.length}</div></div>
             <div class="stat-item"><h4>${lang.decentral_receipts}</h4><div class="stat-value">${decentralReceipts.length}</div></div>
+            <div class="stat-item"><h4>${lang.special_receipts}</h4><div class="stat-value">${specialReceipts.length}</div></div>
             <div class="stat-item"><h4>${lang.delegations}</h4><div class="stat-value">${delegations.length}</div></div>
             <div class="stat-item"><h4>${lang.children}</h4><div class="stat-value">${children.length}</div></div>
             <div class="stat-item"><h4>${lang.marriage}</h4><div class="stat-value">${marriage.length}</div></div>
@@ -2354,6 +2468,7 @@ function renderStats() {
     // Panels: breakdowns for each section
     const centralTotal = centralReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
     const decentralTotal = decentralReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    const specialTotal = specialReceipts.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
     const delegationsTotal = delegations.reduce((s, i) => s + (parseFloat(i.total) || 0), 0);
     const childrenTotal = children.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
     const marriageTotal = marriage.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
@@ -2363,6 +2478,7 @@ function renderStats() {
         <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px;">
             <div class="glass-panel" style="padding:14px;"><h4>${lang.central_receipts}</h4><p>${lang.lbl_records}: ${centralReceipts.length}</p><p>${lang.lbl_total_sum}: ${centralTotal.toLocaleString()} ${lang.currency}</p></div>
             <div class="glass-panel" style="padding:14px;"><h4>${lang.decentral_receipts}</h4><p>${lang.lbl_records}: ${decentralReceipts.length}</p><p>${lang.lbl_total_sum}: ${decentralTotal.toLocaleString()} ${lang.currency}</p></div>
+            <div class="glass-panel" style="padding:14px;"><h4>${lang.special_receipts}</h4><p>${lang.lbl_records}: ${specialReceipts.length}</p><p>${lang.lbl_total_sum}: ${specialTotal.toLocaleString()} ${lang.currency}</p></div>
             <div class="glass-panel" style="padding:14px;"><h4>${lang.delegations}</h4><p>${lang.lbl_records}: ${delegations.length}</p><p>${lang.lbl_total_sum}: ${delegationsTotal.toLocaleString()} ${lang.currency}</p></div>
             <div class="glass-panel" style="padding:14px;"><h4>${lang.children}</h4><p>${lang.lbl_records}: ${children.length}</p><p>${lang.lbl_total_sum}: ${childrenTotal.toLocaleString()} ${lang.currency}</p></div>
             <div class="glass-panel" style="padding:14px;"><h4>${lang.marriage}</h4><p>${lang.lbl_records}: ${marriage.length}</p><p>${lang.lbl_total_sum}: ${marriageTotal.toLocaleString()} ${lang.currency}</p></div>
