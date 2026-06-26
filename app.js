@@ -500,10 +500,10 @@ const translations = {
         sys_admin: 'ڕێڤه‌به‌رێ سيسته‌مى',
         gov_name: 'حكومه‌تا هه‌رێما كوردستانێ - عێراق',
         ministry: 'وه‌زاره‌تا ناڤخۆ',
-        dept_name: 'ڕێڤه‌به‌ريا هاتنوچوونا زاخۆ',
-        audit_system: 'سيسته‌مێ پشكا وردبينيێ',
+        dept_name: 'ڕێڤه‌به‌ريا هاتن و چوونا زاخۆ',
+        audit_system: 'سيسته‌مێ پشكا و ردبينيێ',
         enter_btn: 'چوونه‌ ژوور',
-        app_title: 'پشكا وردبينيێ - ڕێڤه‌به‌ريا هاتنوچوونا زاخۆ',
+        app_title: 'پشكا وردبينيێ - ڕێڤه‌به‌ريا هاتن و چوونا زاخۆ',
         receipts: 'پسووله‌',
         central_receipts: 'پسوولەیێن ناڤه‌ندی',
         decentral_receipts: 'پسوولەیێن نه‌ ناڤه‌ندی',
@@ -531,7 +531,7 @@ const translations = {
         ov_marriage_count: 'گرێبه‌ستێن هه‌ڤژينيێ:',
         ov_fines_count: 'هژمارا ده‌فته‌ران:',
         ov_total_records: 'كۆما تۆماران:',
-        ov_subtitle: 'ڕێڤه‌به‌ريا هاتنوچوونا زاخۆ - پشكا وردبينيێ',
+        ov_subtitle: 'ڕێڤه‌به‌ريا هاتن و چوونا زاخۆ - پشكا وردبينيێ',
         th_type: 'جۆر',
         th_directorate: 'ڕێڤه‌به‌ریا',
         th_department: 'پشك',
@@ -648,7 +648,7 @@ const translations = {
         m12: 'كانوونا ئێكێ',
         lbl_export_placeholder: 'جهێ ده‌ركه‌فتى',
         lbl_import_placeholder: 'جهێ هاتى',
-        bulk_print: 'چاپكرنا کۆمەلکی',
+        bulk_print: 'چاپكرنا گشتی',
         bulk_print_desc: 'پشكێن بخازی چاپ بكی هه‌ڤ ده‌مدا هه‌لبژێره‌:',
         single_print: 'چاپكرنا تاکەكي',
         start_print: 'دەستپێكرنا چاپكرنێ',
@@ -663,8 +663,8 @@ const translations = {
         print_section_marriage: 'تۆمارا هه‌ڤژينيێ',
         print_section_fines: 'تۆمارا ده‌فته‌رێن سزایان',
         records_count: 'هژمارا تۆماران',
-        backup_btn: 'پاراستنا پشتەڤان',
-        backup_modal_title: 'ڕێڤه‌برنا پاراستنا پشتەڤان',
+        backup_btn: 'پاراستنا داتایان',
+        backup_modal_title: 'ڕێڤه‌برنا پاراستنا داتایان',
         backup_desc: 'تۆ دشێی هەمی پێزانینێن سیستمى د فایله‌كێ JSON دا بنێری بۆ پاراستنێ، یان ژى پاشان بهینيه‌ ڤە.',
         export_btn: 'هەناردەكرنا پێزانينان (JSON)',
         import_btn: 'هینانەڤەیا پێزانينان (JSON)',
@@ -993,7 +993,7 @@ function renderCentralReceipts(filter) {
     let data = JSON.parse(dbStore.getItem('receipts') || '[]');
     data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
     let centralData = data.filter(item => item.receipt_type === 'مركزي');
-    
+
     const monthFilterEl = document.getElementById('filter-central-receipts');
     if (monthFilterEl && monthFilterEl.value) {
         centralData = centralData.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
@@ -1036,7 +1036,7 @@ function renderDecentralReceipts(filter) {
     let data = JSON.parse(dbStore.getItem('receipts') || '[]');
     data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
     let decentralData = data.filter(item => item.receipt_type === 'لا مركزي');
-    
+
     const monthFilterEl = document.getElementById('filter-decentral-receipts');
     if (monthFilterEl && monthFilterEl.value) {
         decentralData = decentralData.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
@@ -1079,7 +1079,7 @@ function renderSpecialReceipts(filter) {
     let data = JSON.parse(dbStore.getItem('receipts') || '[]');
     data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
     let specialData = data.filter(item => item.receipt_type === 'خاصه');
-    
+
     const monthFilterEl = document.getElementById('filter-special-receipts');
     if (monthFilterEl && monthFilterEl.value) {
         specialData = specialData.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
@@ -1128,7 +1128,7 @@ function viewImage(base64Str) {
 
 function renderDelegations(filter) {
     let data = JSON.parse(dbStore.getItem('delegations') || '[]');
-    
+
     const monthFilterEl = document.getElementById('filter-delegations');
     if (monthFilterEl && monthFilterEl.value) {
         const monthMapToNum = {
@@ -1183,7 +1183,7 @@ function renderDelegations(filter) {
 
 function renderChildren(filter) {
     let data = JSON.parse(dbStore.getItem('children') || '[]');
-    
+
     const monthFilterEl = document.getElementById('filter-children');
     if (monthFilterEl && monthFilterEl.value) {
         data = data.filter(item => item.arrival && item.arrival.split('-')[1] === monthFilterEl.value);
@@ -1228,7 +1228,7 @@ function renderChildren(filter) {
 
 function renderMarriage(filter) {
     let data = JSON.parse(dbStore.getItem('marriage') || '[]');
-    
+
     const monthFilterEl = document.getElementById('filter-marriage');
     if (monthFilterEl && monthFilterEl.value) {
         data = data.filter(item => {
@@ -1271,7 +1271,7 @@ function renderMarriage(filter) {
 
 function renderFines(filter) {
     let data = JSON.parse(dbStore.getItem('fines') || '[]');
-    
+
     const monthFilterEl = document.getElementById('filter-fines');
     if (monthFilterEl && monthFilterEl.value) {
         data = data.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
@@ -2718,7 +2718,7 @@ function updateAutocompletes() {
 
             // Generate unique datalist ID
             const datalistId = `datalist-${formDef.id}-${fieldName}`;
-            
+
             // Set list attribute on input if not already set
             if (input.getAttribute('list') !== datalistId) {
                 input.setAttribute('list', datalistId);
