@@ -1,4 +1,4 @@
-// ===== DATABASE / CACHE STORE (IndexedDB with LocalStorage Fallback) =====
+﻿// ===== DATABASE / CACHE STORE (IndexedDB with LocalStorage Fallback) =====
 const dbStore = {
     _cache: {},
     _db: null,
@@ -488,6 +488,10 @@ const translations = {
         pl_holder: 'اسم صاحب الدفتر',
         pl_book_num: 'رقم الدفتر',
         all_months: 'جميع الأشهر',
+        export_archive_btn: 'تصدير كأرشيف ويب (HTML)',
+        duplicate_warning_title: 'تنبيه: تكرار محتمل',
+        duplicate_warning_msg: 'هناك سجل آخر يحتوي على نفس التفاصيل بالفعل. هل تريد حفظ هذا السجل على أي حال؟',
+        duplicate_confirm_btn: 'حفظ على أي حال',
         theme_light: 'الوضع الفاتح',
         theme_dark: 'الوضع الداكن'
     },
@@ -703,6 +707,10 @@ const translations = {
         pl_holder: 'ناڤێ خودانێ ده‌فته‌رێ',
         pl_book_num: 'هژمارا ده‌فته‌رێ',
         all_months: 'هه‌می هه‌يڤ',
+        export_archive_btn: 'هەناردەكرن وەك ئەرشیفەکا وێب (HTML)',
+        duplicate_warning_title: 'تنبيه: دووباره‌بوونا پێشبينيكرى',
+        duplicate_warning_msg: 'تۆماره‌كا دى ب هه‌مان پێزانينان يا هه‌ى. ئه‌رێ تو دڤێت ڤێ تۆمارێ بپارێزى ب هه‌ر حال؟',
+        duplicate_confirm_btn: 'پاراستن ب هه‌ر حال',
         theme_light: 'ڕوون',
         theme_dark: 'تاری'
     }
@@ -811,6 +819,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const dataObj = {};
                 for (let [key, value] of formData.entries()) {
                     if (value instanceof File && value.name) {
+                        if (key === 'receipt_images' || key === 'receipt_image') continue;
                         try {
                             dataObj[key] = await getBase64(value);
                         } catch (err) {
@@ -822,35 +831,91 @@ document.addEventListener('DOMContentLoaded', async () => {
                         dataObj[key] = value;
                     }
                 }
-                let currentData = JSON.parse(dbStore.getItem(formDef.key) || '[]');
-                if (editingKey === formDef.key && editingIdx !== null) {
-                    if (!dataObj.receipt_image && currentData[editingIdx].receipt_image) {
-                        dataObj.receipt_image = currentData[editingIdx].receipt_image;
+
+                // Handle multiple receipt images
+                if (formDef.key === 'receipts') {
+                    const receiptImageInput = document.getElementById('receipt-image');
+                    const files = receiptImageInput ? receiptImageInput.files : [];
+                    dataObj.receipt_images = [];
+                    if (files && files.length > 0) {
+                        const filesCount = Math.min(files.length, 10);
+                        for (let i = 0; i < filesCount; i++) {
+                            try {
+                                const base64 = await getBase64(files[i]);
+                                dataObj.receipt_images.push(base64);
+                            } catch (err) {
+                                console.error(err);
+                                showToast(translations[currentLang].err_image);
+                                return;
+                            }
+                        }
                     }
-                    currentData[editingIdx] = dataObj;
-                } else {
-                    currentData.push(dataObj);
                 }
 
-                try {
-                    dbStore.setItem(formDef.key, JSON.stringify(currentData));
-                } catch (e) {
-                    if (e.name === 'QuotaExceededError') {
-                        showToast(translations[currentLang].err_storage);
-                        return;
-                    }
+                // Check duplicate
+                const isDup = checkDuplicate(formDef.key, dataObj);
+                if (isDup) {
+                    showDuplicateWarningModal(() => {
+                        saveRecord(formDef.key, dataObj, formDef.renderFunc, formEl);
+                    });
+                    return;
                 }
 
-                formDef.renderFunc();
-                updateOverviewCards();
-                updateAutocompletes();
-                formEl.reset();
-                setDefaultDates();
-                closeAllModals();
-                showToast(translations[currentLang].success_save);
+                saveRecord(formDef.key, dataObj, formDef.renderFunc, formEl);
             });
         }
     });
+
+    // File change listener for selected images preview
+    const receiptImageInput = document.getElementById('receipt-image');
+    const selectedPreview = document.getElementById('selected-images-preview');
+    if (receiptImageInput && selectedPreview) {
+        receiptImageInput.addEventListener('change', async function () {
+            selectedPreview.innerHTML = '';
+            const filesCount = this.files.length;
+            if (filesCount > 0) {
+                const countToProcess = Math.min(filesCount, 10);
+                if (filesCount > 10) {
+                    showToast(currentLang === 'ar' ? 'الحد الأقصى هو 10 صور فقط!' : 'مازنده‌ترین هژمار 10 وێنه‌نه‌!');
+                }
+                for (let i = 0; i < countToProcess; i++) {
+                    const file = this.files[i];
+                    try {
+                        const base64 = await getBase64(file);
+                        const thumb = document.createElement('div');
+                        thumb.style.position = 'relative';
+                        thumb.style.width = '60px';
+                        thumb.style.height = '60px';
+                        thumb.style.borderRadius = '6px';
+                        thumb.style.overflow = 'hidden';
+                        thumb.style.border = '1px solid var(--surface-border)';
+                        
+                        const img = document.createElement('img');
+                        img.src = base64;
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'cover';
+                        
+                        thumb.appendChild(img);
+                        selectedPreview.appendChild(thumb);
+                    } catch (e) {
+                        console.error(e);
+                    }
+                }
+                const labelText = receiptImageInput.nextElementSibling.querySelector('span');
+                if (labelText) {
+                    labelText.textContent = currentLang === 'ar' 
+                        ? `تم اختيار ${countToProcess} صور` 
+                        : `${countToProcess} وێنه‌ هاتنه‌ هه‌لبژارتن`;
+                }
+            } else {
+                const labelText = receiptImageInput.nextElementSibling.querySelector('span');
+                if (labelText) {
+                    labelText.textContent = translations[currentLang].lbl_upload_text;
+                }
+            }
+        });
+    }
 
     setDefaultDates();
 
@@ -1021,7 +1086,7 @@ function renderCentralReceipts(filter) {
             <td>${item.date}</td>
             <td>${item.code}</td>
             <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
-            <td class="no-print">${item.receipt_image ? `<button class="btn-icon-sm" onclick="viewImage('${item.receipt_image}')"><i class="fa-solid fa-image"></i></button>` : '—'}</td>
+            <td class="no-print">${(item.receipt_images && item.receipt_images.length > 0) || item.receipt_image ? `<button class="btn-icon-sm" onclick="viewRecordImages(${item.originalIdx})" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-images"></i>${(item.receipt_images && item.receipt_images.length > 1) ? ` <span class="badge" style="background: var(--primary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; line-height: 1;">${item.receipt_images.length}</span>` : ''}</button>` : '—'}</td>
             <td class="no-print action-btns">
                 <button class="btn-icon-sm print" onclick="printSingleRecord('receipts',${item.originalIdx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
                 <button class="btn-icon-sm edit" onclick="editRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-pen"></i></button>
@@ -1064,7 +1129,7 @@ function renderDecentralReceipts(filter) {
             <td>${item.date}</td>
             <td>${item.code}</td>
             <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
-            <td class="no-print">${item.receipt_image ? `<button class="btn-icon-sm" onclick="viewImage('${item.receipt_image}')"><i class="fa-solid fa-image"></i></button>` : '—'}</td>
+            <td class="no-print">${(item.receipt_images && item.receipt_images.length > 0) || item.receipt_image ? `<button class="btn-icon-sm" onclick="viewRecordImages(${item.originalIdx})" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-images"></i>${(item.receipt_images && item.receipt_images.length > 1) ? ` <span class="badge" style="background: var(--primary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; line-height: 1;">${item.receipt_images.length}</span>` : ''}</button>` : '—'}</td>
             <td class="no-print action-btns">
                 <button class="btn-icon-sm print" onclick="printSingleRecord('receipts',${item.originalIdx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
                 <button class="btn-icon-sm edit" onclick="editRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-pen"></i></button>
@@ -1107,7 +1172,7 @@ function renderSpecialReceipts(filter) {
             <td>${item.date}</td>
             <td>${item.code}</td>
             <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
-            <td class="no-print">${item.receipt_image ? `<button class="btn-icon-sm" onclick="viewImage('${item.receipt_image}')"><i class="fa-solid fa-image"></i></button>` : '—'}</td>
+            <td class="no-print">${(item.receipt_images && item.receipt_images.length > 0) || item.receipt_image ? `<button class="btn-icon-sm" onclick="viewRecordImages(${item.originalIdx})" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-images"></i>${(item.receipt_images && item.receipt_images.length > 1) ? ` <span class="badge" style="background: var(--primary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; line-height: 1;">${item.receipt_images.length}</span>` : ''}</button>` : '—'}</td>
             <td class="no-print action-btns">
                 <button class="btn-icon-sm print" onclick="printSingleRecord('receipts',${item.originalIdx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
                 <button class="btn-icon-sm edit" onclick="editRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-pen"></i></button>
@@ -1119,11 +1184,96 @@ function renderSpecialReceipts(filter) {
 }
 
 function viewImage(base64Str) {
-    const imgEl = document.getElementById('preview-img-el');
-    if (imgEl) {
-        imgEl.src = base64Str;
-        openModal('image-preview-modal');
+    // Legacy support for single image viewing
+    currentPreviewImages = [base64Str];
+    currentPreviewIdx = 0;
+    updateImagePreviewModal();
+    openModal('image-preview-modal');
+}
+
+let currentPreviewImages = [];
+let currentPreviewIdx = 0;
+
+function viewRecordImages(idx) {
+    const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
+    const item = receipts[idx];
+    if (!item) return;
+    
+    currentPreviewImages = [];
+    if (item.receipt_images && item.receipt_images.length > 0) {
+        currentPreviewImages = item.receipt_images;
+    } else if (item.receipt_image) {
+        currentPreviewImages = [item.receipt_image];
     }
+    
+    if (currentPreviewImages.length === 0) return;
+    
+    currentPreviewIdx = 0;
+    updateImagePreviewModal();
+    openModal('image-preview-modal');
+}
+
+function updateImagePreviewModal() {
+    const imgEl = document.getElementById('preview-img-el');
+    const indicatorEl = document.getElementById('preview-indicator');
+    const prevBtn = document.getElementById('prev-img-btn');
+    const nextBtn = document.getElementById('next-img-btn');
+    const thumbsContainer = document.getElementById('preview-thumbs-container');
+    
+    if (!imgEl) return;
+    
+    imgEl.src = currentPreviewImages[currentPreviewIdx];
+    const count = currentPreviewImages.length;
+    
+    if (count > 1) {
+        if (prevBtn) prevBtn.style.display = 'flex';
+        if (nextBtn) nextBtn.style.display = 'flex';
+        if (indicatorEl) {
+            indicatorEl.textContent = currentLang === 'ar' 
+                ? `صورة ${currentPreviewIdx + 1} من ${count}`
+                : `وێنه‌ ${currentPreviewIdx + 1} ژ ${count}`;
+        }
+        
+        if (thumbsContainer) {
+            thumbsContainer.innerHTML = '';
+            currentPreviewImages.forEach((imgSrc, idx) => {
+                const thumb = document.createElement('img');
+                thumb.src = imgSrc;
+                thumb.style.width = '50px';
+                thumb.style.height = '50px';
+                thumb.style.objectFit = 'cover';
+                thumb.style.borderRadius = '4px';
+                thumb.style.cursor = 'pointer';
+                thumb.style.border = (idx === currentPreviewIdx) 
+                    ? '2px solid var(--primary)' 
+                    : '2px solid transparent';
+                thumb.style.margin = '0 2px';
+                thumb.style.transition = 'border-color 0.2s';
+                thumb.onclick = () => {
+                    currentPreviewIdx = idx;
+                    updateImagePreviewModal();
+                };
+                thumbsContainer.appendChild(thumb);
+            });
+        }
+    } else {
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        if (indicatorEl) indicatorEl.textContent = '';
+        if (thumbsContainer) thumbsContainer.innerHTML = '';
+    }
+}
+
+function nextPreviewImage() {
+    if (currentPreviewImages.length <= 1) return;
+    currentPreviewIdx = (currentPreviewIdx + 1) % currentPreviewImages.length;
+    updateImagePreviewModal();
+}
+
+function prevPreviewImage() {
+    if (currentPreviewImages.length <= 1) return;
+    currentPreviewIdx = (currentPreviewIdx - 1 + currentPreviewImages.length) % currentPreviewImages.length;
+    updateImagePreviewModal();
 }
 
 function renderDelegations(filter) {
@@ -1432,6 +1582,42 @@ function editRecord(key, idx) {
     if (key === 'receipts') {
         const radioContainer = formEl.querySelector('.radio-group-container');
         if (radioContainer) radioContainer.style.display = 'none';
+        
+        // Populate existing images preview
+        const selectedPreview = document.getElementById('selected-images-preview');
+        if (selectedPreview) {
+            selectedPreview.innerHTML = '';
+            let images = [];
+            if (item.receipt_images && item.receipt_images.length > 0) {
+                images = item.receipt_images;
+            } else if (item.receipt_image) {
+                images = [item.receipt_image];
+            }
+            images.forEach(base64 => {
+                const thumb = document.createElement('div');
+                thumb.style.position = 'relative';
+                thumb.style.width = '60px';
+                thumb.style.height = '60px';
+                thumb.style.borderRadius = '6px';
+                thumb.style.overflow = 'hidden';
+                thumb.style.border = '1px solid var(--surface-border)';
+                
+                const img = document.createElement('img');
+                img.src = base64;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                
+                thumb.appendChild(img);
+                selectedPreview.appendChild(thumb);
+            });
+            const labelText = document.getElementById('receipt-image').nextElementSibling.querySelector('span');
+            if (labelText && images.length > 0) {
+                labelText.textContent = currentLang === 'ar' 
+                    ? `تم تحميل ${images.length} صور مسبقاً` 
+                    : `${images.length} وێنه‌ پێشتر باركرينه‌`;
+            }
+        }
     }
     const submitBtn = formEl.querySelector('[type="submit"]');
     if (submitBtn) submitBtn.textContent = translations[currentLang].edit_save_btn;
@@ -1447,6 +1633,14 @@ function openAddReceiptModal(type) {
         if (radio) radio.checked = true;
         const radioContainer = formEl.querySelector('.radio-group-container');
         if (radioContainer) radioContainer.style.display = 'none';
+        
+        // Reset selected images preview
+        const selectedPreview = document.getElementById('selected-images-preview');
+        if (selectedPreview) selectedPreview.innerHTML = '';
+        const labelText = document.getElementById('receipt-image').nextElementSibling.querySelector('span');
+        if (labelText) {
+            labelText.textContent = translations[currentLang].lbl_upload_text;
+        }
     }
     editingKey = null;
     editingIdx = null;
@@ -1519,6 +1713,126 @@ function closeAllModals() {
         btn.textContent = translations[currentLang].save_btn;
         if (icon) btn.prepend(icon);
     });
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.opacity = '0';
+        modal.style.transform = 'translate(-50%, -50%) scale(0.9)';
+        setTimeout(() => {
+            modal.style.display = 'none';
+            // Check if any other modal is still visible
+            const visibleModals = Array.from(document.querySelectorAll('.modal')).filter(m => m.style.display === 'flex' && m.id !== modalId);
+            if (visibleModals.length === 0) {
+                const overlay = document.getElementById('modal-overlay');
+                if (overlay) overlay.style.opacity = '0';
+                setTimeout(() => {
+                    if (overlay && overlay.style.opacity === '0') overlay.style.display = 'none';
+                    document.body.classList.remove('modal-open');
+                }, 300);
+            }
+        }, 300);
+    }
+}
+
+let onDuplicateConfirmCallback = null;
+
+function showDuplicateWarningModal(onConfirm) {
+    onDuplicateConfirmCallback = onConfirm;
+    
+    const lang = translations[currentLang];
+    const titleEl = document.querySelector('#duplicate-confirm-modal .modal-header h3 span');
+    const msgEl = document.getElementById('duplicate-msg');
+    const btnConfirmEl = document.getElementById('duplicate-confirm-btn');
+    const btnCancelEl = document.querySelector('#duplicate-confirm-modal .btn-secondary');
+    
+    if (titleEl) titleEl.textContent = lang.duplicate_warning_title;
+    if (msgEl) msgEl.textContent = lang.duplicate_warning_msg;
+    if (btnConfirmEl) btnConfirmEl.textContent = lang.duplicate_confirm_btn;
+    if (btnCancelEl) btnCancelEl.textContent = lang.close_btn;
+    
+    openModal('duplicate-confirm-modal');
+}
+
+function executeDuplicateConfirm() {
+    closeModal('duplicate-confirm-modal');
+    if (typeof onDuplicateConfirmCallback === 'function') {
+        onDuplicateConfirmCallback();
+        onDuplicateConfirmCallback = null;
+    }
+}
+
+function checkDuplicate(key, dataObj) {
+    const currentData = JSON.parse(dbStore.getItem(key) || '[]');
+    const itemsToCheck = (editingKey === key && editingIdx !== null)
+        ? currentData.filter((_, idx) => idx !== editingIdx)
+        : currentData;
+
+    if (key === 'receipts') {
+        return itemsToCheck.some(item => 
+            String(item.code).trim() === String(dataObj.code).trim() && 
+            item.date === dataObj.date && 
+            parseFloat(item.amount) === parseFloat(dataObj.amount)
+        );
+    } else if (key === 'delegations') {
+        return itemsToCheck.some(item => 
+            String(item.name).trim() === String(dataObj.name).trim() && 
+            item.month === dataObj.month
+        );
+    } else if (key === 'children') {
+        return itemsToCheck.some(item => 
+            String(item.child).trim() === String(dataObj.child).trim() && 
+            String(item.father).trim() === String(dataObj.father).trim() && 
+            String(item.mother).trim() === String(dataObj.mother).trim()
+        );
+    } else if (key === 'marriage') {
+        return itemsToCheck.some(item => 
+            String(item.husband).trim() === String(dataObj.husband).trim() && 
+            String(item.wife).trim() === String(dataObj.wife).trim()
+        );
+    } else if (key === 'fines') {
+        return itemsToCheck.some(item => 
+            String(item.book_number || item.book_num).trim() === String(dataObj.book_number || dataObj.book_num).trim() && 
+            String(item.holder).trim() === String(dataObj.holder).trim()
+        );
+    }
+    return false;
+}
+
+function saveRecord(key, dataObj, renderFunc, formEl) {
+    let currentData = JSON.parse(dbStore.getItem(key) || '[]');
+    if (editingKey === key && editingIdx !== null) {
+        if (key === 'receipts') {
+            if (!dataObj.receipt_images || dataObj.receipt_images.length === 0) {
+                if (currentData[editingIdx].receipt_images) {
+                    dataObj.receipt_images = currentData[editingIdx].receipt_images;
+                } else if (currentData[editingIdx].receipt_image) {
+                    dataObj.receipt_images = [currentData[editingIdx].receipt_image];
+                }
+            }
+        }
+        currentData[editingIdx] = dataObj;
+    } else {
+        currentData.push(dataObj);
+    }
+
+    try {
+        dbStore.setItem(key, JSON.stringify(currentData));
+    } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+            showToast(translations[currentLang].err_storage);
+            return;
+        }
+    }
+
+    renderFunc();
+    updateOverviewCards();
+    updateAutocompletes();
+    formEl.reset();
+    setDefaultDates();
+    closeAllModals();
+    showToast(translations[currentLang].success_save);
 }
 
 window.addEventListener('beforeprint', () => {
@@ -1644,20 +1958,36 @@ function printSingleRecord(key, idx) {
         `;
     }
 
-    const hasImage = (key === 'receipts' && item.receipt_image);
-    const bodyContent = hasImage ? `
+    const hasImages = (key === 'receipts' && ((item.receipt_images && item.receipt_images.length > 0) || item.receipt_image));
+    let imageSideHTML = '';
+    if (hasImages) {
+        let images = [];
+        if (item.receipt_images && item.receipt_images.length > 0) {
+            images = item.receipt_images;
+        } else if (item.receipt_image) {
+            images = [item.receipt_image];
+        }
+        
+        let imagesTags = images.map(img => `<img src="${img}" class="spc-receipt-img" style="max-height: 250px; object-fit: contain; margin-bottom: 10px; border-radius: 6px; display: block; width: 100%;">`).join('');
+        
+        imageSideHTML = `
+            <div class="spc-image-side" style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="spc-image-container" style="max-height: none; overflow: visible;">
+                    <p class="spc-image-title">${lang.th_image}</p>
+                    ${imagesTags}
+                </div>
+            </div>
+        `;
+    }
+
+    const bodyContent = hasImages ? `
         <div class="spc-body-row">
             <div class="spc-info-side">
                 <table class="spc-table">
                     <tbody>${rows}</tbody>
                 </table>
             </div>
-            <div class="spc-image-side">
-                <div class="spc-image-container">
-                    <p class="spc-image-title">${lang.th_image}</p>
-                    <img src="${item.receipt_image}" class="spc-receipt-img">
-                </div>
-            </div>
+            ${imageSideHTML}
         </div>
     ` : `
         <table class="spc-table">
@@ -2737,19 +3067,670 @@ function updateAutocompletes() {
             const uniqueValues = new Set();
             data.forEach(item => {
                 const val = item[fieldName];
-                if (val && typeof val === 'string' && val.trim() !== '') {
-                    uniqueValues.add(val.trim());
-                }
-            });
-
-            // Populate the datalist options
-            datalistEl.innerHTML = '';
-            uniqueValues.forEach(val => {
-                const option = document.createElement('option');
-                option.value = val;
-                datalistEl.appendChild(option);
             });
         });
     });
 }
 
+function generateArchiveHTML() {
+    const data = {
+        receipts: JSON.parse(dbStore.getItem('receipts') || '[]'),
+        delegations: JSON.parse(dbStore.getItem('delegations') || '[]'),
+        children: JSON.parse(dbStore.getItem('children') || '[]'),
+        marriage: JSON.parse(dbStore.getItem('marriage') || '[]'),
+        fines: JSON.parse(dbStore.getItem('fines') || '[]'),
+        sig_director_name: dbStore.getItem('sig_director_name') || '',
+        sig_clerk_name: dbStore.getItem('sig_clerk_name') || '',
+        sig_officer_name: dbStore.getItem('sig_officer_name') || '',
+        exported_at: new Date().toLocaleString()
+    };
+    const lang = translations[currentLang];
+    const pageLang = currentLang;
+
+    function esc(v){ return (String(v||'')).replace(/\\/g,'\\\\').replace(/`/g,"'").replace(/\$\{/g,'\\${'); }
+
+    const sigClerk    = esc(data.sig_clerk_name);
+    const sigOfficer  = esc(data.sig_officer_name);
+    const sigDirector = esc(data.sig_director_name);
+    const exportedAt  = esc(data.exported_at);
+    const jsonData    = JSON.stringify(data)
+                            .replace(/\\/g,'\\\\')
+                            .replace(/`/g,'\\`')
+                            .replace(/\$\{/g,'\\${');
+
+    /* ── section title labels ── */
+    const secTitles = {
+        receipts   : esc(lang.print_section_central_receipt || lang.receipts),
+        delegations: esc(lang.print_section_delegation      || lang.delegations),
+        children   : esc(lang.print_section_children        || lang.children),
+        marriage   : esc(lang.print_section_marriage        || lang.marriage),
+        fines      : esc(lang.print_section_fines           || lang.fines)
+    };
+
+    return `<!DOCTYPE html>
+<html lang="${esc(pageLang)}" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<title>${esc(lang.audit_dept)} - ${esc(lang.ov_subtitle)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* ═══════════════════════════════════════════
+   THEME TOKENS
+═══════════════════════════════════════════ */
+:root[data-theme="dark"]{
+  --bg:#0f172a;--text:#f8fafc;--muted:#94a3b8;
+  --primary:#0d8abc;--pl:#38bdf8;
+  --surf:#1e293b;--surh:#334155;--bord:#334155;
+  --ok:#10b981;--warn:#f59e0b;--err:#ef4444;
+  --sh:0 10px 30px rgba(0,0,0,.5)
+}
+:root[data-theme="light"]{
+  --bg:#f1f5f9;--text:#0f172a;--muted:#64748b;
+  --primary:#0d8abc;--pl:#0ea5e9;
+  --surf:#ffffff;--surh:#e2e8f0;--bord:#e2e8f0;
+  --ok:#059669;--warn:#d97706;--err:#dc2626;
+  --sh:0 6px 24px rgba(0,0,0,.06)
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Noto Kufi Arabic',sans-serif;transition:background .2s,color .2s,border-color .2s}
+body{background:var(--bg);color:var(--text);direction:rtl;padding:20px;font-size:14px;min-height:100vh}
+.wrap{max-width:1440px;margin:0 auto}
+
+/* ── Header ── */
+header{background:var(--surf);border:1px solid var(--bord);border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:var(--sh)}
+.hdr-l h1{font-size:20px;font-weight:800}
+.hdr-l p{color:var(--muted);margin-top:5px;font-size:12px}
+.hdr-r{display:flex;gap:12px;align-items:center}
+.theme-btn{background:var(--surh);color:var(--text);border:1px solid var(--bord);padding:9px 14px;border-radius:10px;cursor:pointer;font-size:16px;line-height:1}
+.theme-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px}
+.sc{background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:18px;text-align:center;box-shadow:var(--sh);position:relative;overflow:hidden}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+.sc.c0::before{background:var(--primary)}.sc.c1::before{background:var(--ok)}.sc.c2::before{background:var(--warn)}
+.sc.c3::before{background:#8b5cf6}.sc.c4::before{background:#ec4899}.sc.c5::before{background:#06b6d4}.sc.c6::before{background:var(--err)}
+.sc h3{font-size:12px;color:var(--muted);margin-bottom:8px}
+.sc .num{font-size:26px;font-weight:800}
+
+/* ── Panel ── */
+.panel{background:var(--surf);border:1px solid var(--bord);border-radius:14px;padding:18px 20px;margin-bottom:20px;box-shadow:var(--sh)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--bord);padding-bottom:14px;margin-bottom:16px}
+.tb{background:transparent;color:var(--muted);border:1px solid transparent;padding:9px 18px;border-radius:10px;cursor:pointer;font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:7px}
+.tb:hover{background:var(--surh);color:var(--text)}
+.tb.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.filters{display:flex;gap:12px;flex-wrap:wrap}
+.si{position:relative;flex:2;min-width:240px}
+.si input{width:100%;background:var(--bg);border:1px solid var(--bord);color:var(--text);padding:11px 40px 11px 14px;border-radius:10px;outline:none;font-size:13px}
+.si input:focus{border-color:var(--primary)}
+.si i{position:absolute;top:50%;right:14px;transform:translateY(-50%);color:var(--muted)}
+select.flt{flex:1;min-width:150px;background:var(--bg);border:1px solid var(--bord);color:var(--text);padding:11px 14px;border-radius:10px;outline:none;font-size:13px;cursor:pointer}
+select.flt:focus{border-color:var(--primary)}
+
+/* ── Table ── */
+.tbl-wrap{background:var(--surf);border:1px solid var(--bord);border-radius:14px;overflow:hidden;box-shadow:var(--sh);margin-bottom:20px}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;text-align:right}
+th{background:rgba(13,138,188,.06);border-bottom:2px solid var(--bord);padding:14px 15px;font-weight:700;color:var(--pl);font-size:13px}
+td{border-bottom:1px solid var(--bord);padding:12px 15px;font-size:13.5px}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surh)}
+.badge{display:inline-block;padding:3px 8px;border-radius:10px;font-size:11px;font-weight:800;color:#fff}
+.amt{font-weight:700;color:var(--ok)}
+.btn-sm{background:var(--surh);color:var(--text);border:1px solid var(--bord);padding:6px 11px;border-radius:7px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;margin-left:5px}
+.btn-sm:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-sm.print:hover{background:var(--ok);border-color:var(--ok)}
+.nodata{text-align:center;padding:50px;color:var(--muted)}
+.nodata i{font-size:36px;margin-bottom:14px;display:block;opacity:.4}
+
+/* ── Modal ── */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:900;display:none;justify-content:center;align-items:center;padding:20px}
+.modal-box{background:var(--surf);border:1px solid var(--bord);border-radius:16px;width:min(96%,780px);max-height:92vh;display:flex;flex-direction:column;box-shadow:var(--sh)}
+.modal-hdr{padding:18px 22px;border-bottom:1px solid var(--bord);display:flex;justify-content:space-between;align-items:center}
+.modal-hdr h3{font-size:17px;font-weight:800;color:var(--pl);display:flex;align-items:center;gap:9px}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer}
+.modal-close:hover{color:var(--err)}
+.modal-body{padding:22px;overflow-y:auto;flex:1}
+.modal-ftr{padding:14px 22px;border-top:1px solid var(--bord);display:flex;justify-content:flex-end;gap:10px}
+.btn-m{padding:10px 18px;border-radius:9px;font-weight:700;cursor:pointer;border:none;font-size:13px;display:inline-flex;align-items:center;gap:7px}
+.btn-m.sec{background:var(--surh);color:var(--text)}
+.btn-m.ok{background:var(--ok);color:#fff}
+
+/* ── Images inside modal ── */
+.imgs-title{font-weight:700;color:var(--pl);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.imgs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:12px}
+.thumb{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:9px;cursor:pointer;border:2px solid transparent;box-shadow:0 3px 10px rgba(0,0,0,.2)}
+.thumb:hover{border-color:var(--primary);transform:scale(1.04)}
+
+/* ── Lightbox ── */
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:2000;display:none;justify-content:center;align-items:center;flex-direction:column;padding:20px}
+.lb-c{position:relative;max-width:82%;max-height:82vh}
+.lb-img{max-width:100%;max-height:82vh;border-radius:8px}
+.lb-x{position:absolute;top:-44px;right:0;color:#fff;font-size:26px;cursor:pointer;background:none;border:none}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;width:44px;height:44px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px}
+.lb-p{left:-58px}.lb-n{right:-58px}
+.lb-ind{color:#fff;margin-top:13px;font-weight:700}
+.lb-thumbs{display:flex;gap:7px;margin-top:12px}
+.lb-th{width:48px;height:48px;object-fit:cover;border-radius:5px;cursor:pointer;opacity:.5;border:2px solid transparent}
+.lb-th.active{opacity:1;border-color:var(--primary)}
+
+/* ── Footer ── */
+.foot{display:flex;justify-content:space-between;border-top:1px solid var(--bord);padding-top:14px;margin-top:24px;color:var(--muted);font-size:12px}
+
+/* ═══════════════════════════════════════════
+   PRINT CARD  (exact copy from main site)
+   single-print-card lives inside #printWin
+═══════════════════════════════════════════ */
+#printWin{display:none}
+
+/* ══════════════════════════════════════════
+   PRINT MEDIA — hide UI, show card
+══════════════════════════════════════════ */
+@media print {
+  body{background:#fff!important;color:#000!important;padding:0!important}
+  .wrap,header,.stats,.panel,.tbl-wrap,.foot,.lb,.modal{display:none!important}
+  #printWin{display:block!important}
+
+  /* ── identical to executeSinglePrint styles ── */
+  *{font-family:'Noto Kufi Arabic',sans-serif}
+  body{background:#fff;color:#1a1a2e;direction:rtl}
+  .single-print-card{padding:28px 35px;max-width:750px;margin:auto}
+  .spc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:10px}
+  .spc-header-right,.spc-header-left{flex:1;font-size:12px;line-height:1.9}
+  .spc-header-left{text-align:left}
+  .spc-header-center{flex:0 0 160px;text-align:center}
+  .spc-gov{font-size:11px;color:#444}
+  .spc-min{font-size:11px;color:#444}
+  .spc-dept{font-size:13px;font-weight:700}
+  .spc-audit{font-size:12px;color:#0D8ABC}
+  .spc-logo{width:80px;height:80px;object-fit:contain;margin-bottom:6px}
+  .spc-title{font-size:16px;font-weight:800;color:#1a1a2e}
+  .spc-badge{display:inline-block;background:#0D8ABC;color:#fff;font-size:10px;padding:3px 10px;border-radius:20px;margin-top:4px}
+  .spc-table{width:100%;border-collapse:collapse;margin-top:8px}
+  .spc-table th{background:#f0f7fc;color:#1a1a2e;text-align:right;padding:9px 14px;font-size:12px;width:35%;border:1px solid #dde}
+  .spc-table td{padding:9px 14px;font-size:13px;border:1px solid #dde}
+  .spc-table tr.amount-row th,.spc-table tr.amount-row td{background:#fff8e1;font-weight:700;color:#b45309;font-size:14px}
+  .spc-signatures{display:flex;justify-content:space-between;gap:20px;margin-top:100px;padding-top:20px}
+  .spc-sig{text-align:center;flex:1;font-size:11px}
+  .spc-sig p{margin:0}
+  .spc-sig p.sig-title{font-weight:700;margin-bottom:2px}
+  .spc-body-row{display:flex;gap:20px;align-items:flex-start;margin-top:10px;width:100%}
+  .spc-info-side{flex:1 1 55%}
+  .spc-image-side{flex:1 1 45%;text-align:center;display:flex;flex-direction:column;gap:8px}
+  .spc-image-container{border:1px solid #ddd;border-radius:8px;padding:10px;background:#f9f9f9;max-height:none;overflow:visible}
+  .spc-receipt-img{max-width:100%;max-height:250px;object-fit:contain;border-radius:6px;display:block;margin:0 auto 8px}
+  .spc-image-title{font-weight:600;margin-bottom:8px;color:#555;font-size:11px;text-align:center}
+  @page{margin:1.5cm}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- Header -->
+<header>
+  <div class="hdr-l">
+    <h1>${esc(lang.gov_name)} &#8211; ${esc(lang.ministry)}</h1>
+    <p>${esc(lang.dept_name)} &#8211; ${esc(lang.audit_dept)} | ${esc(lang.ov_subtitle)}</p>
+  </div>
+  <div class="hdr-r">
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()"><i id="themeIco" class="fa-solid fa-sun"></i></button>
+    <div style="text-align:left">
+      <p><strong>${esc(lang.lbl_date_print)}</strong> ${exportedAt}</p>
+      <p style="font-size:11px;margin-top:3px;color:var(--muted)">&#128274; أرشيف تفاعلي غير متصل</p>
+    </div>
+  </div>
+</header>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="sc c0"><h3>${esc(lang.central_receipts)}</h3><div class="num" id="s0">0</div></div>
+  <div class="sc c1"><h3>${esc(lang.decentral_receipts)}</h3><div class="num" id="s1">0</div></div>
+  <div class="sc c2"><h3>${esc(lang.special_receipts)}</h3><div class="num" id="s2">0</div></div>
+  <div class="sc c3"><h3>${esc(lang.delegations)}</h3><div class="num" id="s3">0</div></div>
+  <div class="sc c4"><h3>${esc(lang.children)}</h3><div class="num" id="s4">0</div></div>
+  <div class="sc c5"><h3>${esc(lang.marriage)}</h3><div class="num" id="s5">0</div></div>
+  <div class="sc c6"><h3>${esc(lang.fines)}</h3><div class="num" id="s6">0</div></div>
+</div>
+
+<!-- Control Panel -->
+<div class="panel">
+  <div class="tabs">
+    <button class="tb active" onclick="switchTab('receipts',this)"><i class="fa-solid fa-file-invoice-dollar"></i>${esc(lang.receipts)}</button>
+    <button class="tb" onclick="switchTab('delegations',this)"><i class="fa-solid fa-plane-departure"></i>${esc(lang.delegations)}</button>
+    <button class="tb" onclick="switchTab('children',this)"><i class="fa-solid fa-child"></i>${esc(lang.children)}</button>
+    <button class="tb" onclick="switchTab('marriage',this)"><i class="fa-solid fa-ring"></i>${esc(lang.marriage)}</button>
+    <button class="tb" onclick="switchTab('fines',this)"><i class="fa-solid fa-book-open"></i>${esc(lang.fines)}</button>
+  </div>
+  <div class="filters">
+    <div class="si">
+      <i class="fa-solid fa-search"></i>
+      <input type="text" id="qs" placeholder="${esc(lang.search_placeholder)}" oninput="doSearch()">
+    </div>
+    <select class="flt" id="typeF" onchange="doFilter()" style="display:none"></select>
+    <select class="flt" id="monthF" onchange="doFilter()" style="display:none"></select>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="tbl-wrap">
+  <div class="tbl-scroll">
+    <table id="tbl">
+      <thead><tr id="thead"></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="nodata" id="nodata" style="display:none">
+    <i class="fa-solid fa-folder-open"></i>${esc(lang.empty_data)}
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="foot">
+  <div>
+    <p><strong>${esc(lang.sig_clerk)}:</strong> ${sigClerk||'&#8212;'}</p>
+    <p><strong>${esc(lang.sig_officer)}:</strong> ${sigOfficer||'&#8212;'}</p>
+    <p><strong>${esc(lang.sig_director)}:</strong> ${sigDirector||'&#8212;'}</p>
+  </div>
+  <div style="text-align:left;align-self:flex-end">
+    <p>&#169; ${new Date().getFullYear()} &#8211; ${esc(lang.dept_name)}</p>
+  </div>
+</div>
+</div><!-- /.wrap -->
+
+<!-- ══ Details Modal ══ -->
+<div id="detailModal" class="modal" onclick="closeDet(event)">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <h3 id="detTitle"><i class="fa-solid fa-circle-info"></i> تفاصيل السجل</h3>
+      <button class="modal-close" onclick="closeDet(event)"><i class="fa-solid fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <!-- preview of the print card (dark/light) -->
+      <div id="modalPreview" style="border:1px solid var(--bord);border-radius:12px;padding:20px;background:rgba(255,255,255,.01);margin-bottom:18px;overflow:auto"></div>
+      <!-- images -->
+      <div id="imgSec" style="display:none">
+        <p class="imgs-title"><i class="fa-solid fa-images"></i> الصور المرفقة للوصل</p>
+        <div class="imgs-grid" id="imgGrid"></div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-m sec" onclick="closeDet(event)"><i class="fa-solid fa-times"></i> ${esc(lang.close_btn||'إغلاق')}</button>
+      <button class="btn-m ok" onclick="doPrint()"><i class="fa-solid fa-print"></i> طباعة السجل</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Hidden print container ══ -->
+<div id="printWin"></div>
+
+<!-- Lightbox -->
+<div id="lb" class="lb" onclick="lbClose(event)">
+  <div class="lb-c" onclick="event.stopPropagation()">
+    <button class="lb-x" onclick="lbClose(event)"><i class="fa-solid fa-times"></i></button>
+    <button class="lb-nav lb-p" onclick="lbPrev()"><i class="fa-solid fa-chevron-right"></i></button>
+    <button class="lb-nav lb-n" onclick="lbNext()"><i class="fa-solid fa-chevron-left"></i></button>
+    <img id="lbImg" class="lb-img" src="" alt="">
+  </div>
+  <div id="lbInd" class="lb-ind"></div>
+  <div id="lbThumbs" class="lb-thumbs"></div>
+</div>
+
+<script>
+/* ── Data ── */
+const D = ${jsonData};
+let tab='receipts', qs='', mf='', tf='', lbImgs=[], lbIdx=0;
+
+const CUR = '${esc(pageLang)}';
+const SIG_CLERK   = '${sigClerk}';
+const SIG_OFFICER = '${sigOfficer}';
+const SIG_DIR     = '${sigDirector}';
+
+const SEC_TITLES = {
+  receipts:    '${secTitles.receipts}',
+  delegations: '${secTitles.delegations}',
+  children:    '${secTitles.children}',
+  marriage:    '${secTitles.marriage}',
+  fines:       '${secTitles.fines}'
+};
+
+const L = {
+  receipt_type: '${esc(lang.lbl_receipt_type||'نوع الوصل')}',
+  directorate:  '${esc(lang.lbl_directorate||lang.th_directorate||'')}',
+  department:   '${esc(lang.lbl_department ||lang.th_department ||'')}',
+  location:     '${esc(lang.lbl_location   ||lang.th_location   ||'')}',
+  date:         '${esc(lang.lbl_date       ||lang.th_date       ||'')}',
+  code:         '${esc(lang.lbl_code       ||lang.th_code       ||'')}',
+  amount:       '${esc(lang.lbl_amount     ||lang.th_amount     ||'')}',
+  total:        '${esc(lang.lbl_total      ||lang.th_total      ||'')}',
+  name:         '${esc(lang.th_name        ||'')}',
+  month:        '${esc(lang.lbl_month      ||lang.th_month      ||'')}',
+  count:        '${esc(lang.lbl_count      ||lang.th_count      ||'')}',
+  export_num:   '${esc(lang.th_export      ||'')}',
+  import_num:   '${esc(lang.th_import      ||'')}',
+  father:       '${esc(lang.lbl_father     ||lang.th_father     ||'')}',
+  mother:       '${esc(lang.lbl_mother     ||lang.th_mother     ||'')}',
+  child:        '${esc(lang.lbl_child      ||lang.th_child      ||'')}',
+  gender:       '${esc(lang.lbl_gender     ||lang.th_gender     ||'')}',
+  dob:          '${esc(lang.th_dob         ||'')}',
+  arrival:      '${esc(lang.th_arrival     ||'')}',
+  husband:      '${esc(lang.lbl_husband    ||lang.th_husband    ||'')}',
+  wife:         '${esc(lang.lbl_wife       ||lang.th_wife       ||'')}',
+  holder:       '${esc(lang.lbl_holder     ||lang.th_holder     ||'')}',
+  book_type:    '${esc(lang.lbl_book_type  ||'')}',
+  book_number:  '${esc(lang.lbl_book_num   ||lang.th_book_num   ||'')}',
+  currency:     '${esc(lang.currency       ||'د.ع')}',
+  actions:      '${esc(lang.th_actions     ||'الإجراءات')}',
+  vd:           '${esc(lang.view_details   ||'عرض التفاصيل')}',
+  pr:           '${esc(lang.print_record   ||'طباعة')}',
+  sig_clerk:    '${esc(lang.sig_clerk      ||'')}',
+  sig_officer:  '${esc(lang.sig_officer    ||'')}',
+  sig_director: '${esc(lang.sig_director   ||'')}',
+  lbl_date_p:   '${esc(lang.lbl_date_print ||'')}',
+  records_count:'${esc(lang.records_count  ||'عدد السجلات')}',
+  single_print: '${esc(lang.single_print   ||'طباعة مفردة')}',
+  th_image:     '${esc(lang.th_image       ||'الصورة')}',
+  lbl_central:  '${esc(lang.lbl_central    ||'مركزي')}',
+  lbl_decentral:'${esc(lang.lbl_decentral  ||'لا مركزي')}',
+  lbl_special:  '${esc(lang.lbl_special    ||'خاصة')}',
+  lbl_male:     '${esc(lang.lbl_male       ||'ذكر')}',
+  lbl_female:   '${esc(lang.lbl_female     ||'أنثى')}',
+  gov_name:     '${esc(lang.gov_name       ||'')}',
+  ministry:     '${esc(lang.ministry       ||'')}',
+  dept_name:    '${esc(lang.dept_name      ||'')}',
+  audit_dept:   '${esc(lang.audit_dept     ||'')}'
+};
+
+const MONTHS_AR = ['كانون الثاني','شباط','آذار','نيسان','أيار','حزيران','تموز','آب','أيلول','تشرين الأول','تشرين الثاني','كانون الأول'];
+const MONTHS_KU = ['كانوونا دووێ','شوبات','آدار','نیسان','گۆلان','حوزەیران','تیرمەهـ','تەباخ','ئەیلول','چرییا ئێكێ','چرییا دووێ','كانوونا ئێكێ'];
+const MONTHS = CUR==='ar' ? MONTHS_AR : MONTHS_KU;
+
+/* ── Stats ── */
+document.getElementById('s0').textContent = D.receipts.filter(r=>r.receipt_type==='مركزي').length;
+document.getElementById('s1').textContent = D.receipts.filter(r=>r.receipt_type==='لا مركزي').length;
+document.getElementById('s2').textContent = D.receipts.filter(r=>r.receipt_type==='خاصه').length;
+document.getElementById('s3').textContent = D.delegations.length;
+document.getElementById('s4').textContent = D.children.length;
+document.getElementById('s5').textContent = D.marriage.length;
+document.getElementById('s6').textContent = D.fines.length;
+
+/* ── Theme ── */
+function toggleTheme(){
+  const r=document.documentElement,ico=document.getElementById('themeIco');
+  if(r.getAttribute('data-theme')==='dark'){r.setAttribute('data-theme','light');ico.className='fa-solid fa-moon';}
+  else{r.setAttribute('data-theme','dark');ico.className='fa-solid fa-sun';}
+}
+
+/* ── Tabs ── */
+function switchTab(t,btn){
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  tab=t;qs='';mf='';tf='';
+  document.getElementById('qs').value='';
+  setupFilters();render();
+}
+
+/* ── Filters ── */
+function setupFilters(){
+  const tF=document.getElementById('typeF'),mF=document.getElementById('monthF');
+  tF.style.display='none';mF.style.display='none';tF.innerHTML='';mF.innerHTML='';
+  const all=CUR==='ar'?'الكل':'هەمی';
+  if(tab==='receipts'){
+    tF.innerHTML='<option value="">'+L.receipt_type+' ('+all+')</option>'
+      +'<option value="مركزي">'+L.lbl_central+'</option>'
+      +'<option value="لا مركزي">'+L.lbl_decentral+'</option>'
+      +'<option value="خاصه">'+L.lbl_special+'</option>';
+    tF.style.display='block';
+  }
+  if(['receipts','children','fines'].includes(tab)){
+    mF.innerHTML='<option value="">'+(CUR==='ar'?'الشهر':'هه‌یڤ')+' ('+all+')</option>';
+    for(let i=1;i<=12;i++){const v=(i<10?'0':'')+i;mF.innerHTML+='<option value="'+v+'">'+MONTHS[i-1]+'</option>';}
+    mF.style.display='block';
+  } else if(tab==='delegations'){
+    mF.innerHTML='<option value="">'+(CUR==='ar'?'الشهر':'هه‌یڤ')+' ('+all+')</option>';
+    MONTHS.forEach(m=>{mF.innerHTML+='<option value="'+m+'">'+m+'</option>';});
+    mF.style.display='block';
+  }
+}
+function doSearch(){qs=document.getElementById('qs').value.toLowerCase().trim();render();}
+function doFilter(){
+  const tF=document.getElementById('typeF'),mF=document.getElementById('monthF');
+  tf=tF?tF.value:'';mf=mF?mF.value:'';render();
+}
+
+/* ── Data filter ── */
+function filtered(){
+  let lst=[...D[tab]||[]];
+  if(qs) lst=lst.filter(r=>Object.values(r).some(v=>typeof v==='string'&&!v.startsWith('data:image')&&v.toLowerCase().includes(qs)));
+  if(tf&&tab==='receipts') lst=lst.filter(r=>r.receipt_type===tf);
+  if(mf){
+    if(['receipts','children','fines'].includes(tab)) lst=lst.filter(r=>{const d=r.date||r.arrival||'';return d.split('-')[1]===mf;});
+    if(tab==='delegations') lst=lst.filter(r=>r.month===mf);
+  }
+  return lst;
+}
+
+/* ── Column definitions ── */
+const COLS={
+  receipts:['receipt_type','directorate','department','location','date','code','amount'],
+  delegations:['name','month','count','amount','total','export_num','import_num'],
+  children:['child','father','mother','gender','dob','arrival','amount'],
+  marriage:['husband','wife','date','amount'],
+  fines:['book_type','holder','book_number','date','location','total']
+};
+
+/* ── Render Table ── */
+function render(){
+  const thead=document.getElementById('thead'),tbody=document.getElementById('tbody'),nodata=document.getElementById('nodata'),tbl=document.getElementById('tbl');
+  thead.innerHTML='';tbody.innerHTML='';
+  const rows=filtered();
+  if(!rows.length){nodata.style.display='block';tbl.style.display='none';return;}
+  nodata.style.display='none';tbl.style.display='table';
+  const cols=COLS[tab]||[];
+  cols.forEach(c=>{const th=document.createElement('th');th.textContent=L[c]||c;thead.appendChild(th);});
+  const thA=document.createElement('th');thA.textContent=L.actions;thead.appendChild(thA);
+  rows.forEach(item=>{
+    const tr=document.createElement('tr');
+    cols.forEach(c=>{
+      const td=document.createElement('td');
+      if(c==='amount'||c==='total'){
+        td.className='amt';
+        td.textContent=parseFloat(item[c]||0).toLocaleString()+' '+L.currency;
+      } else if(c==='receipt_type'){
+        const v=item[c]||'';
+        const clr=v==='مركزي'?'#0d8abc':v==='لا مركزي'?'#10b981':'#f59e0b';
+        const lbl=v==='مركزي'?L.lbl_central:v==='لا مركزي'?L.lbl_decentral:L.lbl_special;
+        td.innerHTML='<span class="badge" style="background:'+clr+'">'+lbl+'</span>';
+      } else if(c==='gender'){
+        td.textContent=item[c]==='ذكر'?L.lbl_male:L.lbl_female;
+      } else {
+        td.textContent=item[c]||'—';
+      }
+      tr.appendChild(td);
+    });
+    const tdA=document.createElement('td');
+    const b1=document.createElement('button');b1.className='btn-sm';b1.innerHTML='<i class="fa-solid fa-eye"></i> '+L.vd;b1.onclick=()=>openDet(item);tdA.appendChild(b1);
+    const b2=document.createElement('button');b2.className='btn-sm print';b2.innerHTML='<i class="fa-solid fa-print"></i> '+L.pr;b2.onclick=()=>printRow(item);tdA.appendChild(b2);
+    tr.appendChild(tdA);
+    tbody.appendChild(tr);
+  });
+}
+
+/* ══════════════════════════════════════════
+   BUILD PRINT CARD HTML
+   (identical markup to printSingleRecord in main app)
+══════════════════════════════════════════ */
+function buildPrintCard(item){
+  const now=new Date();
+  const dateStr=now.toLocaleDateString(CUR==='ar'?'ar-IQ':'ku-IQ');
+  const timeStr=now.toLocaleTimeString(CUR==='ar'?'ar-IQ':'ku-IQ');
+
+  let secTitle = SEC_TITLES[tab] || '';
+  if(tab==='receipts'){
+    secTitle = item.receipt_type==='مركزي' ? SEC_TITLES.receipts : SEC_TITLES.delegations;
+    /* keep original: central vs decentral label comes from sec title key */
+    secTitle = SEC_TITLES.receipts;
+  }
+
+  /* ── field rows ── */
+  let rows='';
+  if(tab==='receipts'){
+    const tLbl=item.receipt_type==='مركزي'?L.lbl_central:item.receipt_type==='لا مركزي'?L.lbl_decentral:L.lbl_special;
+    rows=\`<tr><th>\${L.receipt_type}</th><td>\${tLbl}</td></tr>
+<tr><th>\${L.directorate}</th><td>\${item.directorate||''}</td></tr>
+<tr><th>\${L.department}</th><td>\${item.department||''}</td></tr>
+<tr><th>\${L.location}</th><td>\${item.location||''}</td></tr>
+<tr><th>\${L.date}</th><td>\${item.date||''}</td></tr>
+<tr><th>\${L.code}</th><td>\${item.code||''}</td></tr>
+<tr class="amount-row"><th>\${L.amount}</th><td>\${parseFloat(item.amount||0).toLocaleString()} \${L.currency}</td></tr>\`;
+  } else if(tab==='delegations'){
+    rows=\`<tr><th>\${L.name}</th><td>\${item.name||''}</td></tr>
+<tr><th>\${L.month}</th><td>\${item.month||''}</td></tr>
+<tr><th>\${L.count}</th><td>\${item.count||''}</td></tr>
+<tr><th>\${L.export_num}</th><td>\${item.export_num||item.export||''}</td></tr>
+<tr><th>\${L.import_num}</th><td>\${item.import_num||item.import||''}</td></tr>
+<tr><th>\${L.amount}</th><td>\${parseFloat(item.amount||0).toLocaleString()} \${L.currency}</td></tr>
+<tr class="amount-row"><th>\${L.total}</th><td>\${parseFloat(item.total||0).toLocaleString()} \${L.currency}</td></tr>\`;
+  } else if(tab==='children'){
+    rows=\`<tr><th>\${L.father}</th><td>\${item.father||''}</td></tr>
+<tr><th>\${L.mother}</th><td>\${item.mother||''}</td></tr>
+<tr><th>\${L.child}</th><td>\${item.child||''}</td></tr>
+<tr><th>\${L.gender}</th><td>\${item.gender==='ذكر'?L.lbl_male:L.lbl_female}</td></tr>
+<tr><th>\${L.dob}</th><td>\${item.dob||''}</td></tr>
+<tr><th>\${L.arrival}</th><td>\${item.arrival||''}</td></tr>
+<tr class="amount-row"><th>\${L.amount}</th><td>\${parseFloat(item.amount||0).toLocaleString()} \${L.currency}</td></tr>\`;
+  } else if(tab==='marriage'){
+    rows=\`<tr><th>\${L.husband}</th><td>\${item.husband||''}</td></tr>
+<tr><th>\${L.wife}</th><td>\${item.wife||''}</td></tr>
+<tr><th>\${L.date}</th><td>\${item.date||''}</td></tr>
+<tr><th>\${L.arrival}</th><td>\${item.arrival||''}</td></tr>
+<tr class="amount-row"><th>\${L.amount}</th><td>\${parseFloat(item.amount||0).toLocaleString()} \${L.currency}</td></tr>\`;
+  } else if(tab==='fines'){
+    rows=\`<tr><th>\${L.book_type}</th><td>\${item.book_type||''}</td></tr>
+<tr><th>\${L.holder}</th><td>\${item.holder||''}</td></tr>
+<tr><th>\${L.book_number}</th><td>\${item.book_number||''}</td></tr>
+<tr><th>\${L.date}</th><td>\${item.date||''}</td></tr>
+<tr><th>\${L.location}</th><td>\${item.location||''}</td></tr>
+<tr class="amount-row"><th>\${L.total}</th><td>\${parseFloat(item.total||0).toLocaleString()} \${L.currency}</td></tr>\`;
+  }
+
+  /* ── images side ── */
+  let imgs=item.receipt_images&&item.receipt_images.length?item.receipt_images:item.receipt_image?[item.receipt_image]:[];
+  let imgSideHTML='';
+  if(tab==='receipts'&&imgs.length){
+    const tags=imgs.map(s=>\`<img src="\${s}" class="spc-receipt-img">\`).join('');
+    imgSideHTML=\`<div class="spc-image-side"><div class="spc-image-container"><p class="spc-image-title">\${L.th_image}</p>\${tags}</div></div>\`;
+  }
+
+  const bodyHTML=imgSideHTML
+    ?\`<div class="spc-body-row"><div class="spc-info-side"><table class="spc-table"><tbody>\${rows}</tbody></table></div>\${imgSideHTML}</div>\`
+    :\`<table class="spc-table"><tbody>\${rows}</tbody></table>\`;
+
+  return \`<div class="single-print-card">
+  <div class="spc-header">
+    <div class="spc-header-right">
+      <p class="spc-gov">\${L.gov_name}</p>
+      <p class="spc-min">\${L.ministry}</p>
+      <p class="spc-dept">\${L.dept_name}</p>
+      <p class="spc-audit">\${L.audit_dept}</p>
+    </div>
+    <div class="spc-header-center">
+      <img src="logo.png" class="spc-logo" onerror="this.style.display='none'">
+      <h2 class="spc-title">\${secTitle}</h2>
+      <span class="spc-badge">\${L.single_print}</span>
+    </div>
+    <div class="spc-header-left">
+      <p><strong>\${L.lbl_date_p}</strong> \${dateStr}</p>
+      <p><strong>\${CUR==='ar'?'الوقت':'کات'}:</strong> \${timeStr}</p>
+      <p><strong>\${L.records_count}:</strong> 1</p>
+    </div>
+  </div>
+  \${bodyHTML}
+  <div class="spc-signatures">
+    <div class="spc-sig"><div style="height:50px"></div><p class="sig-title">\${L.sig_clerk}</p><p class="sig-name">\${SIG_CLERK||'—'}</p></div>
+    <div class="spc-sig"><div style="height:50px"></div><p class="sig-title">\${L.sig_officer}</p><p class="sig-name">\${SIG_OFFICER||'—'}</p></div>
+    <div class="spc-sig"><div style="height:50px"></div><p class="sig-title">\${L.sig_director}</p><p class="sig-name">\${SIG_DIR||'—'}</p></div>
+  </div>
+</div>\`;
+}
+
+/* ── Modal open ── */
+let _currentItem = null;
+function openDet(item){
+  _currentItem = item;
+  const preview=document.getElementById('modalPreview');
+  const imgGrid=document.getElementById('imgGrid');
+  const imgSec=document.getElementById('imgSec');
+  imgGrid.innerHTML='';imgSec.style.display='none';
+
+  /* Build a screen-friendly card inside the modal */
+  preview.innerHTML = buildPrintCard(item);
+
+  /* Make the preview readable in dark/light mode by overriding print colours */
+  preview.querySelectorAll('.spc-table th').forEach(el=>{el.style.background='var(--surh)';el.style.color='var(--text)';el.style.border='1px solid var(--bord)';});
+  preview.querySelectorAll('.spc-table td').forEach(el=>{el.style.border='1px solid var(--bord)';el.style.color='var(--text)';});
+  preview.querySelectorAll('.spc-table tr.amount-row th, .spc-table tr.amount-row td').forEach(el=>{el.style.background='rgba(251,191,36,.08)';el.style.color='var(--warn)';});
+  preview.querySelectorAll('.spc-image-container').forEach(el=>{el.style.background='var(--surh)';el.style.border='1px solid var(--bord)';});
+  preview.querySelectorAll('.spc-receipt-img').forEach(el=>{el.style.cursor='pointer';});
+
+  /* Images lightbox hookup */
+  let imgs=item.receipt_images&&item.receipt_images.length?item.receipt_images:item.receipt_image?[item.receipt_image]:[];
+  if(tab==='receipts'&&imgs.length){
+    imgSec.style.display='block';
+    imgs.forEach((s,i)=>{
+      const img=document.createElement('img');img.src=s;img.className='thumb';
+      img.onclick=()=>lbOpen(imgs,i);imgGrid.appendChild(img);
+    });
+    preview.querySelectorAll('.spc-receipt-img').forEach((el,i)=>{el.onclick=()=>lbOpen(imgs,i);});
+  }
+
+  document.getElementById('detailModal').style.display='flex';
+}
+function closeDet(e){document.getElementById('detailModal').style.display='none';}
+
+/* ── Print ── */
+function doPrint(){
+  if(!_currentItem) return;
+  document.getElementById('printWin').innerHTML = buildPrintCard(_currentItem);
+  window.print();
+}
+function printRow(item){openDet(item);setTimeout(()=>{doPrint();},400);}
+
+/* ── Lightbox ── */
+function lbOpen(imgs,idx){lbImgs=imgs;lbIdx=idx;lbUpdate();document.getElementById('lb').style.display='flex';}
+function lbUpdate(){
+  document.getElementById('lbImg').src=lbImgs[lbIdx];
+  const n=lbImgs.length;
+  const p=document.querySelector('.lb-p'),nx=document.querySelector('.lb-n'),ind=document.getElementById('lbInd'),th=document.getElementById('lbThumbs');
+  if(n>1){p.style.display='flex';nx.style.display='flex';ind.textContent='صورة '+(lbIdx+1)+' من '+n;th.innerHTML='';lbImgs.forEach((s,i)=>{const img=document.createElement('img');img.src=s;img.className='lb-th'+(i===lbIdx?' active':'');img.onclick=()=>{lbIdx=i;lbUpdate();};th.appendChild(img);});}
+  else{p.style.display='none';nx.style.display='none';ind.textContent='';th.innerHTML='';}
+}
+function lbPrev(){if(lbImgs.length<=1)return;lbIdx=(lbIdx-1+lbImgs.length)%lbImgs.length;lbUpdate();}
+function lbNext(){if(lbImgs.length<=1)return;lbIdx=(lbIdx+1)%lbImgs.length;lbUpdate();}
+function lbClose(e){document.getElementById('lb').style.display='none';}
+
+/* ── Boot ── */
+setupFilters();
+render();
+</script>
+</body>
+</html>`;
+}
+
+function exportHTMLArchive() {
+    const htmlContent = generateArchiveHTML();
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().split('T')[0];
+    const timeStr = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
+    a.href = url;
+    a.download = `traffic_audit_archive_${dateStr}_${timeStr}.html`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(translations[currentLang].success_save);
+    }, 100);
+}
