@@ -1,4 +1,4 @@
-﻿// ===== DATABASE / CACHE STORE (IndexedDB with LocalStorage Fallback) =====
+// ===== DATABASE / CACHE STORE (IndexedDB with LocalStorage Fallback) =====
 const dbStore = {
     _cache: {},
     _db: null,
@@ -946,7 +946,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
-
 function getBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -999,6 +998,71 @@ function initData() {
     renderChildren();
     renderMarriage();
     renderFines();
+}
+
+function updateAutocompleteSuggestions() {
+    const dataKeys = {
+        'receipts': ['directorate', 'department', 'location'],
+        'delegations': ['name', 'export_num', 'import_num'],
+        'children': ['father', 'mother', 'child'],
+        'marriage': ['husband', 'wife'],
+        'fines': ['holder', 'location']
+    };
+
+    const uniqueValues = {};
+
+    for (const [storeKey, fields] of Object.entries(dataKeys)) {
+        const dataStr = dbStore.getItem(storeKey);
+        if (dataStr) {
+            try {
+                const data = JSON.parse(dataStr);
+                data.forEach(item => {
+                    fields.forEach(field => {
+                        if (!uniqueValues[field]) {
+                            uniqueValues[field] = new Set();
+                        }
+                        if (item[field] && typeof item[field] === 'string') {
+                            uniqueValues[field].add(item[field].trim());
+                        }
+                    });
+                });
+            } catch (e) {
+                console.error("Error parsing for autocomplete", e);
+            }
+        }
+    }
+
+    let datalistContainer = document.getElementById('datalist-container');
+    if (!datalistContainer) {
+        datalistContainer = document.createElement('div');
+        datalistContainer.id = 'datalist-container';
+        document.body.appendChild(datalistContainer);
+    }
+    datalistContainer.innerHTML = '';
+
+    for (const [field, valuesSet] of Object.entries(uniqueValues)) {
+        const datalistId = 'dl-' + field;
+        const datalist = document.createElement('datalist');
+        datalist.id = datalistId;
+        
+        valuesSet.forEach(val => {
+            if (val) {
+                const option = document.createElement('option');
+                option.value = val;
+                datalist.appendChild(option);
+            }
+        });
+        
+        datalistContainer.appendChild(datalist);
+
+        document.querySelectorAll(`input[name="${field}"]`).forEach(input => {
+            if (input.type !== 'radio' && input.type !== 'checkbox' && input.type !== 'file' && input.type !== 'date' && input.type !== 'number') {
+                input.setAttribute('list', datalistId);
+                // To prevent browser's generic autocomplete hiding datalist
+                input.setAttribute('autocomplete', 'off');
+            }
+        });
+    }
 }
 
 function updateOverviewCards() {
@@ -1906,69 +1970,112 @@ function printSingleRecord(key, idx) {
         fines: lang.print_section_fines
     };
 
+    const validImages = [];
+    if (key === 'receipts') {
+        if (item.receipt_images && item.receipt_images.length > 0) {
+            item.receipt_images.forEach(img => {
+                if (img && img.trim() !== '') validImages.push(img);
+            });
+        } else if (item.receipt_image && item.receipt_image.trim() !== '') {
+            validImages.push(item.receipt_image);
+        }
+    }
+    const hasImages = validImages.length > 0;
+    
     // Build field rows based on section
     let rows = '';
-    if (key === 'receipts') {
-        rows = `
-            <tr><th>${lang.lbl_receipt_type}</th><td>${item.receipt_type === 'مركزي' ? lang.lbl_central : lang.lbl_decentral}</td></tr>
-            <tr><th>${lang.lbl_directorate}</th><td>${item.directorate}</td></tr>
-            <tr><th>${lang.lbl_department}</th><td>${item.department}</td></tr>
-            <tr><th>${lang.lbl_location}</th><td>${item.location}</td></tr>
-            <tr><th>${lang.lbl_date}</th><td>${item.date}</td></tr>
-            <tr><th>${lang.lbl_code}</th><td>${item.code}</td></tr>
-            <tr class="amount-row"><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td></tr>
-        `;
-    } else if (key === 'delegations') {
-        rows = `
-            <tr><th>${lang.th_name}</th><td>${item.name}</td></tr>
-            <tr><th>${lang.lbl_month}</th><td>${item.month}</td></tr>
-            <tr><th>${lang.lbl_count}</th><td>${item.count}</td></tr>
-            <tr><th>${lang.th_export}</th><td>${item.export_num}</td></tr>
-            <tr><th>${lang.th_import}</th><td>${item.import_num}</td></tr>
-            <tr><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td></tr>
-            <tr class="amount-row"><th>${lang.lbl_total}</th><td>${parseFloat(item.total).toLocaleString()} ${lang.currency}</td></tr>
-        `;
-    } else if (key === 'children') {
-        rows = `
-            <tr><th>${lang.lbl_father}</th><td>${item.father}</td></tr>
-            <tr><th>${lang.lbl_mother}</th><td>${item.mother}</td></tr>
-            <tr><th>${lang.lbl_child}</th><td>${item.child}</td></tr>
-            <tr><th>${lang.lbl_gender}</th><td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td></tr>
-            <tr><th>${lang.th_dob}</th><td>${item.dob}</td></tr>
-            <tr><th>${lang.th_arrival}</th><td>${item.arrival}</td></tr>
-            <tr class="amount-row"><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td></tr>
-        `;
-    } else if (key === 'marriage') {
-        rows = `
-            <tr><th>${lang.lbl_husband}</th><td>${item.husband}</td></tr>
-            <tr><th>${lang.lbl_wife}</th><td>${item.wife}</td></tr>
-            <tr><th>${lang.lbl_employee_gender || lang.lbl_gender}</th><td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td></tr>
-            <tr><th>${lang.th_marriage_date || lang.th_date}</th><td>${item.date}</td></tr>
-            <tr><th>${lang.th_arrival}</th><td>${item.arrival}</td></tr>
-            <tr class="amount-row"><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td></tr>
-        `;
-    } else if (key === 'fines') {
-        rows = `
-            <tr><th>${lang.lbl_book_type}</th><td>${item.book_type}</td></tr>
-            <tr><th>${lang.lbl_holder}</th><td>${item.holder}</td></tr>
-            <tr><th>${lang.lbl_book_num}</th><td>${item.book_number}</td></tr>
-            <tr><th>${lang.th_date}</th><td>${item.date}</td></tr>
-            <tr><th>${lang.lbl_location}</th><td>${item.location}</td></tr>
-            <tr class="amount-row"><th>${lang.lbl_total}</th><td>${parseFloat(item.total).toLocaleString()} ${lang.currency}</td></tr>
-        `;
+    if (hasImages) {
+        if (key === 'receipts') {
+            rows = `
+                <thead>
+                    <tr>
+                        <th>${lang.lbl_receipt_type}</th>
+                        <th>${lang.lbl_directorate}</th>
+                        <th>${lang.lbl_department}</th>
+                        <th>${lang.lbl_location}</th>
+                        <th>${lang.lbl_date}</th>
+                        <th>${lang.lbl_code}</th>
+                        <th class="amount-row">${lang.lbl_amount}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>${item.receipt_type === 'مركزي' ? lang.lbl_central : lang.lbl_decentral}</td>
+                        <td>${item.directorate}</td>
+                        <td>${item.department}</td>
+                        <td>${item.location}</td>
+                        <td>${item.date}</td>
+                        <td>${item.code}</td>
+                        <td class="amount-row">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
+                    </tr>
+                </tbody>
+            `;
+        }
+    } else {
+        if (key === 'receipts') {
+            rows = `
+                <tbody>
+                    <tr><th>${lang.lbl_receipt_type}</th><td>${item.receipt_type === 'مركزي' ? lang.lbl_central : lang.lbl_decentral}</td></tr>
+                    <tr><th>${lang.lbl_directorate}</th><td>${item.directorate}</td></tr>
+                    <tr><th>${lang.lbl_department}</th><td>${item.department}</td></tr>
+                    <tr><th>${lang.lbl_location}</th><td>${item.location}</td></tr>
+                    <tr><th>${lang.lbl_date}</th><td>${item.date}</td></tr>
+                    <tr><th>${lang.lbl_code}</th><td>${item.code}</td></tr>
+                    <tr class="amount-row"><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td></tr>
+                </tbody>
+            `;
+        } else if (key === 'delegations') {
+            rows = `
+                <tbody>
+                    <tr><th>${lang.th_name}</th><td>${item.name}</td></tr>
+                    <tr><th>${lang.lbl_month}</th><td>${item.month}</td></tr>
+                    <tr><th>${lang.lbl_count}</th><td>${item.count}</td></tr>
+                    <tr><th>${lang.th_export}</th><td>${item.export_num}</td></tr>
+                    <tr><th>${lang.th_import}</th><td>${item.import_num}</td></tr>
+                    <tr><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td></tr>
+                    <tr class="amount-row"><th>${lang.lbl_total}</th><td>${parseFloat(item.total).toLocaleString()} ${lang.currency}</td></tr>
+                </tbody>
+            `;
+        } else if (key === 'children') {
+            rows = `
+                <tbody>
+                    <tr><th>${lang.lbl_father}</th><td>${item.father}</td></tr>
+                    <tr><th>${lang.lbl_mother}</th><td>${item.mother}</td></tr>
+                    <tr><th>${lang.lbl_child}</th><td>${item.child}</td></tr>
+                    <tr><th>${lang.lbl_gender}</th><td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td></tr>
+                    <tr><th>${lang.th_dob}</th><td>${item.dob}</td></tr>
+                    <tr><th>${lang.th_arrival}</th><td>${item.arrival}</td></tr>
+                    <tr class="amount-row"><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td></tr>
+                </tbody>
+            `;
+        } else if (key === 'marriage') {
+            rows = `
+                <tbody>
+                    <tr><th>${lang.lbl_husband}</th><td>${item.husband}</td></tr>
+                    <tr><th>${lang.lbl_wife}</th><td>${item.wife}</td></tr>
+                    <tr><th>${lang.lbl_employee_gender || lang.lbl_gender}</th><td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td></tr>
+                    <tr><th>${lang.th_marriage_date || lang.th_date}</th><td>${item.date}</td></tr>
+                    <tr><th>${lang.th_arrival}</th><td>${item.arrival}</td></tr>
+                    <tr class="amount-row"><th>${lang.lbl_amount}</th><td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td></tr>
+                </tbody>
+            `;
+        } else if (key === 'fines') {
+            rows = `
+                <tbody>
+                    <tr><th>${lang.lbl_book_type}</th><td>${item.book_type}</td></tr>
+                    <tr><th>${lang.lbl_holder}</th><td>${item.holder}</td></tr>
+                    <tr><th>${lang.lbl_book_num}</th><td>${item.book_number}</td></tr>
+                    <tr><th>${lang.th_date}</th><td>${item.date}</td></tr>
+                    <tr><th>${lang.lbl_location}</th><td>${item.location}</td></tr>
+                    <tr class="amount-row"><th>${lang.lbl_total}</th><td>${parseFloat(item.total).toLocaleString()} ${lang.currency}</td></tr>
+                </tbody>
+            `;
+        }
     }
 
-    const hasImages = (key === 'receipts' && ((item.receipt_images && item.receipt_images.length > 0) || item.receipt_image));
     let imageSideHTML = '';
     if (hasImages) {
-        let images = [];
-        if (item.receipt_images && item.receipt_images.length > 0) {
-            images = item.receipt_images;
-        } else if (item.receipt_image) {
-            images = [item.receipt_image];
-        }
-        
-        let imagesTags = images.map(img => `<img src="${img}" class="spc-receipt-img" style="max-height: 250px; object-fit: contain; margin-bottom: 10px; border-radius: 6px; display: block; width: 100%;">`).join('');
+        let imagesTags = validImages.map(img => `<img src="${img}" class="spc-receipt-img" style="max-height: 450px; width: 100%; object-fit: contain; margin-bottom: 10px; border-radius: 8px; display: block; background: #fff;">`).join('');
         
         imageSideHTML = `
             <div class="spc-image-side" style="display: flex; flex-direction: column; gap: 8px;">
@@ -1983,15 +2090,15 @@ function printSingleRecord(key, idx) {
     const bodyContent = hasImages ? `
         <div class="spc-body-row">
             <div class="spc-info-side">
-                <table class="spc-table">
-                    <tbody>${rows}</tbody>
+                <table class="spc-table spc-table-horizontal">
+                    ${rows}
                 </table>
             </div>
             ${imageSideHTML}
         </div>
     ` : `
-        <table class="spc-table">
-            <tbody>${rows}</tbody>
+        <table class="spc-table spc-table-vertical">
+            ${rows}
         </table>
     `;
 
@@ -2069,7 +2176,10 @@ function executeSinglePrint() {
                 .spc-badge { display:inline-block; background:#0D8ABC; color:#fff; font-size:10px; padding:3px 10px; border-radius:20px; margin-top:4px; }
                 .spc-divider { display: none; }
                 .spc-table { width:100%; border-collapse:collapse; margin-top:8px; }
-                .spc-table th { background:#f0f7fc; color:#1a1a2e; text-align:right; padding:9px 14px; font-size:12px; width:35%; border:1px solid #dde; }
+                .spc-table th { background:#f0f7fc; color:#1a1a2e; padding:9px 14px; font-size:12px; border:1px solid #dde; }
+                .spc-table-vertical th { width:35%; text-align:right; }
+                .spc-table-vertical td { text-align:right; }
+                .spc-table-horizontal th, .spc-table-horizontal td { text-align:center; }
                 .spc-table td { padding:9px 14px; font-size:13px; border:1px solid #dde; }
                 .spc-table tr.amount-row th, .spc-table tr.amount-row td { background:#fff8e1; font-weight:700; color:#b45309; font-size:14px; }
                 .spc-signatures { display:flex; justify-content:space-between; gap:20px; margin-top:20px; }
@@ -2078,17 +2188,17 @@ function executeSinglePrint() {
                 .spc-sig p.sig-title { font-weight:700; margin-bottom:2px; }
                 .spc-sig p.sig-name { margin: 0; }
                 .spc-sig-line { display: none; }
-                .spc-body-row { display:flex; gap:20px; align-items:flex-start; margin-top:10px; width:100%; }
-                .spc-info-side { flex:1 1 55%; }
-                .spc-image-side { flex:1 1 45%; text-align:center; }
-                .spc-image-container { border:1px solid #ddd; border-radius:8px; padding:10px; background:#f9f9f9; }
-                .spc-receipt-img { max-width:100%; max-height:280px; object-fit:contain; border-radius:6px; display:block; margin:0 auto; }
+                .spc-body-row { display:flex; flex-direction:column; gap:25px; align-items:center; margin-top:15px; width:100%; }
+                .spc-info-side { width:100%; }
+                .spc-image-side { width:100%; text-align:center; }
+                .spc-image-container { border:1px solid #ddd; border-radius:8px; padding:15px; background:#f9f9f9; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+                .spc-receipt-img { max-width:100%; max-height:500px; object-fit:contain; border-radius:6px; display:block; margin:0 auto; border: 1px solid #ccc; }
                 .spc-image-title { font-weight:600; margin-bottom:8px; color:#555; font-size:11px; text-align:center; }
                 @media print {
                     @page { margin:1.5cm; }
                     body { display:block; }
-                    .single-print-card { display:block; }
-                    .spc-signatures { margin-top:100px !important; padding-top:20px; }
+                    .single-print-card { display:block; padding-bottom: 120px; }
+                    .spc-signatures { position: fixed; bottom: 0; left: 0; right: 0; margin-top: 0 !important; padding-top: 20px; padding-bottom: 20px; background: #fff; }
                 }
             </style>
         </head>
@@ -3052,6 +3162,7 @@ function updateAutocompletes() {
             // Set list attribute on input if not already set
             if (input.getAttribute('list') !== datalistId) {
                 input.setAttribute('list', datalistId);
+                input.setAttribute('autocomplete', 'off');
             }
 
             // Find or create datalist element
@@ -3067,6 +3178,17 @@ function updateAutocompletes() {
             const uniqueValues = new Set();
             data.forEach(item => {
                 const val = item[fieldName];
+                if (val && typeof val === 'string' && val.trim() !== '') {
+                    uniqueValues.add(val.trim());
+                }
+            });
+
+            // Populate datalist
+            datalistEl.innerHTML = '';
+            uniqueValues.forEach(val => {
+                const option = document.createElement('option');
+                option.value = val;
+                datalistEl.appendChild(option);
             });
         });
     });
@@ -3734,3 +3856,210 @@ function exportHTMLArchive() {
         showToast(translations[currentLang].success_save);
     }, 100);
 }
+
+
+// ==========================================
+// FIREBASE CLOUD SYNC MODULE
+// ==========================================
+window.firebaseInitialized = false;
+
+function openFirebaseModal() {
+    document.getElementById('firebase-modal').classList.add('active');
+    const existing = localStorage.getItem('firebaseConfig');
+    if (existing) {
+        document.getElementById('firebase-config-input').value = existing;
+    }
+}
+
+function saveFirebaseConfig() {
+    const input = document.getElementById('firebase-config-input').value.trim();
+    const statusEl = document.getElementById('firebase-status');
+    statusEl.style.display = 'block';
+    
+    if (!input) {
+        statusEl.textContent = 'يرجى إدخال الإعدادات.';
+        statusEl.style.color = 'var(--danger)';
+        return;
+    }
+    
+    try {
+        let configObj;
+        try {
+             configObj = JSON.parse(input);
+        } catch(e) {
+             configObj = (new Function("return " + input))();
+        }
+        
+        if (!configObj || !configObj.apiKey || !configObj.projectId) {
+            throw new Error("Invalid config format");
+        }
+        
+        localStorage.setItem('firebaseConfig', JSON.stringify(configObj));
+        statusEl.textContent = 'تم حفظ الإعدادات بنجاح!';
+        statusEl.style.color = 'var(--success)';
+        
+        initFirebase();
+        
+    } catch (e) {
+        statusEl.textContent = 'خطأ في صيغة الإعدادات: تأكد من نسخ الكود بشكل صحيح.';
+        statusEl.style.color = 'var(--danger)';
+        console.error("Firebase config parse error", e);
+    }
+}
+
+let isSyncingFromCloud = false;
+
+function initFirebase() {
+    const configStr = localStorage.getItem('firebaseConfig');
+    let configObj = null;
+    
+    try {
+        if (configStr) {
+            configObj = JSON.parse(configStr);
+        } else {
+            // Hardcoded config provided by user
+            configObj = {
+              apiKey: "AIzaSyC1or4aNIDNdA5oDxJQNZ-YPlN7YTxvVDE",
+              authDomain: "traffic-audit.firebaseapp.com",
+              databaseURL: "https://traffic-audit-default-rtdb.firebaseio.com",
+              projectId: "traffic-audit",
+              storageBucket: "traffic-audit.firebasestorage.app",
+              messagingSenderId: "991603683928",
+              appId: "1:991603683928:web:4100285097d634b5dbd02d",
+              measurementId: "G-JQWE1NTZTF"
+            };
+        }
+
+        if (!window.firebaseInitialized) {
+            firebase.initializeApp(configObj);
+            window.firebaseInitialized = true;
+            
+            // Listen to real-time changes
+            firebase.database().ref('appData').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    isSyncingFromCloud = true; // prevent re-uploading
+                    for (const key in data) {
+                        originalSetItem.call(dbStore, key, data[key]);
+                    }
+                    isSyncingFromCloud = false;
+                    
+                    // Re-render current section to reflect new data
+                    const activeSection = document.querySelector('.content-section.active');
+                    if (activeSection) {
+                        const secId = activeSection.id;
+                        if(secId === 'central-receipts-section' || secId === 'decentral-receipts-section' || secId === 'special-receipts-section') renderReceipts();
+                        else if(secId === 'delegations-section') renderDelegations();
+                        else if(secId === 'children-section') renderChildren();
+                        else if(secId === 'marriage-section') renderMarriage();
+                        else if(secId === 'fines-section') renderFines();
+                        else if(secId === 'stats-section') renderStats();
+                    }
+                } else {
+                    // Cloud is empty, automatically upload local data!
+                    console.log("Cloud is empty. Auto-syncing local data to cloud...");
+                    const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
+                    const updates = {};
+                    let hasLocalData = false;
+                    for(const key of tables) {
+                        const localData = dbStore._cache[key] || localStorage.getItem(key);
+                        if (localData && localData !== '[]') {
+                            updates[key] = localData;
+                            hasLocalData = true;
+                        }
+                    }
+                    if (hasLocalData) {
+                        firebase.database().ref('appData').set(updates).then(() => {
+                            console.log("Auto-sync complete.");
+                            alert("✅ تم رفع جميع بياناتك القديمة إلى السحابة بنجاح!");
+                        }).catch((err) => {
+                            alert("❌ حدث خطأ أثناء الرفع للسحابة، قد تكون المشكلة في (Rules): " + err.message);
+                        });
+                    }
+                }
+            });
+            console.log("Firebase initialized successfully.");
+        }
+    } catch (e) {
+        console.error("Failed to initialize Firebase", e);
+    }
+}
+
+// Proxy dbStore.setItem for automatic push
+const originalSetItem = dbStore.setItem;
+dbStore.setItem = function(key, valStr) {
+    const res = originalSetItem.call(this, key, valStr);
+    
+    const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
+    if (window.firebaseInitialized && tables.includes(key) && !isSyncingFromCloud) {
+        firebase.database().ref('appData/' + key).set(valStr).catch(e => console.error("Firebase push error", e));
+    }
+    
+    return res;
+};
+
+async function syncToCloud() {
+    if (!window.firebaseInitialized) {
+        alert("يرجى إعداد Firebase أولاً.");
+        return;
+    }
+    const statusEl = document.getElementById('firebase-status');
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'جاري الرفع إلى السحابة...';
+    statusEl.style.color = 'var(--primary)';
+    
+    try {
+        const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
+        const updates = {};
+        for(const key of tables) {
+            updates[key] = dbStore._cache[key] || '[]';
+        }
+        await firebase.database().ref('appData').set(updates);
+        
+        statusEl.textContent = 'تم الرفع إلى السحابة بنجاح!';
+        statusEl.style.color = 'var(--success)';
+    } catch (e) {
+        statusEl.textContent = 'فشل في الرفع إلى السحابة.';
+        statusEl.style.color = 'var(--danger)';
+        console.error(e);
+    }
+}
+
+async function syncFromCloud() {
+    if (!window.firebaseInitialized) {
+        alert("يرجى إعداد Firebase أولاً.");
+        return;
+    }
+    const statusEl = document.getElementById('firebase-status');
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'جاري الاسترداد من السحابة...';
+    statusEl.style.color = 'var(--primary)';
+    
+    try {
+        const snapshot = await firebase.database().ref('appData').once('value');
+        const data = snapshot.val();
+        if (data) {
+            isSyncingFromCloud = true;
+            for (const key in data) {
+                originalSetItem.call(dbStore, key, data[key]);
+            }
+            isSyncingFromCloud = false;
+            
+            statusEl.textContent = 'تم الاسترداد بنجاح! سيتم إعادة تحميل الصفحة.';
+            statusEl.style.color = 'var(--success)';
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+             statusEl.textContent = 'لا توجد بيانات في السحابة.';
+             statusEl.style.color = 'var(--warning)';
+        }
+    } catch (e) {
+        statusEl.textContent = 'فشل في الاسترداد من السحابة.';
+        statusEl.style.color = 'var(--danger)';
+        console.error(e);
+    }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    initFirebase();
+});
+

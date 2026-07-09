@@ -20,6 +20,10 @@
     <link rel="icon" href="logo-192.png" type="image/png" sizes="192x192">
     <link rel="icon" href="logo-512.png" type="image/png" sizes="512x512">
     <link rel="apple-touch-icon" href="logo-192.png">
+    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 </head>
 
 <body>
@@ -144,6 +148,10 @@
                         title="النسخ الاحتياطي">
                         <i class="fa-solid fa-database"></i>
                         <span data-tr="backup_btn">النسخ الاحتياطي</span>
+                    </button>
+                                    <button class="btn-firebase" onclick="openFirebaseModal()" data-tr-title="firebase_btn" title="الربط السحابي" style="display: none !important;">
+                        <i class="fa-solid fa-cloud"></i>
+                        <span data-tr="firebase_btn">الربط السحابي</span>
                     </button>
                 </div>
             </header>
@@ -1294,6 +1302,57 @@
         <div class="modal-footer" style="display: flex; gap: 10px; justify-content: center; padding: 20px;">
             <button class="btn-secondary" onclick="closeModal('duplicate-confirm-modal')" data-tr="close_btn">إلغاء</button>
             <button class="btn-primary" style="background: var(--warning); color: #000;" id="duplicate-confirm-btn" onclick="executeDuplicateConfirm()">حفظ على أي حال</button>
+        </div>
+    </div>
+
+
+    <!-- ===== FIREBASE MODAL ===== -->
+    <div class="modal glass-panel no-print" id="firebase-modal" style="max-width: 520px;">
+        <div class="modal-header">
+            <h3>
+                <i class="fa-solid fa-cloud" style="margin-left:10px; color:#f57c00"></i>
+                <span data-tr="firebase_modal_title">إعدادات الربط السحابي (Firebase)</span>
+            </h3>
+            <button class="close-btn" type="button" onclick="closeAllModals()"><i class="fa-solid fa-times"></i></button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 15px; font-size: 14px; color: var(--text-muted); line-height: 1.6;" data-tr="firebase_desc">
+                قم بلصق كود الإعدادات الخاص بمشروعك (firebaseConfig) لتفعيل التخزين السحابي والمزامنة التلقائية.
+            </p>
+            <div class="form-group">
+                <textarea id="firebase-config-input" class="form-control" style="height: 150px; direction: ltr; font-family: monospace;" placeholder='{
+  apiKey: "...",
+  authDomain: "...",
+  databaseURL: "...",
+  projectId: "...",
+  storageBucket: "...",
+  messagingSenderId: "...",
+  appId: "..."
+}'></textarea>
+            </div>
+            
+            <div id="firebase-status" style="margin-top: 15px; padding: 10px; border-radius: 8px; display: none; text-align: center; font-weight: bold;"></div>
+
+            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--surface-border); border-radius: 12px; padding: 20px; margin-top: 20px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;">
+                <button type="button" onclick="saveFirebaseConfig()" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--success), #059669); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                    <i class="fa-solid fa-check"></i>
+                    <span data-tr="save_firebase_config">حفظ الإعدادات والاتصال</span>
+                </button>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <button type="button" onclick="syncToCloud()" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span data-tr="sync_to_cloud">رفع للسحابة</span>
+                    </button>
+                    <button type="button" onclick="syncFromCloud()" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, #8e44ad, #9b59b6); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                        <i class="fa-solid fa-cloud-arrow-down"></i>
+                        <span data-tr="sync_from_cloud">استرداد من السحابة</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 15px;">
+                <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn" style="width: 100%;">إغلاق</button>
+            </div>
         </div>
     </div>
 

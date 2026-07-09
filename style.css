@@ -417,6 +417,7 @@ body {
     z-index: -1;
     border-radius: 50%;
     animation: float 20s infinite ease-in-out alternate;
+    pointer-events: none;
 }
 
 [data-theme="light"] .bg-shape {
@@ -2186,7 +2187,7 @@ select.form-control {
 ::-webkit-scrollbar-thumb {
     background: linear-gradient(var(--primary), #8B5CF6);
     border-radius: 10px;
-    border: 3px solid #0d121f; /* Creates a modern floating thumb look */
+    border: 3px solid var(--background); /* Creates a modern floating thumb look */
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -3198,15 +3199,177 @@ select.form-control {
 
 html,
 body {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    
+    
 }
 
-html::-webkit-scrollbar,
-body::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-    display: none;
+
+
+
+
+/* ===== SINGLE RECORD PRINT LAYOUT ===== */
+.single-print-card {
+    direction: rtl;
+    color: #000;
+    font-family: var(--font-main);
+    padding: 20px;
+    background: #fff;
+}
+
+.spc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #333;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.spc-header-right, .spc-header-left {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.spc-header-center {
+    flex: 2;
+    text-align: center;
+}
+
+.spc-logo {
+    width: 80px;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.spc-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+.spc-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #f0f0f0;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.spc-body-row {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    align-items: center;
+    justify-content: center;
+}
+
+.spc-info-side {
+    flex: 1;
+}
+
+.spc-image-side {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.spc-image-container {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    background: #fafafa;
+}
+
+.spc-image-title {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.spc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.spc-table th, .spc-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    font-size: 15px;
+}
+
+.spc-table th {
+    font-weight: bold;
+    background-color: #f9f9f9;
+}
+.spc-table-vertical th {
+    width: 35%;
+    text-align: right;
+}
+.spc-table-vertical td {
+    text-align: right;
+}
+.spc-table-horizontal th, .spc-table-horizontal td {
+    text-align: center;
+}
+
+.amount-row th, .amount-row td {
+    font-weight: bold;
+    font-size: 16px;
+    background-color: #f0f8ff;
+}
+
+.spc-signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 50px;
+    padding-top: 20px;
+}
+
+.spc-sig {
+    text-align: center;
+    flex: 1;
+}
+
+.sig-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.sig-name {
+    font-size: 14px;
+}
+
+@media print {
+    .single-print-card {
+        padding: 0;
+        padding-bottom: 120px;
+    }
+    .spc-signatures {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin-top: 0 !important;
+        padding-top: 20px;
+        padding-bottom: 20px;
+        background: #fff;
+    }
+    .spc-table th, .spc-table td {
+        border-color: #000;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .spc-image-container {
+        border-color: #000;
+        background: transparent;
+    }
+    .amount-row th, .amount-row td {
+        background-color: #e6f2ff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
 }
 
 
