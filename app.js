@@ -3940,7 +3940,11 @@ function initFirebase() {
                 if (data) {
                     isSyncingFromCloud = true; // prevent re-uploading
                     for (const key in data) {
-                        originalSetItem.call(dbStore, key, data[key]);
+                        let val = data[key];
+                        if (typeof val !== 'string') {
+                            val = JSON.stringify(val);
+                        }
+                        originalSetItem.call(dbStore, key, val);
                     }
                     isSyncingFromCloud = false;
                     
@@ -3964,7 +3968,11 @@ function initFirebase() {
                     for(const key of tables) {
                         const localData = dbStore._cache[key] || localStorage.getItem(key);
                         if (localData && localData !== '[]') {
-                            updates[key] = localData;
+                            try {
+                                updates[key] = JSON.parse(localData);
+                            } catch(e) {
+                                updates[key] = localData;
+                            }
                             hasLocalData = true;
                         }
                     }
@@ -3986,13 +3994,29 @@ function initFirebase() {
 }
 
 // Proxy dbStore.setItem for automatic push
+let lastFirebaseErrorTime = 0;
 const originalSetItem = dbStore.setItem;
 dbStore.setItem = function(key, valStr) {
     const res = originalSetItem.call(this, key, valStr);
     
     const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
     if (window.firebaseInitialized && tables.includes(key) && !isSyncingFromCloud) {
-        firebase.database().ref('appData/' + key).set(valStr).catch(e => console.error("Firebase push error", e));
+        try {
+            let cloudData = valStr;
+            try { cloudData = JSON.parse(valStr); } catch(e) {}
+            firebase.database().ref('appData/' + key).set(cloudData).catch(e => {
+                console.error("Firebase push error", e);
+                if (e.message && (e.message.includes("permission_denied") || e.message.includes("Permission denied"))) {
+                    const now = Date.now();
+                    if (now - lastFirebaseErrorTime > 5000) {
+                        lastFirebaseErrorTime = now;
+                        alert("❌ تم رفض الإذن من Firebase! لا يمكن رفع الملف.\n\nيرجى التأكد من تعديل قواعد بيانات Firebase (Rules) لتسمح بالقراءة والكتابة:\n\n{\n  \"rules\": {\n    \".read\": true,\n    \".write\": true\n  }\n}");
+                    }
+                }
+            });
+        } catch(err) {
+            console.error(err);
+        }
     }
     
     return res;
@@ -4012,7 +4036,12 @@ async function syncToCloud() {
         const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
         const updates = {};
         for(const key of tables) {
-            updates[key] = dbStore._cache[key] || '[]';
+            const localData = dbStore._cache[key] || '[]';
+            try {
+                updates[key] = JSON.parse(localData);
+            } catch(e) {
+                updates[key] = localData;
+            }
         }
         await firebase.database().ref('appData').set(updates);
         
@@ -4041,7 +4070,11 @@ async function syncFromCloud() {
         if (data) {
             isSyncingFromCloud = true;
             for (const key in data) {
-                originalSetItem.call(dbStore, key, data[key]);
+                let valStr = data[key];
+                if (typeof valStr !== 'string') {
+                    valStr = JSON.stringify(valStr);
+                }
+                originalSetItem.call(dbStore, key, valStr);
             }
             isSyncingFromCloud = false;
             
