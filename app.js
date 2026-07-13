@@ -3884,21 +3884,42 @@ function saveFirebaseConfig() {
     
     try {
         let configObj;
+        let cleanInput = input;
+        
+        // Try to extract the object if they pasted the whole snippet
+        const match = input.match(/const\s+firebaseConfig\s*=\s*(\{[\s\S]*?\});?/);
+        if (match) {
+            cleanInput = match[1];
+        } else {
+            const objMatch = input.match(/\{[\s\S]*apiKey[\s\S]*projectId[\s\S]*\}/);
+            if (objMatch) {
+                cleanInput = objMatch[0];
+            }
+        }
+
         try {
-             configObj = JSON.parse(input);
+             configObj = (new Function("return " + cleanInput))();
         } catch(e) {
-             configObj = (new Function("return " + input))();
+             configObj = JSON.parse(cleanInput);
         }
         
         if (!configObj || !configObj.apiKey || !configObj.projectId) {
             throw new Error("Invalid config format");
         }
         
+        if (!configObj.databaseURL) {
+            statusEl.textContent = 'الرابط databaseURL مفقود! يرجى إنشاء Realtime Database في فايربيس أولاً ثم نسخ الكود الجديد.';
+            statusEl.style.color = 'var(--danger)';
+            return;
+        }
+        
         localStorage.setItem('firebaseConfig', JSON.stringify(configObj));
-        statusEl.textContent = 'تم حفظ الإعدادات بنجاح!';
+        statusEl.textContent = 'تم حفظ الإعدادات بنجاح! سيتم تحديث الصفحة لتطبيقها...';
         statusEl.style.color = 'var(--success)';
         
-        initFirebase();
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
         
     } catch (e) {
         statusEl.textContent = 'خطأ في صيغة الإعدادات: تأكد من نسخ الكود بشكل صحيح.';

@@ -131,7 +131,7 @@ body {
     color: var(--text);
     min-height: 100vh;
     overflow-x: hidden;
-    scrollbar-width: thin;
+    /* scrollbar-width: thin; removed for compat */
     position: relative;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -463,8 +463,8 @@ body {
 /* Glassmorphism Utilities */
 .glass-panel {
     background: var(--surface);
-    backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
     border: 1px solid var(--surface-border);
     border-radius: 16px;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
@@ -519,6 +519,7 @@ img {
     background: var(--glass-dark-88);
     border-radius: 28px;
     box-shadow: none;
+    -webkit-backdrop-filter: none;
     backdrop-filter: none;
 }
 
@@ -664,6 +665,7 @@ img {
     align-items: center;
     text-align: center;
     position: relative;
+    -webkit-backdrop-filter: blur(18px);
     backdrop-filter: blur(18px);
     width: 100%;
     min-height: clamp(170px, 16vw, 230px);
@@ -1068,6 +1070,7 @@ img {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.6);
+    -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     z-index: 1000;
     display: none;
@@ -1936,7 +1939,7 @@ select.form-control {
         flex: 1 0 auto !important;
         width: 100% !important;
         max-width: none !important;
-        min-height: auto !important;
+        min-height: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
         box-shadow: none !important;
@@ -1947,7 +1950,7 @@ select.form-control {
         display: block !important;
         width: 100% !important;
         max-width: none !important;
-        min-height: auto !important;
+        min-height: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
         box-shadow: none !important;
@@ -1970,6 +1973,7 @@ select.form-control {
         background: none !important;
         border: none !important;
         box-shadow: none !important;
+        -webkit-backdrop-filter: none !important;
         backdrop-filter: none !important;
         padding: 0 !important;
         overflow: visible !important;
@@ -2212,6 +2216,7 @@ select.form-control {
 
 .toast {
     background: rgba(13, 138, 188, 0.9);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     color: white;
     padding: 12px 25px;
@@ -2236,10 +2241,6 @@ select.form-control {
 }
 
 /* Responsive Table Scrollbar */
-.table-responsive {
-    scrollbar-width: thin;
-    scrollbar-color: var(--primary) transparent;
-}
 
 .table-responsive::-webkit-scrollbar {
     height: 8px;
@@ -2401,6 +2402,7 @@ select.form-control {
     font-size: 14px;
     font-weight: 600;
     color: var(--text);
+    -webkit-user-select: none;
     user-select: none;
 }
 
@@ -2710,7 +2712,6 @@ select.form-control {
         white-space: normal;
         overflow-wrap: normal;
         word-break: keep-all;
-        text-wrap: wrap;
     }
 
     .header-actions {
@@ -2819,7 +2820,6 @@ select.form-control {
     .table-responsive {
         max-width: 100%;
         overflow: auto;
-        -webkit-overflow-scrolling: touch;
         padding: 0;
         border-radius: clamp(14px, 1.4vw, 18px);
     }
@@ -2918,7 +2918,6 @@ select.form-control {
 
     #single-print-preview {
         overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
     }
 
     .spc-logo {
@@ -3240,11 +3239,7 @@ select.form-control {
     }
 }
 
-html,
-body {
-    
-    
-}
+
 
 
 
