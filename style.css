@@ -113,7 +113,25 @@
 html {
     font-size: clamp(14px, 1.2vw, 18px);
     line-height: 1.55;
+    /* direction:ltr + overflow-y:auto = single scrollbar on the RIGHT side
+       body has overflow:hidden so body's own left-RTL scrollbar never appears */
+    direction: ltr;
     overflow-x: hidden;
+    overflow-y: auto;
+}
+
+body {
+    direction: rtl;
+    margin: 0;
+    color: var(--text);
+    min-height: 100vh;
+    position: relative;
+    /* overflow hidden on body prevents its own scrollbar (which appears on left in RTL) */
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    padding: 0.75rem;
 }
 
 * {
@@ -123,20 +141,18 @@ html {
     font-family: var(--font-main);
 }
 
-body {
-    margin: 0;
+/* Background animation moved to ::before with position:fixed
+   This puts it on its own GPU layer, preventing it from
+   causing repaints on every scroll - fixes dark mode scroll lag */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
     background: var(--bg-gradient);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-    /* scrollbar-width: thin; removed for compat */
-    position: relative;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-    padding: 0.75rem;
+    will-change: background-position;
 }
 
 @keyframes gradientBG {
@@ -1132,6 +1148,13 @@ img {
 .modal-body {
     padding: clamp(16px, 1.6vw, 22px);
     overflow-y: auto;
+    /* Force scrollbar to RIGHT side in RTL */
+    direction: ltr;
+}
+
+/* Restore RTL for modal content */
+.modal-body > * {
+    direction: rtl;
 }
 
 .modal-footer {
@@ -1298,23 +1321,8 @@ select.form-control {
     background: rgba(13, 138, 188, 0.05);
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-}
+/* Scrollbar styles moved to the main scrollbar section below */
 
-::-webkit-scrollbar-track {
-    background: var(--background);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--surface-border);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
-}
 
 /* ============================================
    RESPONSIVE DESIGN - ALL DEVICES
@@ -1819,6 +1827,13 @@ select.form-control {
     overflow-y: auto;
     overflow-x: auto;
     padding: 0;
+    /* Force scrollbar to RIGHT side even in RTL layout */
+    direction: ltr;
+}
+
+/* Restore RTL inside the table so text/content stays correct */
+.table-responsive > * {
+    direction: rtl;
 }
 
 .data-table {
@@ -2177,25 +2192,43 @@ select.form-control {
 
 
 
-/* Custom Scrollbar */
+/* =============================================
+   SCROLLBAR - Identical in light & dark mode
+   Thin, elegant, same behavior in both modes
+   ============================================= */
 ::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
+    width: 5px;
+    height: 5px;
+}
+
+/* Hide body's own scrollbar completely - prevents the left scrollbar in RTL dark mode */
+body::-webkit-scrollbar {
+    display: none;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--glass-dark-45);
-    border-radius: 10px;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(var(--primary), #8B5CF6);
-    border-radius: 10px;
-    border: 3px solid var(--background); /* Creates a modern floating thumb look */
+    background: rgba(13, 138, 188, 0.0);
+    border-radius: 99px;
+    transition: background 0.3s ease;
+}
+
+/* Show scrollbar when hovering over the page */
+html:hover ::-webkit-scrollbar-thumb,
+body:hover ::-webkit-scrollbar-thumb {
+    background: rgba(13, 138, 188, 0.4);
+}
+
+/* Show scrollbar while actively scrolling (class added by JS) */
+html.is-scrolling ::-webkit-scrollbar-thumb {
+    background: rgba(13, 138, 188, 0.55) !important;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(var(--primary-light), #9F7AEA);
+    background: rgba(13, 138, 188, 0.85) !important;
 }
 
 ::-webkit-scrollbar-corner {
@@ -2632,14 +2665,14 @@ select.form-control {
     body {
         width: 100%;
         min-width: 0;
-        overflow-x: hidden;
     }
 
     body {
         padding: clamp(8px, 1.4vw, 18px);
     }
 
-    body.modal-open {
+    body.modal-open,
+    html:has(body.modal-open) {
         overflow: hidden;
     }
 

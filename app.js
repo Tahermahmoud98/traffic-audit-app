@@ -166,6 +166,40 @@ const dbStore = {
 // Initialize the cache synchronously from localStorage on script load
 dbStore.initSync();
 
+// ===== PERFORMANCE: DATA CACHE =====
+// Cache for parsed data arrays to avoid repeated JSON.parse
+const _dataCache = {};
+function getCachedData(key) {
+    const raw = dbStore.getItem(key);
+    if (!raw) return [];
+    if (_dataCache[key] && _dataCache[key].raw === raw) {
+        return _dataCache[key].data;
+    }
+    try {
+        const data = JSON.parse(raw);
+        _dataCache[key] = { raw, data };
+        return data;
+    } catch(e) {
+        return [];
+    }
+}
+function invalidateCache(key) {
+    delete _dataCache[key];
+}
+
+// ===== PERFORMANCE: DEBOUNCE =====
+function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
+// Track which sections have been rendered at least once
+const _renderedSections = new Set();
+
+
 // ===== SPLASH SCREEN =====
 function enterApp() {
     const splash = document.getElementById('splash-screen');
@@ -185,6 +219,21 @@ function showSection(sectionId) {
     const target = document.getElementById(sectionId);
     if (target) {
         target.classList.add('active');
+
+        // Lazy render: only render the section if not rendered yet or data changed
+        const renderMap = {
+            'central-receipts-section': () => renderCentralReceipts(),
+            'decentral-receipts-section': () => renderDecentralReceipts(),
+            'special-receipts-section': () => renderSpecialReceipts(),
+            'delegations-section': () => renderDelegations(),
+            'children-section': () => renderChildren(),
+            'marriage-section': () => renderMarriage(),
+            'fines-section': () => renderFines(),
+            'stats-section': () => renderStats()
+        };
+        if (renderMap[sectionId]) {
+            renderMap[sectionId]();
+        }
     }
 }
 
@@ -750,8 +799,23 @@ function toggleLanguage() {
     dbStore.setItem('appLang', currentLang);
     applyLanguage();
     applyTheme(); // Update theme text translation
+    // Only re-render the currently active section (lazy rendering)
     initData();
-    updateOverviewCards();
+    const activeSection = document.querySelector('.content-section.active');
+    if (activeSection) {
+        const sectionId = activeSection.id;
+        const renderMap = {
+            'central-receipts-section': renderCentralReceipts,
+            'decentral-receipts-section': renderDecentralReceipts,
+            'special-receipts-section': renderSpecialReceipts,
+            'delegations-section': renderDelegations,
+            'children-section': renderChildren,
+            'marriage-section': renderMarriage,
+            'fines-section': renderFines,
+            'stats-section': renderStats
+        };
+        if (renderMap[sectionId]) renderMap[sectionId]();
+    }
 }
 
 function applyLanguage() {
@@ -798,8 +862,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await dbStore.init();
     applyLanguage();
     applyTheme();
+    // initData now only updates overview cards (lazy rendering for sections)
     initData();
-    updateOverviewCards();
     updateAutocompletes();
 
     const forms = [
@@ -934,8 +998,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         delAmount.addEventListener('input', calcTotal);
     }
 
-    // Ensure stats are available on load (but don't force display)
-    if (document.getElementById('stats-content')) renderStats();
+    // Stats section renders on demand when user clicks it
+    // if (document.getElementById('stats-content')) renderStats();
     renderPrintSignatureNames();
 
     // Enable Enter key on search input to trigger search
@@ -955,8 +1019,9 @@ function getBase64(file) {
             img.src = reader.result;
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 800;
-                const MAX_HEIGHT = 800;
+                // Reduced from 800 to 600 for faster Firebase upload & less storage
+                const MAX_WIDTH = 600;
+                const MAX_HEIGHT = 600;
                 let width = img.width;
                 let height = img.height;
 
@@ -972,12 +1037,12 @@ function getBase64(file) {
                     }
                 }
 
-                canvas.width = width;
-                canvas.height = height;
+                canvas.width = Math.round(width);
+                canvas.height = Math.round(height);
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                // Compress image to save dbStore space
-                resolve(canvas.toDataURL('image/jpeg', 0.7));
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                // Quality reduced from 0.7 to 0.6 for faster Firebase upload
+                resolve(canvas.toDataURL('image/jpeg', 0.6));
             };
             img.onerror = () => reject(new Error("Failed to load image"));
         };
@@ -993,12 +1058,11 @@ function setDefaultDates() {
 }
 
 function initData() {
-    renderReceipts();
-    renderDelegations();
-    renderChildren();
-    renderMarriage();
-    renderFines();
+    // Only render what's currently visible (lazy rendering)
+    // Overview cards only - sections render on demand when clicked
+    updateOverviewCards();
 }
+
 
 function updateAutocompleteSuggestions() {
     const dataKeys = {
@@ -1066,11 +1130,12 @@ function updateAutocompleteSuggestions() {
 }
 
 function updateOverviewCards() {
-    const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
-    const delegations = JSON.parse(dbStore.getItem('delegations') || '[]');
-    const children = JSON.parse(dbStore.getItem('children') || '[]');
-    const marriage = JSON.parse(dbStore.getItem('marriage') || '[]');
-    const fines = JSON.parse(dbStore.getItem('fines') || '[]');
+    // Use cached data to avoid repeated JSON.parse
+    const receipts = getCachedData('receipts');
+    const delegations = getCachedData('delegations');
+    const children = getCachedData('children');
+    const marriage = getCachedData('marriage');
+    const fines = getCachedData('fines');
 
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
     const currency = translations[currentLang].currency;
@@ -1119,7 +1184,7 @@ function renderReceipts(filter) {
 }
 
 function renderCentralReceipts(filter) {
-    let data = JSON.parse(dbStore.getItem('receipts') || '[]');
+    let data = getCachedData('receipts');
     data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
     let centralData = data.filter(item => item.receipt_type === 'مركزي');
 
@@ -1162,7 +1227,7 @@ function renderCentralReceipts(filter) {
 }
 
 function renderDecentralReceipts(filter) {
-    let data = JSON.parse(dbStore.getItem('receipts') || '[]');
+    let data = getCachedData('receipts');
     data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
     let decentralData = data.filter(item => item.receipt_type === 'لا مركزي');
 
@@ -1205,7 +1270,7 @@ function renderDecentralReceipts(filter) {
 }
 
 function renderSpecialReceipts(filter) {
-    let data = JSON.parse(dbStore.getItem('receipts') || '[]');
+    let data = getCachedData('receipts');
     data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
     let specialData = data.filter(item => item.receipt_type === 'خاصه');
 
@@ -1259,7 +1324,7 @@ let currentPreviewImages = [];
 let currentPreviewIdx = 0;
 
 function viewRecordImages(idx) {
-    const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
+    const receipts = getCachedData('receipts');
     const item = receipts[idx];
     if (!item) return;
     
@@ -1341,7 +1406,7 @@ function prevPreviewImage() {
 }
 
 function renderDelegations(filter) {
-    let data = JSON.parse(dbStore.getItem('delegations') || '[]');
+    let data = getCachedData('delegations');
 
     const monthFilterEl = document.getElementById('filter-delegations');
     if (monthFilterEl && monthFilterEl.value) {
@@ -1396,7 +1461,7 @@ function renderDelegations(filter) {
 }
 
 function renderChildren(filter) {
-    let data = JSON.parse(dbStore.getItem('children') || '[]');
+    let data = getCachedData('children');
 
     const monthFilterEl = document.getElementById('filter-children');
     if (monthFilterEl && monthFilterEl.value) {
@@ -1441,7 +1506,7 @@ function renderChildren(filter) {
 }
 
 function renderMarriage(filter) {
-    let data = JSON.parse(dbStore.getItem('marriage') || '[]');
+    let data = getCachedData('marriage');
 
     const monthFilterEl = document.getElementById('filter-marriage');
     if (monthFilterEl && monthFilterEl.value) {
@@ -1484,7 +1549,7 @@ function renderMarriage(filter) {
 }
 
 function renderFines(filter) {
-    let data = JSON.parse(dbStore.getItem('fines') || '[]');
+    let data = getCachedData('fines');
 
     const monthFilterEl = document.getElementById('filter-fines');
     if (monthFilterEl && monthFilterEl.value) {
@@ -1574,7 +1639,7 @@ function performSearch() {
             const allKeys = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
             let found = false;
             for (const k of allKeys) {
-                const arr = JSON.parse(dbStore.getItem(k) || '[]');
+                const arr = getCachedData(k);
                 const match = arr.find(it => matchesFilter(it, q));
                 if (match) {
                     if (k === 'receipts') {
@@ -1626,7 +1691,7 @@ const modalKeyMap = {
 };
 
 function editRecord(key, idx) {
-    const data = JSON.parse(dbStore.getItem(key) || '[]');
+    const data = getCachedData(key);
     const item = data[idx];
     if (!item) return;
     editingKey = key;
@@ -1722,7 +1787,8 @@ function executeDelete() {
     const { key, idx } = pendingDelete;
     if (key === null || idx === null) return;
 
-    const data = JSON.parse(dbStore.getItem(key) || '[]');
+    // Use a copy of cached data - getCachedData returns the cached array, splice would mutate it
+    const data = [...getCachedData(key)];
     data.splice(idx, 1);
     dbStore.setItem(key, JSON.stringify(data));
 
@@ -1828,7 +1894,7 @@ function executeDuplicateConfirm() {
 }
 
 function checkDuplicate(key, dataObj) {
-    const currentData = JSON.parse(dbStore.getItem(key) || '[]');
+    const currentData = getCachedData(key);
     const itemsToCheck = (editingKey === key && editingIdx !== null)
         ? currentData.filter((_, idx) => idx !== editingIdx)
         : currentData;
@@ -1865,7 +1931,8 @@ function checkDuplicate(key, dataObj) {
 }
 
 function saveRecord(key, dataObj, renderFunc, formEl) {
-    let currentData = JSON.parse(dbStore.getItem(key) || '[]');
+    // Spread to get a mutable copy (getCachedData returns cached array)
+    let currentData = [...getCachedData(key)];
     if (editingKey === key && editingIdx !== null) {
         if (key === 'receipts') {
             if (!dataObj.receipt_images || dataObj.receipt_images.length === 0) {
@@ -1954,7 +2021,7 @@ let _singlePrintHTML = '';
 
 function printSingleRecord(key, idx) {
     const lang = translations[currentLang];
-    const data = JSON.parse(dbStore.getItem(key) || '[]');
+    const data = getCachedData(key);
     const item = data[idx];
     if (!item) return;
 
@@ -2212,12 +2279,12 @@ function openBulkPrintModal() {
     // Update record counts
     const keys = ['delegations', 'children', 'marriage', 'fines'];
     keys.forEach(key => {
-        const data = JSON.parse(dbStore.getItem(key) || '[]');
+        const data = getCachedData(key);
         const el = document.getElementById(`bp-count-${key}`);
         if (el) el.textContent = `(${data.length})`;
     });
 
-    const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
+    const receipts = getCachedData('receipts');
     const centralCount = receipts.filter(item => item.receipt_type === 'مركزي').length;
     const decentralCount = receipts.filter(item => item.receipt_type === 'لا مركزي').length;
     const specialCount = receipts.filter(item => item.receipt_type === 'خاصه').length;
@@ -2235,13 +2302,13 @@ function openBulkPrintModal() {
 function buildSectionHTML(key, lang) {
     let data = [];
     if (key === 'central-receipts') {
-        data = JSON.parse(dbStore.getItem('receipts') || '[]').filter(item => item.receipt_type === 'مركزي');
+        data = getCachedData('receipts').filter(item => item.receipt_type === 'مركزي');
     } else if (key === 'decentral-receipts') {
-        data = JSON.parse(dbStore.getItem('receipts') || '[]').filter(item => item.receipt_type === 'لا مركزي');
+        data = getCachedData('receipts').filter(item => item.receipt_type === 'لا مركزي');
     } else if (key === 'special-receipts') {
-        data = JSON.parse(dbStore.getItem('receipts') || '[]').filter(item => item.receipt_type === 'خاصه');
+        data = getCachedData('receipts').filter(item => item.receipt_type === 'خاصه');
     } else {
-        data = JSON.parse(dbStore.getItem(key) || '[]');
+        data = getCachedData(key);
     }
 
     const monthFilterEl = document.getElementById(`filter-${key}`);
@@ -2432,11 +2499,11 @@ function executeBulkPrint() {
 function printSection(key) {
     const lang = translations[currentLang];
     if (key === 'stats') {
-        let receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
-        let delegations = JSON.parse(dbStore.getItem('delegations') || '[]');
-        let children = JSON.parse(dbStore.getItem('children') || '[]');
-        let marriage = JSON.parse(dbStore.getItem('marriage') || '[]');
-        let fines = JSON.parse(dbStore.getItem('fines') || '[]');
+        let receipts = getCachedData('receipts');
+        let delegations = getCachedData('delegations');
+        let children = getCachedData('children');
+        let marriage = getCachedData('marriage');
+        let fines = getCachedData('fines');
 
         const monthFilterEl = document.getElementById('filter-stats');
         if (monthFilterEl && monthFilterEl.value) {
@@ -2708,11 +2775,11 @@ function buildPrintPage(content, lang, title) {
 
 // ===== MONTHLY ARCHIVE SYSTEM =====
 function getMonthlyBreakdown() {
-    const receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
-    const delegations = JSON.parse(dbStore.getItem('delegations') || '[]');
-    const children = JSON.parse(dbStore.getItem('children') || '[]');
-    const marriage = JSON.parse(dbStore.getItem('marriage') || '[]');
-    const fines = JSON.parse(dbStore.getItem('fines') || '[]');
+    const receipts = getCachedData('receipts');
+    const delegations = getCachedData('delegations');
+    const children = getCachedData('children');
+    const marriage = getCachedData('marriage');
+    const fines = getCachedData('fines');
 
     const monthlyData = {};
     for (let m = 1; m <= 12; m++) {
@@ -2854,11 +2921,11 @@ function showMonthArchiveDetails(m) {
 
 // ===== STATISTICS RENDERING =====
 function renderStats() {
-    let receipts = JSON.parse(dbStore.getItem('receipts') || '[]');
-    let delegations = JSON.parse(dbStore.getItem('delegations') || '[]');
-    let children = JSON.parse(dbStore.getItem('children') || '[]');
-    let marriage = JSON.parse(dbStore.getItem('marriage') || '[]');
-    let fines = JSON.parse(dbStore.getItem('fines') || '[]');
+    let receipts = getCachedData('receipts');
+    let delegations = getCachedData('delegations');
+    let children = getCachedData('children');
+    let marriage = getCachedData('marriage');
+    let fines = getCachedData('fines');
 
     const monthFilterEl = document.getElementById('filter-stats');
     if (monthFilterEl && monthFilterEl.value) {
@@ -2988,11 +3055,11 @@ function exportData() {
     const backup = {
         backup_version: 1,
         timestamp: new Date().toISOString(),
-        receipts: JSON.parse(dbStore.getItem('receipts') || '[]'),
-        delegations: JSON.parse(dbStore.getItem('delegations') || '[]'),
-        children: JSON.parse(dbStore.getItem('children') || '[]'),
-        marriage: JSON.parse(dbStore.getItem('marriage') || '[]'),
-        fines: JSON.parse(dbStore.getItem('fines') || '[]'),
+        receipts: getCachedData('receipts'),
+        delegations: getCachedData('delegations'),
+        children: getCachedData('children'),
+        marriage: getCachedData('marriage'),
+        fines: getCachedData('fines'),
         sig_director_name: dbStore.getItem('sig_director_name') || '',
         sig_clerk_name: dbStore.getItem('sig_clerk_name') || '',
         sig_officer_name: dbStore.getItem('sig_officer_name') || '',
@@ -3146,8 +3213,8 @@ function updateAutocompletes() {
         const formEl = document.getElementById(formDef.id);
         if (!formEl) return;
 
-        // Retrieve data from DB
-        const data = JSON.parse(dbStore.getItem(formDef.key) || '[]');
+        // Retrieve data from cache (avoids repeated JSON.parse)
+        const data = getCachedData(formDef.key);
         if (!Array.isArray(data)) return;
 
         // Find all text inputs inside this form
@@ -3196,11 +3263,11 @@ function updateAutocompletes() {
 
 function generateArchiveHTML() {
     const data = {
-        receipts: JSON.parse(dbStore.getItem('receipts') || '[]'),
-        delegations: JSON.parse(dbStore.getItem('delegations') || '[]'),
-        children: JSON.parse(dbStore.getItem('children') || '[]'),
-        marriage: JSON.parse(dbStore.getItem('marriage') || '[]'),
-        fines: JSON.parse(dbStore.getItem('fines') || '[]'),
+        receipts: getCachedData('receipts'),
+        delegations: getCachedData('delegations'),
+        children: getCachedData('children'),
+        marriage: getCachedData('marriage'),
+        fines: getCachedData('fines'),
         sig_director_name: dbStore.getItem('sig_director_name') || '',
         sig_clerk_name: dbStore.getItem('sig_clerk_name') || '',
         sig_officer_name: dbStore.getItem('sig_officer_name') || '',
@@ -4030,6 +4097,7 @@ function initFirebase() {
                                 }
                                 
                                 const mergedStr = JSON.stringify(mergedData);
+                                invalidateCache(key);
                                 originalSetItem.call(dbStore, key, mergedStr);
                                 
                                 // If local records were added, sync them back to the cloud database
@@ -4040,10 +4108,12 @@ function initFirebase() {
                                     });
                                 }
                             } else {
+                                invalidateCache(key);
                                 originalSetItem.call(dbStore, key, valStr);
                             }
                         } else {
                             // Non-table values (settings, etc.)
+                            invalidateCache(key);
                             originalSetItem.call(dbStore, key, valStr);
                         }
                     }
@@ -4099,31 +4169,64 @@ function initFirebase() {
 // Proxy dbStore.setItem for automatic push
 let lastFirebaseErrorTime = 0;
 const originalSetItem = dbStore.setItem;
+
+// Debounced Firebase push - waits 2 seconds after last change before uploading
+// This prevents multiple rapid writes (e.g. when saving a record triggers multiple setItem calls)
+const _pendingFirebaseUploads = {};
+function _debouncedFirebasePush(key, valStr) {
+    if (_pendingFirebaseUploads[key]) {
+        clearTimeout(_pendingFirebaseUploads[key]);
+    }
+    _pendingFirebaseUploads[key] = setTimeout(() => {
+        delete _pendingFirebaseUploads[key];
+        if (!window.firebaseInitialized || isSyncingFromCloud) return;
+        try {
+            let cloudData;
+            try { cloudData = JSON.parse(valStr); } catch(e) { cloudData = valStr; }
+            
+            // For receipts: strip images before sending to reduce payload size
+            // Images are large Base64 strings that slow down Firebase significantly
+            if (key === 'receipts' && Array.isArray(cloudData)) {
+                const stripped = cloudData.map(item => {
+                    if (!item.receipt_images && !item.receipt_image) return item;
+                    const { receipt_images, receipt_image, ...rest } = item;
+                    return rest;
+                });
+                firebase.database().ref('appData/' + key).set(stripped).catch(handleFirebaseError);
+            } else {
+                firebase.database().ref('appData/' + key).set(cloudData).catch(handleFirebaseError);
+            }
+        } catch(err) {
+            console.error(err);
+        }
+    }, 2000); // 2 second debounce
+}
+
+function handleFirebaseError(e) {
+    console.error("Firebase push error", e);
+    if (e.message && (e.message.includes("permission_denied") || e.message.includes("Permission denied"))) {
+        const now = Date.now();
+        if (now - lastFirebaseErrorTime > 10000) {
+            lastFirebaseErrorTime = now;
+            alert("❌ تم رفض الإذن من Firebase! لا يمكن رفع الملف.\n\nيرجى التأكد من تعديل قواعد بيانات Firebase (Rules) لتسمح بالقراءة والكتابة:\n\n{\n  \"rules\": {\n    \".read\": true,\n    \".write\": true\n  }\n}");
+        }
+    }
+}
+
 dbStore.setItem = function(key, valStr) {
+    // Invalidate cache for this key
+    invalidateCache(key);
+    
     const res = originalSetItem.call(this, key, valStr);
     
     const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
     if (window.firebaseInitialized && tables.includes(key) && !isSyncingFromCloud) {
-        try {
-            let cloudData = valStr;
-            try { cloudData = JSON.parse(valStr); } catch(e) {}
-            firebase.database().ref('appData/' + key).set(cloudData).catch(e => {
-                console.error("Firebase push error", e);
-                if (e.message && (e.message.includes("permission_denied") || e.message.includes("Permission denied"))) {
-                    const now = Date.now();
-                    if (now - lastFirebaseErrorTime > 5000) {
-                        lastFirebaseErrorTime = now;
-                        alert("❌ تم رفض الإذن من Firebase! لا يمكن رفع الملف.\n\nيرجى التأكد من تعديل قواعد بيانات Firebase (Rules) لتسمح بالقراءة والكتابة:\n\n{\n  \"rules\": {\n    \".read\": true,\n    \".write\": true\n  }\n}");
-                    }
-                }
-            });
-        } catch(err) {
-            console.error(err);
-        }
+        _debouncedFirebasePush(key, valStr);
     }
     
     return res;
 };
+
 
 async function syncToCloud() {
     if (!window.firebaseInitialized) {
@@ -4195,7 +4298,38 @@ async function syncFromCloud() {
     }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    initFirebase();
+// Firebase is loaded with defer, so we use 'load' event to ensure it's ready
+// Also add a small retry mechanism in case of slow network
+window.addEventListener('load', () => {
+    // Try to init Firebase after a brief moment to ensure defer scripts are parsed
+    if (typeof firebase !== 'undefined') {
+        initFirebase();
+    } else {
+        // Retry once if firebase not yet defined (very slow network)
+        setTimeout(() => {
+            if (typeof firebase !== 'undefined') {
+                initFirebase();
+            }
+        }, 3000);
+    }
 });
 
+
+// ===== SCROLLBAR AUTO-HIDE (same behavior in light & dark mode) =====
+// Show the scrollbar while scrolling, hide it after 1.5s of inactivity
+(function() {
+    let scrollTimer = null;
+    const html = document.documentElement;
+
+    function showScrollbar() {
+        html.classList.add('is-scrolling');
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+            html.classList.remove('is-scrolling');
+        }, 1500);
+    }
+
+    // Listen to both window and html scroll events
+    window.addEventListener('scroll', showScrollbar, { passive: true });
+    document.addEventListener('scroll', showScrollbar, { passive: true });
+})();
