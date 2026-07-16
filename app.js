@@ -3956,16 +3956,96 @@ function initFirebase() {
             window.firebaseInitialized = true;
             
             // Listen to real-time changes
-            firebase.database().ref('appData').on('value', (snapshot) => {
+            // Sync once at startup instead of real-time listener to avoid loop/network overload
+            firebase.database().ref('appData').once('value').then((snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     isSyncingFromCloud = true; // prevent re-uploading
+                    
+                    const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
+                    
                     for (const key in data) {
                         let val = data[key];
-                        if (typeof val !== 'string') {
-                            val = JSON.stringify(val);
+                        let valStr = typeof val === 'string' ? val : JSON.stringify(val);
+                        
+                        if (tables.includes(key)) {
+                            // Merge logic for table data arrays to prevent deletion of unsynced local files
+                            let localData = [];
+                            try {
+                                const localStr = dbStore.getItem(key);
+                                if (localStr) localData = JSON.parse(localStr);
+                            } catch(e) {
+                                console.error("Error parsing local data for merge:", e);
+                            }
+                            
+                            let cloudData = [];
+                            try {
+                                cloudData = JSON.parse(valStr);
+                            } catch(e) {
+                                console.error("Error parsing cloud data for merge:", e);
+                            }
+                            
+                            if (Array.isArray(localData) && Array.isArray(cloudData)) {
+                                // Helper function to compare two records
+                                const areRecordsEqual = (a, b) => {
+                                    if (a === b) return true;
+                                    if (!a || !b) return false;
+                                    
+                                    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+                                    for (const k of keys) {
+                                        if (k === 'receipt_image' || k === 'receipt_images' || k === 'originalIdx') {
+                                            continue;
+                                        }
+                                        if (String(a[k] || '').trim() !== String(b[k] || '').trim()) {
+                                            return false;
+                                        }
+                                    }
+                                    
+                                    // Fast comparison for images using length first
+                                    const imgA = a.receipt_image || '';
+                                    const imgB = b.receipt_image || '';
+                                    if (imgA.length !== imgB.length) return false;
+                                    if (imgA !== imgB) return false;
+                                    
+                                    const imgsA = a.receipt_images || [];
+                                    const imgsB = b.receipt_images || [];
+                                    if (imgsA.length !== imgsB.length) return false;
+                                    for (let i = 0; i < imgsA.length; i++) {
+                                        if (imgsA[i].length !== imgsB[i].length) return false;
+                                        if (imgsA[i] !== imgsB[i]) return false;
+                                    }
+                                    
+                                    return true;
+                                };
+                                
+                                // Merge cloud and local arrays (union without duplicates)
+                                const mergedData = [...cloudData];
+                                let localAdded = false;
+                                for (const localItem of localData) {
+                                    const exists = cloudData.some(cloudItem => areRecordsEqual(localItem, cloudItem));
+                                    if (!exists) {
+                                        mergedData.push(localItem);
+                                        localAdded = true;
+                                    }
+                                }
+                                
+                                const mergedStr = JSON.stringify(mergedData);
+                                originalSetItem.call(dbStore, key, mergedStr);
+                                
+                                // If local records were added, sync them back to the cloud database
+                                if (localAdded) {
+                                    console.log(`Syncing merged local data for ${key} back to cloud...`);
+                                    firebase.database().ref('appData/' + key).set(mergedData).catch(err => {
+                                        console.error(`Failed to upload merged local data for ${key}:`, err);
+                                    });
+                                }
+                            } else {
+                                originalSetItem.call(dbStore, key, valStr);
+                            }
+                        } else {
+                            // Non-table values (settings, etc.)
+                            originalSetItem.call(dbStore, key, valStr);
                         }
-                        originalSetItem.call(dbStore, key, val);
                     }
                     isSyncingFromCloud = false;
                     
@@ -4006,6 +4086,8 @@ function initFirebase() {
                         });
                     }
                 }
+            }).catch(e => {
+                console.error("Firebase startup sync failed:", e);
             });
             console.log("Firebase initialized successfully.");
         }
