@@ -31,49 +31,58 @@
 
 <body>
 
-    <!-- ===== WELCOME SPLASH SCREEN ===== -->
-    <div id="splash-screen" class="splash-screen">
-        <!-- Splash language toggle -->
-        <div class="splash-lang-toggle no-print" style="position: absolute; top: 20px; right: 20px; z-index: 10001;">
+
+
+    <!-- ===== LOGIN SCREEN ===== -->
+    <div id="login-screen" class="login-portal no-print" style="display: flex; z-index: 999999;">
+        <div class="login-portal-controls">
+            <button class="btn-lang" onclick="toggleTheme()" title="تغيير المظهر">
+                <i id="login-theme-icon" class="fa-solid fa-sun"></i>
+                <span id="login-theme-text" class="lang-text-el" data-tr="theme_light">فاتح</span>
+            </button>
             <button class="btn-lang" onclick="toggleLanguage()">
                 <i class="fa-solid fa-globe"></i>
                 <span class="lang-text-el">English</span>
             </button>
         </div>
 
-        <!-- Animated background blobs -->
-        <div class="splash-blob blob-1"></div>
-        <div class="splash-blob blob-2"></div>
-        <div class="splash-blob blob-3"></div>
-
-        <div class="splash-content">
-            <!-- Logo emblem -->
-            <img src="logo.png" alt="شعار المراجعة" class="splash-emblem" style="width: 130px; height: 130px; margin: 0 auto 20px auto; display: block;">
-
-            <!-- Title block -->
-            <div class="splash-titles">
-                <p class="splash-gov" data-tr="gov_name">حكومة إقليم كوردستان - العراق</p>
-                <p class="splash-ministry" data-tr="ministry">وزارة الداخلية</p>
-                <h1 class="splash-main" data-tr="dept_name">مديرية مرور زاخو</h1>
-                <!-- <div class="splash-divider-line"></div> -->
-                <h2 class="splash-sub" data-tr="audit_system">نظام قسم التدقيق</h2>
+        <div class="login-portal-card glass-panel">
+            <div class="login-portal-header">
+                <img src="logo.png" alt="شعار المراجعة" class="login-portal-logo">
+                <p class="login-gov" data-tr="gov_name">حكومة إقليم كوردستان - العراق</p>
+                <p class="login-ministry" data-tr="ministry">وزارة الداخلية</p>
+                <h2 class="login-dept" data-tr="dept_name">مديرية مرور زاخو</h2>
+                <h3 class="login-sub" data-tr="login_title">نظام قسم التدقيق - تسجيل الدخول</h3>
             </div>
 
-            <!-- Animated loading dots -->
-            <div class="splash-dots">
-                <span></span><span></span><span></span>
-            </div>
+            <form id="login-form" onsubmit="handleLoginSubmit(event)" class="login-portal-form">
+                <div class="form-group">
+                    <label for="login-username" data-tr="username_lbl">اسم المستخدم</label>
+                    <div class="login-input-wrapper">
+                        <i class="fa-solid fa-user login-input-icon"></i>
+                        <input type="text" id="login-username" class="login-input-control" data-tr-placeholder="pl_username" placeholder="ادخل اسم المستخدم..." required autocomplete="username">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="login-password" data-tr="password_lbl">كلمة المرور</label>
+                    <div class="login-input-wrapper">
+                        <i class="fa-solid fa-lock login-input-icon"></i>
+                        <input type="password" id="login-password" class="login-input-control" data-tr-placeholder="pl_password" placeholder="ادخل كلمة المرور..." required autocomplete="current-password">
+                    </div>
+                </div>
+                
+                <div id="login-error-msg" class="login-error" style="display: none;"></div>
 
-            <!-- Enter button -->
-            <button class="splash-enter-btn" onclick="enterApp()">
-                <i class="fa-solid fa-arrow-left"></i>
-                <span data-tr="enter_btn">دخول النظام</span>
-            </button>
-
-            <p class="splash-year" data-tr="splash_year">© 2025 - مديرية مرور زاخو</p>
+                <button type="submit" class="btn-login-submit" style="margin-top: 26px;">
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    <span data-tr="login_btn">تسجيل الدخول</span>
+                </button>
+            </form>
+            
+            <p class="login-footer-year" data-tr="splash_year">© 2025 - مديرية مرور زاخو</p>
         </div>
     </div>
-    <!-- ===== END SPLASH SCREEN ===== -->
+    <!-- ===== END LOGIN SCREEN ===== -->
 
     <!-- Global Print Header -->
     <div class="print-only print-document-header">
@@ -102,8 +111,7 @@
     <div class="bg-shape shape-2"></div>
     <div class="bg-shape shape-3"></div>
 
-    <div class="app-container">
-
+    <div class="app-container" style="display: none;">
 
         <!-- Main Content -->
         <main class="main-content">
@@ -118,6 +126,14 @@
                     </div>
                 </div>
                 <div class="header-actions">
+                    <div id="user-profile-badge" class="user-badge" style="display: flex; align-items: center; gap: 8px;">
+                        <span id="user-badge-pill" class="user-badge-pill"></span>
+                        <button class="btn-logout" onclick="logoutUser()" data-tr-title="logout_btn" title="تسجيل الخروج">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span data-tr="logout_btn">خروج</span>
+                        </button>
+                    </div>
+
                     <div class="header-search">
                         <input id="section-search" class="search-input" type="search" data-tr-placeholder="pl_search"
                             placeholder="ابحث في القسم...">
@@ -126,8 +142,6 @@
                         <button class="btn-icon-sm" data-tr-title="title_clear" title="مسح" onclick="clearSearch()"><i
                                 class="fa-solid fa-times"></i></button>
                     </div>
-
-
 
                     <button id="theme-toggle-btn" class="btn-lang" onclick="toggleTheme()" title="تغيير المظهر">
                         <i id="theme-icon" class="fa-solid fa-sun"></i>
@@ -1443,6 +1457,21 @@
                 <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn"
                     style="width: 100%;">إغلاق</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div class="modal glass-panel no-print" id="custom-alert-modal" style="max-width: 440px;">
+        <div class="modal-card" style="text-align: center; padding: 25px 20px;">
+            <div id="custom-alert-icon-wrapper" style="width: 70px; height: 70px; border-radius: 50%; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px auto;">
+                <i id="custom-alert-icon" class="fa-solid fa-shield-halved" style="font-size: 32px; color: #f59e0b;"></i>
+            </div>
+            <h3 id="custom-alert-title" style="font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 12px;" data-tr="alert_notice_title">تنبيه النظام</h3>
+            <p id="custom-alert-msg" style="font-size: 14px; font-weight: 600; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px;"></p>
+            <button type="button" class="btn-primary" onclick="closeAllModals()" style="width: 100%; padding: 12px; border-radius: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="fa-solid fa-check"></i>
+                <span data-tr="close_btn">حسناً</span>
+            </button>
         </div>
     </div>
 

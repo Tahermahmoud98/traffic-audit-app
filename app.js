@@ -1,3 +1,150 @@
+// Custom Luxury Alert Modal Popup
+function showCustomAlert(msg, title = null, iconClass = 'fa-solid fa-shield-halved', iconColor = '#f59e0b') {
+    const modal = document.getElementById('custom-alert-modal');
+    const msgEl = document.getElementById('custom-alert-msg');
+    const titleEl = document.getElementById('custom-alert-title');
+    const iconEl = document.getElementById('custom-alert-icon');
+    const wrapperEl = document.getElementById('custom-alert-icon-wrapper');
+    
+    if (msgEl) msgEl.textContent = msg;
+    if (titleEl) {
+        const lang = typeof currentLang !== 'undefined' ? currentLang : 'ar';
+        titleEl.textContent = title || ((typeof translations !== 'undefined' && translations[lang]?.alert_notice_title) ? translations[lang].alert_notice_title : 'تنبيه النظام');
+    }
+    if (iconEl) iconEl.className = iconClass;
+    if (iconEl && iconColor) iconEl.style.color = iconColor;
+    if (wrapperEl && iconColor) {
+        wrapperEl.style.background = iconColor === '#ef4444' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)';
+        wrapperEl.style.borderColor = iconColor === '#ef4444' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)';
+    }
+    
+    if (typeof openModal === 'function') {
+        openModal('custom-alert-modal');
+    } else {
+        if (modal) {
+            document.body.classList.add('modal-open');
+            modal.style.display = 'flex';
+        }
+    }
+}
+
+// Override default browser alert box so all alerts open as a luxury modal window
+window.alert = function(msg) {
+    showCustomAlert(msg);
+};
+
+// ==========================================
+// AUTHENTICATION & ROLE-BASED ACCESS CONTROL
+// ==========================================
+const USERS_DB = {
+    'ali': { password: '4330432', name: 'علي', role: 'admin' },
+    'shawkat': { password: '1234512345', name: 'شوكت', role: 'viewer' }
+};
+
+let currentUser = null;
+
+function checkAuthSession() {
+    const saved = localStorage.getItem('currentUser');
+    if (saved) {
+        try {
+            currentUser = JSON.parse(saved);
+        } catch(e) {
+            currentUser = null;
+        }
+    }
+    
+    const loginScreen = document.getElementById('login-screen');
+    const appContainer = document.querySelector('.app-container');
+    const splashScreen = document.getElementById('splash-screen');
+    
+    if (!currentUser) {
+        // HIDE ALL SITE CONTENT BEFORE LOGIN
+        document.body.classList.remove('is-authenticated');
+        if (appContainer) appContainer.style.display = 'none';
+        if (splashScreen) splashScreen.style.display = 'none';
+        if (loginScreen) {
+            loginScreen.style.display = 'flex';
+            loginScreen.style.zIndex = '999999';
+        }
+        document.body.classList.add('modal-open');
+    } else {
+        document.body.classList.add('is-authenticated');
+        if (loginScreen) loginScreen.style.display = 'none';
+        if (splashScreen) splashScreen.style.display = 'none';
+        if (appContainer) appContainer.style.display = 'flex';
+        document.body.classList.remove('modal-open');
+        applyRolePermissions();
+    }
+}
+
+function handleLoginSubmit(event) {
+    if (event) event.preventDefault();
+    const userIn = document.getElementById('login-username').value.trim();
+    const passIn = document.getElementById('login-password').value.trim();
+    const errEl = document.getElementById('login-error-msg');
+    
+    if (USERS_DB[userIn] && USERS_DB[userIn].password === passIn) {
+        const u = USERS_DB[userIn];
+        currentUser = { username: userIn, name: u.name, role: u.role };
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        
+        if (errEl) errEl.style.display = 'none';
+        checkAuthSession();
+        if (typeof showToast === 'function') {
+            showToast(`مرحباً بك يا ${currentUser.name}!`);
+        }
+    } else {
+        if (errEl) {
+            const lang = typeof currentLang !== 'undefined' ? currentLang : 'ar';
+            errEl.textContent = (typeof translations !== 'undefined' && translations[lang]?.login_error_msg) ? translations[lang].login_error_msg : 'اسم المستخدم أو كلمة المرور غير صحيحة!';
+            errEl.style.display = 'block';
+        }
+    }
+}
+
+function logoutUser() {
+    currentUser = null;
+    localStorage.removeItem('currentUser');
+    document.body.classList.remove('is-authenticated');
+    document.body.classList.remove('is-viewer');
+    const loginUserIn = document.getElementById('login-username');
+    const loginPassIn = document.getElementById('login-password');
+    if (loginUserIn) loginUserIn.value = '';
+    if (loginPassIn) loginPassIn.value = '';
+    const errEl = document.getElementById('login-error-msg');
+    if (errEl) errEl.style.display = 'none';
+    checkAuthSession();
+}
+
+function applyRolePermissions() {
+    if (!currentUser) return;
+    
+    const badgePill = document.getElementById('user-badge-pill');
+    const lang = typeof currentLang !== 'undefined' ? currentLang : 'ar';
+    const btnFirebase = document.querySelector('.btn-firebase');
+    const btnBackup = document.querySelector('.btn-backup');
+    
+    if (currentUser.role === 'admin') {
+        document.body.classList.remove('is-viewer');
+        if (btnFirebase) btnFirebase.style.display = '';
+        if (btnBackup) btnBackup.style.display = '';
+        if (badgePill) {
+            const roleTxt = (typeof translations !== 'undefined' && translations[lang]?.role_admin) ? translations[lang].role_admin : 'أدمن رئيسي';
+            badgePill.className = 'user-badge-pill user-badge-admin';
+            badgePill.innerHTML = `<i class="fa-solid fa-user-shield"></i> ${currentUser.name} (${roleTxt})`;
+        }
+    } else {
+        document.body.classList.add('is-viewer');
+        if (btnFirebase) btnFirebase.style.display = 'none';
+        if (btnBackup) btnBackup.style.display = 'none';
+        if (badgePill) {
+            const roleTxt = (typeof translations !== 'undefined' && translations[lang]?.role_viewer) ? translations[lang].role_viewer : 'أدمن مشاهد';
+            badgePill.className = 'user-badge-pill user-badge-viewer';
+            badgePill.innerHTML = `<i class="fa-solid fa-eye"></i> ${currentUser.name} (${roleTxt})`;
+        }
+    }
+}
+
 // ===== DATABASE / CACHE STORE (IndexedDB with LocalStorage Fallback) =====
 const dbStore = {
     _cache: {},
@@ -205,7 +352,13 @@ function enterApp() {
     const splash = document.getElementById('splash-screen');
     if (splash) {
         splash.classList.add('hide');
-        setTimeout(() => splash.remove(), 900);
+        setTimeout(() => {
+            splash.style.display = 'none';
+            if (splash.parentNode) splash.parentNode.removeChild(splash);
+            checkAuthSession();
+        }, 400);
+    } else {
+        checkAuthSession();
     }
 }
 
@@ -326,6 +479,17 @@ let currentLang = dbStore.getItem('appLang') || 'ku';
 
 const translations = {
     ar: {
+        login_title: 'تسجيل الدخول للنظام',
+        login_subtitle: 'مديرية مرور زاخو - قسم التدقيق',
+        username_lbl: 'اسم المستخدم',
+        password_lbl: 'كلمة المرور',
+        login_btn: 'دخول',
+        logout_btn: 'تسجيل الخروج',
+        login_error_msg: 'اسم المستخدم أو كلمة المرور غير صحيحة!',
+        viewer_mode_notice: 'أنت في وضع المشاهدة فقط (أدمن مشاهد) - لا يمكنك الإضافة أو التعديل أو الحذف',
+        permission_denied_msg: 'عذراً! هذا الحساب مخصص للمشاهدة فقط ولا يمتلك صلاحية الإضافة أو التعديل أو الحذف.',
+        role_admin: 'أدمن رئيسي',
+        role_viewer: 'أدمن مشاهد',
         lang_btn: 'کوردی (باديني)',
         sys_admin: 'مدير النظام',
         err_image: 'حدث خطأ أثناء معالجة الصورة',
@@ -542,7 +706,18 @@ const translations = {
         duplicate_warning_msg: 'هناك سجل آخر يحتوي على نفس التفاصيل بالفعل. هل تريد حفظ هذا السجل على أي حال؟',
         duplicate_confirm_btn: 'حفظ على أي حال',
         theme_light: 'الوضع الفاتح',
-        theme_dark: 'الوضع الداكن'
+        theme_dark: 'الوضع الداكن',
+        login_title: 'نظام قسم التدقيق - تسجيل الدخول',
+        login_subtitle: 'مديرية مرور زاخو - قسم التدقيق',
+        username_lbl: 'اسم المستخدم',
+        password_lbl: 'كلمة المرور',
+        pl_username: 'ادخل اسم المستخدم...',
+        pl_password: 'ادخل كلمة المرور...',
+        login_btn: 'تسجيل الدخول',
+        login_error_msg: 'اسم المستخدم أو كلمة المرور غير صحيحة!',
+        role_admin: 'أدمن رئيسي',
+        role_viewer: 'أدمن مشاهد',
+        alert_notice_title: 'تنبيه النظام'
     },
     ku: {
         err_image: 'هه‌ڵه‌كا له‌ كاتا پرۆسه‌كرنا وێنەیێ',
@@ -645,6 +820,8 @@ const translations = {
         edit_save_btn: 'پاراستنا دەستكاریێ',
         confirm_del: 'ئه‌رێ تو يێ پشت ڕاستى ژ ژێبرنا ڤێ تۆمارێ؟',
         success_save: 'پێزانين ب سه‌ركه‌فتيانه‌ هاتنه‌ پاراستن!',
+        permission_denied_msg: 'بوخۆشبوون! ڤى هه‌ژمارى ب تنێ مافێ ته‌ماشه‌كرنێ یا هه‌ى و مافێ زێده‌كرن یان گۆهۆڕین یان ژێبرنێ نینه‌.',
+        viewer_mode_notice: 'تو د دۆخێ ته‌ماشه‌كرنێ دا يى ب تنێ - تو نه‌شێى زێده‌ بكه‌ى یان بگوهرى یان ژێببه‌ى',
         st_total_receipts: 'كۆما پسوولەیان',
         st_total_central_receipts: 'كۆما پسوولەیێن ناڤه‌ندی',
         st_total_decentral_receipts: 'كۆما پسوولەیێن نه‌ ناڤه‌ندی',
@@ -761,7 +938,18 @@ const translations = {
         duplicate_warning_msg: 'تۆماره‌كا دى ب هه‌مان پێزانينان يا هه‌ى. ئه‌رێ تو دڤێت ڤێ تۆمارێ بپارێزى ب هه‌ر حال؟',
         duplicate_confirm_btn: 'پاراستن ب هه‌ر حال',
         theme_light: 'ڕوون',
-        theme_dark: 'تاری'
+        theme_dark: 'تاری',
+        login_title: 'سيسته‌مێ پشكا وردبينيێ - چوونه‌ ژوور',
+        login_subtitle: 'ڕێڤه‌به‌ريا هاتن و چوونا زاخۆ - پشكا وردبينيێ',
+        username_lbl: 'ناڤێ بارهێنه‌رى',
+        password_lbl: 'په‌یڤا نهێنی',
+        pl_username: 'ناڤێ بارهێنه‌رى بنڤێسه...',
+        pl_password: 'په‌یڤا نهێنی بنڤێسه...',
+        login_btn: 'چوونه‌ ژوور',
+        login_error_msg: 'ناڤێ بارهێنه‌رى یان په‌یڤا نهێنی خه‌ڵه‌ته‌!',
+        role_admin: 'سه‌رۆكێ ڕێڤه‌به‌ریێ',
+        role_viewer: 'بينه‌ر',
+        alert_notice_title: 'ئاگه‌هداریا سيسته‌مى'
     }
 };
 
@@ -779,11 +967,24 @@ function applyTheme() {
         if (currentTheme === 'light') {
             themeIcon.className = 'fa-solid fa-moon';
             themeText.setAttribute('data-tr', 'theme_dark');
-            themeText.textContent = translations[currentLang].theme_dark || 'داكن';
+            themeText.textContent = translations[currentLang]?.theme_dark || 'داكن';
         } else {
             themeIcon.className = 'fa-solid fa-sun';
             themeText.setAttribute('data-tr', 'theme_light');
-            themeText.textContent = translations[currentLang].theme_light || 'فاتح';
+            themeText.textContent = translations[currentLang]?.theme_light || 'فاتح';
+        }
+    }
+    const loginThemeIcon = document.getElementById('login-theme-icon');
+    const loginThemeText = document.getElementById('login-theme-text');
+    if (loginThemeIcon && loginThemeText) {
+        if (currentTheme === 'light') {
+            loginThemeIcon.className = 'fa-solid fa-moon';
+            loginThemeText.setAttribute('data-tr', 'theme_dark');
+            loginThemeText.textContent = translations[currentLang]?.theme_dark || 'داكن';
+        } else {
+            loginThemeIcon.className = 'fa-solid fa-sun';
+            loginThemeText.setAttribute('data-tr', 'theme_light');
+            loginThemeText.textContent = translations[currentLang]?.theme_light || 'فاتح';
         }
     }
 }
@@ -860,6 +1061,7 @@ function applyLanguage() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     await dbStore.init();
+    checkAuthSession();
     applyLanguage();
     applyTheme();
     // initData now only updates overview cards (lazy rendering for sections)
@@ -1002,11 +1204,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // if (document.getElementById('stats-content')) renderStats();
     renderPrintSignatureNames();
 
-    // Enable Enter key on search input to trigger search
+    // Enable live input search and keyboard shortcuts on search input
     const si = document.getElementById('section-search');
     if (si) {
+        si.addEventListener('input', () => performSearch());
         si.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') { e.preventDefault(); performSearch(); }
+            if (e.key === 'Escape') { e.preventDefault(); clearSearch(); }
         });
     }
 });
@@ -1183,133 +1387,79 @@ function renderReceipts(filter) {
     renderSpecialReceipts(filter);
 }
 
-function renderCentralReceipts(filter) {
-    let data = getCachedData('receipts');
-    data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
-    let centralData = data.filter(item => item.receipt_type === 'مركزي');
+function renderReceiptCategory(categoryType, tableId, statsId, filterElId, statsLangKey, filter) {
+    const rawData = getCachedData('receipts');
+    const lang = translations[currentLang];
+    const monthFilterEl = document.getElementById(filterElId);
+    const monthVal = monthFilterEl ? monthFilterEl.value : '';
 
-    const monthFilterEl = document.getElementById('filter-central-receipts');
-    if (monthFilterEl && monthFilterEl.value) {
-        centralData = centralData.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
+    let totalAmount = 0;
+    let count = 0;
+    let rowsHtml = '';
+    const hasFilter = Boolean(filter);
+
+    for (let idx = 0; idx < rawData.length; idx++) {
+        const item = rawData[idx];
+        if (item.receipt_type !== categoryType) continue;
+        if (monthVal && item.date && item.date.slice(5, 7) !== monthVal) continue;
+        if (hasFilter && !matchesFilter(item, filter)) continue;
+
+        count++;
+        const amt = parseFloat(item.amount) || 0;
+        totalAmount += amt;
+
+        const hasImages = (item.receipt_images && item.receipt_images.length > 0) || item.receipt_image;
+        const imgCount = item.receipt_images ? item.receipt_images.length : 0;
+        const imageCell = hasImages 
+            ? `<button class="btn-icon-sm" onclick="viewRecordImages(${idx})" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-images"></i>${imgCount > 1 ? ` <span class="badge" style="background: var(--primary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; line-height: 1;">${imgCount}</span>` : ''}</button>` 
+            : '—';
+
+        const dirHtml = hasFilter ? highlightMatch(item.directorate || '', filter) : (item.directorate || '');
+        const deptHtml = hasFilter ? highlightMatch(item.department || '', filter) : (item.department || '');
+        const locHtml = hasFilter ? highlightMatch(item.location || '', filter) : (item.location || '');
+        const dateHtml = hasFilter ? highlightMatch(item.date || '', filter) : (item.date || '');
+        const codeHtml = hasFilter ? highlightMatch(item.code || '', filter) : (item.code || '');
+
+        rowsHtml += `<tr>
+            <td>${dirHtml}</td>
+            <td>${deptHtml}</td>
+            <td>${locHtml}</td>
+            <td>${dateHtml}</td>
+            <td>${codeHtml}</td>
+            <td style="font-weight:bold; color:var(--success);">${amt.toLocaleString()} ${lang.currency}</td>
+            <td class="no-print">${imageCell}</td>
+            <td class="no-print action-btns">
+                <button class="btn-icon-sm print" onclick="printSingleRecord('receipts',${idx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
+                <button class="btn-icon-sm edit" onclick="editRecord('receipts',${idx})"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-icon-sm del" onclick="deleteRecord('receipts',${idx})"><i class="fa-solid fa-trash"></i></button>
+            </td>
+        </tr>`;
     }
 
-    if (filter) centralData = centralData.filter(item => matchesFilter(item, filter));
-    const tbody = document.querySelector('#central-receipts-table tbody');
-    if (!tbody) return;
-    const statsDiv = document.getElementById('central-receipts-stats');
-    const lang = translations[currentLang];
+    const tbody = document.querySelector(`#${tableId} tbody`);
+    if (tbody) {
+        tbody.innerHTML = rowsHtml || `<tr><td colspan="8" style="text-align:center;">${lang.empty_data}</td></tr>`;
+    }
+
+    const statsDiv = document.getElementById(statsId);
     if (statsDiv) {
-        let totalAmount = centralData.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
         statsDiv.innerHTML = `
-            <div class="stat-item"><h4>${lang.st_total_central_receipts}</h4><div class="stat-value">${centralData.length}</div></div>
+            <div class="stat-item"><h4>${lang[statsLangKey]}</h4><div class="stat-value">${count}</div></div>
             <div class="stat-item"><h4>${lang.st_total_amounts}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
         `;
     }
-    tbody.innerHTML = centralData.length ? '' : `<tr><td colspan="8" style="text-align:center;">${lang.empty_data}</td></tr>`;
-    centralData.forEach((item) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${item.directorate}</td>
-            <td>${item.department}</td>
-            <td>${item.location}</td>
-            <td>${item.date}</td>
-            <td>${item.code}</td>
-            <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
-            <td class="no-print">${(item.receipt_images && item.receipt_images.length > 0) || item.receipt_image ? `<button class="btn-icon-sm" onclick="viewRecordImages(${item.originalIdx})" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-images"></i>${(item.receipt_images && item.receipt_images.length > 1) ? ` <span class="badge" style="background: var(--primary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; line-height: 1;">${item.receipt_images.length}</span>` : ''}</button>` : '—'}</td>
-            <td class="no-print action-btns">
-                <button class="btn-icon-sm print" onclick="printSingleRecord('receipts',${item.originalIdx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
-                <button class="btn-icon-sm edit" onclick="editRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn-icon-sm del" onclick="deleteRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-trash"></i></button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+}
+
+function renderCentralReceipts(filter) {
+    renderReceiptCategory('مركزي', 'central-receipts-table', 'central-receipts-stats', 'filter-central-receipts', 'st_total_central_receipts', filter);
 }
 
 function renderDecentralReceipts(filter) {
-    let data = getCachedData('receipts');
-    data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
-    let decentralData = data.filter(item => item.receipt_type === 'لا مركزي');
-
-    const monthFilterEl = document.getElementById('filter-decentral-receipts');
-    if (monthFilterEl && monthFilterEl.value) {
-        decentralData = decentralData.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
-    }
-
-    if (filter) decentralData = decentralData.filter(item => matchesFilter(item, filter));
-    const tbody = document.querySelector('#decentral-receipts-table tbody');
-    if (!tbody) return;
-    const statsDiv = document.getElementById('decentral-receipts-stats');
-    const lang = translations[currentLang];
-    if (statsDiv) {
-        let totalAmount = decentralData.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-        statsDiv.innerHTML = `
-            <div class="stat-item"><h4>${lang.st_total_decentral_receipts}</h4><div class="stat-value">${decentralData.length}</div></div>
-            <div class="stat-item"><h4>${lang.st_total_amounts}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
-        `;
-    }
-    tbody.innerHTML = decentralData.length ? '' : `<tr><td colspan="8" style="text-align:center;">${lang.empty_data}</td></tr>`;
-    decentralData.forEach((item) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${item.directorate}</td>
-            <td>${item.department}</td>
-            <td>${item.location}</td>
-            <td>${item.date}</td>
-            <td>${item.code}</td>
-            <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
-            <td class="no-print">${(item.receipt_images && item.receipt_images.length > 0) || item.receipt_image ? `<button class="btn-icon-sm" onclick="viewRecordImages(${item.originalIdx})" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-images"></i>${(item.receipt_images && item.receipt_images.length > 1) ? ` <span class="badge" style="background: var(--primary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; line-height: 1;">${item.receipt_images.length}</span>` : ''}</button>` : '—'}</td>
-            <td class="no-print action-btns">
-                <button class="btn-icon-sm print" onclick="printSingleRecord('receipts',${item.originalIdx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
-                <button class="btn-icon-sm edit" onclick="editRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn-icon-sm del" onclick="deleteRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-trash"></i></button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+    renderReceiptCategory('لا مركزي', 'decentral-receipts-table', 'decentral-receipts-stats', 'filter-decentral-receipts', 'st_total_decentral_receipts', filter);
 }
 
 function renderSpecialReceipts(filter) {
-    let data = getCachedData('receipts');
-    data = data.map((item, idx) => ({ ...item, originalIdx: idx }));
-    let specialData = data.filter(item => item.receipt_type === 'خاصه');
-
-    const monthFilterEl = document.getElementById('filter-special-receipts');
-    if (monthFilterEl && monthFilterEl.value) {
-        specialData = specialData.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
-    }
-
-    if (filter) specialData = specialData.filter(item => matchesFilter(item, filter));
-    const tbody = document.querySelector('#special-receipts-table tbody');
-    if (!tbody) return;
-    const statsDiv = document.getElementById('special-receipts-stats');
-    const lang = translations[currentLang];
-    if (statsDiv) {
-        let totalAmount = specialData.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-        statsDiv.innerHTML = `
-            <div class="stat-item"><h4>${lang.st_total_special_receipts}</h4><div class="stat-value">${specialData.length}</div></div>
-            <div class="stat-item"><h4>${lang.st_total_amounts}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
-        `;
-    }
-    tbody.innerHTML = specialData.length ? '' : `<tr><td colspan="8" style="text-align:center;">${lang.empty_data}</td></tr>`;
-    specialData.forEach((item) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${item.directorate}</td>
-            <td>${item.department}</td>
-            <td>${item.location}</td>
-            <td>${item.date}</td>
-            <td>${item.code}</td>
-            <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
-            <td class="no-print">${(item.receipt_images && item.receipt_images.length > 0) || item.receipt_image ? `<button class="btn-icon-sm" onclick="viewRecordImages(${item.originalIdx})" style="display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-images"></i>${(item.receipt_images && item.receipt_images.length > 1) ? ` <span class="badge" style="background: var(--primary); color: white; padding: 2px 6px; border-radius: 10px; font-size: 10px; font-weight: bold; line-height: 1;">${item.receipt_images.length}</span>` : ''}</button>` : '—'}</td>
-            <td class="no-print action-btns">
-                <button class="btn-icon-sm print" onclick="printSingleRecord('receipts',${item.originalIdx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
-                <button class="btn-icon-sm edit" onclick="editRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn-icon-sm del" onclick="deleteRecord('receipts',${item.originalIdx})"><i class="fa-solid fa-trash"></i></button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+    renderReceiptCategory('خاصه', 'special-receipts-table', 'special-receipts-stats', 'filter-special-receipts', 'st_total_special_receipts', filter);
 }
 
 function viewImage(base64Str) {
@@ -1406,32 +1556,16 @@ function prevPreviewImage() {
 }
 
 function renderDelegations(filter) {
-    let data = getCachedData('delegations');
-
-    const monthFilterEl = document.getElementById('filter-delegations');
-    if (monthFilterEl && monthFilterEl.value) {
-        const monthMapToNum = {
-            'كانون الثاني': '01', 'شباط': '02', 'آذار': '03', 'نيسان': '04',
-            'أيار': '05', 'حزيران': '06', 'تموز': '07', 'آب': '08',
-            'أيلول': '09', 'تشرين الأول': '10', 'تشرين الثاني': '11', 'كانون الأول': '12'
-        };
-        data = data.filter(item => item.month && monthMapToNum[item.month] === monthFilterEl.value);
-    }
-
-    if (filter) data = data.filter(item => matchesFilter(item, filter));
-    const tbody = document.querySelector('#delegations-table tbody');
-    if (!tbody) return;
-    const statsDiv = document.getElementById('delegations-stats');
+    const data = getCachedData('delegations');
     const lang = translations[currentLang];
-    if (statsDiv) {
-        let totalAmount = data.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
-        let totalMissions = data.reduce((sum, item) => sum + (parseInt(item.count) || 0), 0);
-        statsDiv.innerHTML = `
-            <div class="stat-item"><h4>${lang.st_delegation_records}</h4><div class="stat-value">${data.length}</div></div>
-            <div class="stat-item"><h4>${lang.st_total_delegations}</h4><div class="stat-value">${totalMissions}</div></div>
-            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
-        `;
-    }
+    const monthFilterEl = document.getElementById('filter-delegations');
+    const monthVal = monthFilterEl ? monthFilterEl.value : '';
+
+    const monthMapToNum = {
+        'كانون الثاني': '01', 'شباط': '02', 'آذار': '03', 'نيسان': '04',
+        'أيار': '05', 'حزيران': '06', 'تموز': '07', 'آب': '08',
+        'أيلول': '09', 'تشرين الأول': '10', 'تشرين الثاني': '11', 'كانون الأول': '12'
+    };
 
     const monthMap = {
         'كانون الثاني': 'm1', 'شباط': 'm2', 'آذار': 'm3', 'نيسان': 'm4',
@@ -1439,177 +1573,286 @@ function renderDelegations(filter) {
         'أيلول': 'm9', 'تشرين الأول': 'm10', 'تشرين الثاني': 'm11', 'كانون الأول': 'm12'
     };
 
-    tbody.innerHTML = data.length ? '' : `<tr><td colspan="8" style="text-align:center;">${lang.empty_data}</td></tr>`;
-    data.forEach((item, idx) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${item.name}</td>
-            <td>${monthMap[item.month] && lang[monthMap[item.month]] ? lang[monthMap[item.month]] : item.month}</td>
-            <td><span class="badge bg-secondary">${item.count}</span></td>
-            <td>${item.export_num}</td>
-            <td>${item.import_num}</td>
-            <td>${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
-            <td style="font-weight:bold; color:var(--success);">${parseFloat(item.total).toLocaleString()} ${lang.currency}</td>
+    let totalAmount = 0;
+    let totalMissions = 0;
+    let count = 0;
+    let rowsHtml = '';
+    const hasFilter = Boolean(filter);
+
+    for (let idx = 0; idx < data.length; idx++) {
+        const item = data[idx];
+        if (monthVal && item.month && monthMapToNum[item.month] !== monthVal) continue;
+        if (hasFilter && !matchesFilter(item, filter)) continue;
+
+        count++;
+        const amt = parseFloat(item.amount) || 0;
+        const tot = parseFloat(item.total) || 0;
+        const cnt = parseInt(item.count) || 0;
+
+        totalAmount += tot;
+        totalMissions += cnt;
+
+        const monthName = monthMap[item.month] && lang[monthMap[item.month]] ? lang[monthMap[item.month]] : (item.month || '');
+
+        const nameHtml = hasFilter ? highlightMatch(item.name || '', filter) : (item.name || '');
+        const expHtml = hasFilter ? highlightMatch(item.export_num || '', filter) : (item.export_num || '');
+        const impHtml = hasFilter ? highlightMatch(item.import_num || '', filter) : (item.import_num || '');
+
+        rowsHtml += `<tr>
+            <td>${nameHtml}</td>
+            <td>${monthName}</td>
+            <td><span class="badge bg-secondary">${cnt}</span></td>
+            <td>${expHtml}</td>
+            <td>${impHtml}</td>
+            <td>${amt.toLocaleString()} ${lang.currency}</td>
+            <td style="font-weight:bold; color:var(--success);">${tot.toLocaleString()} ${lang.currency}</td>
             <td class="no-print action-btns">
                 <button class="btn-icon-sm print" onclick="printSingleRecord('delegations',${idx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
                 <button class="btn-icon-sm edit" onclick="editRecord('delegations',${idx})"><i class="fa-solid fa-pen"></i></button>
                 <button class="btn-icon-sm del" onclick="deleteRecord('delegations',${idx})"><i class="fa-solid fa-trash"></i></button>
             </td>
+        </tr>`;
+    }
+
+    const tbody = document.querySelector('#delegations-table tbody');
+    if (tbody) {
+        tbody.innerHTML = rowsHtml || `<tr><td colspan="8" style="text-align:center;">${lang.empty_data}</td></tr>`;
+    }
+
+    const statsDiv = document.getElementById('delegations-stats');
+    if (statsDiv) {
+        statsDiv.innerHTML = `
+            <div class="stat-item"><h4>${lang.st_delegation_records}</h4><div class="stat-value">${count}</div></div>
+            <div class="stat-item"><h4>${lang.st_total_delegations}</h4><div class="stat-value">${totalMissions}</div></div>
+            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
         `;
-        tbody.appendChild(tr);
-    });
+    }
 }
 
 function renderChildren(filter) {
-    let data = getCachedData('children');
-
-    const monthFilterEl = document.getElementById('filter-children');
-    if (monthFilterEl && monthFilterEl.value) {
-        data = data.filter(item => item.arrival && item.arrival.split('-')[1] === monthFilterEl.value);
-    }
-
-    if (filter) data = data.filter(item => matchesFilter(item, filter));
-    const tbody = document.querySelector('#children-table tbody');
-    if (!tbody) return;
-    const statsDiv = document.getElementById('children-stats');
+    const data = getCachedData('children');
     const lang = translations[currentLang];
-    if (statsDiv) {
-        let totalAmount = data.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-        let males = data.filter(item => item.gender === 'ذكر').length;
-        let females = data.filter(item => item.gender === 'أنثى').length;
-        statsDiv.innerHTML = `
-            <div class="stat-item"><h4>${lang.st_total_children}</h4><div class="stat-value">${data.length}</div></div>
-            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
-            <div class="stat-item"><h4>${lang.st_males}</h4><div class="stat-value">${males}</div></div>
-            <div class="stat-item"><h4>${lang.st_females}</h4><div class="stat-value">${females}</div></div>
-        `;
-    }
-    tbody.innerHTML = data.length ? '' : `<tr><td colspan="8" style="text-align:center;">${lang.empty_data}</td></tr>`;
-    data.forEach((item, idx) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${item.father}</td>
-            <td>${item.mother}</td>
-            <td>${item.child}</td>
+    const monthFilterEl = document.getElementById('filter-children');
+    const monthVal = monthFilterEl ? monthFilterEl.value : '';
+
+    let totalAmount = 0;
+    let count = 0;
+    let males = 0;
+    let females = 0;
+    let rowsHtml = '';
+    const hasFilter = Boolean(filter);
+
+    for (let idx = 0; idx < data.length; idx++) {
+        const item = data[idx];
+        if (monthVal && item.arrival && item.arrival.slice(5, 7) !== monthVal) continue;
+        if (hasFilter && !matchesFilter(item, filter)) continue;
+
+        count++;
+        const amt = parseFloat(item.amount) || 0;
+        totalAmount += amt;
+        if (item.gender === 'ذكر') males++;
+        else if (item.gender === 'أنثى') females++;
+
+        const fatherHtml = hasFilter ? highlightMatch(item.father || '', filter) : (item.father || '');
+        const motherHtml = hasFilter ? highlightMatch(item.mother || '', filter) : (item.mother || '');
+        const childHtml = hasFilter ? highlightMatch(item.child || '', filter) : (item.child || '');
+        const arrivalHtml = hasFilter ? highlightMatch(item.arrival || '', filter) : (item.arrival || '');
+
+        rowsHtml += `<tr>
+            <td>${fatherHtml}</td>
+            <td>${motherHtml}</td>
+            <td>${childHtml}</td>
             <td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td>
-            <td>${item.dob}</td>
-            <td>${item.arrival}</td>
-            <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
+            <td>${item.dob || ''}</td>
+            <td>${arrivalHtml}</td>
+            <td style="font-weight:bold; color:var(--success);">${amt.toLocaleString()} ${lang.currency}</td>
             <td class="no-print action-btns">
                 <button class="btn-icon-sm print" onclick="printSingleRecord('children',${idx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
                 <button class="btn-icon-sm edit" onclick="editRecord('children',${idx})"><i class="fa-solid fa-pen"></i></button>
                 <button class="btn-icon-sm del" onclick="deleteRecord('children',${idx})"><i class="fa-solid fa-trash"></i></button>
             </td>
+        </tr>`;
+    }
+
+    const tbody = document.querySelector('#children-table tbody');
+    if (tbody) {
+        tbody.innerHTML = rowsHtml || `<tr><td colspan="8" style="text-align:center;">${lang.empty_data}</td></tr>`;
+    }
+
+    const statsDiv = document.getElementById('children-stats');
+    if (statsDiv) {
+        statsDiv.innerHTML = `
+            <div class="stat-item"><h4>${lang.st_total_children}</h4><div class="stat-value">${count}</div></div>
+            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
+            <div class="stat-item"><h4>${lang.st_males}</h4><div class="stat-value">${males}</div></div>
+            <div class="stat-item"><h4>${lang.st_females}</h4><div class="stat-value">${females}</div></div>
         `;
-        tbody.appendChild(tr);
-    });
+    }
 }
 
 function renderMarriage(filter) {
-    let data = getCachedData('marriage');
-
-    const monthFilterEl = document.getElementById('filter-marriage');
-    if (monthFilterEl && monthFilterEl.value) {
-        data = data.filter(item => {
-            const d = item.date || item.arrival;
-            return d && d.split('-')[1] === monthFilterEl.value;
-        });
-    }
-
-    if (filter) data = data.filter(item => matchesFilter(item, filter));
-    const tbody = document.querySelector('#marriage-table tbody');
-    if (!tbody) return;
-    const statsDiv = document.getElementById('marriage-stats');
+    const data = getCachedData('marriage');
     const lang = translations[currentLang];
-    if (statsDiv) {
-        let totalAmount = data.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-        statsDiv.innerHTML = `
-            <div class="stat-item"><h4>${lang.st_marriage_contracts}</h4><div class="stat-value">${data.length}</div></div>
-            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
-        `;
-    }
-    tbody.innerHTML = data.length ? '' : `<tr><td colspan="7" style="text-align:center;">${lang.empty_data}</td></tr>`;
-    data.forEach((item, idx) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${item.husband}</td>
-            <td>${item.wife}</td>
+    const monthFilterEl = document.getElementById('filter-marriage');
+    const monthVal = monthFilterEl ? monthFilterEl.value : '';
+
+    let totalAmount = 0;
+    let count = 0;
+    let rowsHtml = '';
+    const hasFilter = Boolean(filter);
+
+    for (let idx = 0; idx < data.length; idx++) {
+        const item = data[idx];
+        const d = item.date || item.arrival;
+        if (monthVal && d && d.slice(5, 7) !== monthVal) continue;
+        if (hasFilter && !matchesFilter(item, filter)) continue;
+
+        count++;
+        const amt = parseFloat(item.amount) || 0;
+        totalAmount += amt;
+
+        const husbandHtml = hasFilter ? highlightMatch(item.husband || '', filter) : (item.husband || '');
+        const wifeHtml = hasFilter ? highlightMatch(item.wife || '', filter) : (item.wife || '');
+        const dateHtml = hasFilter ? highlightMatch(item.date || '', filter) : (item.date || '');
+        const arrivalHtml = hasFilter ? highlightMatch(item.arrival || '', filter) : (item.arrival || '');
+
+        rowsHtml += `<tr>
+            <td>${husbandHtml}</td>
+            <td>${wifeHtml}</td>
             <td>${item.gender === 'ذكر' ? lang.lbl_male : lang.lbl_female}</td>
-            <td>${item.date}</td>
-            <td>${item.arrival}</td>
-            <td style="font-weight:bold; color:var(--success);">${parseFloat(item.amount).toLocaleString()} ${lang.currency}</td>
+            <td>${dateHtml}</td>
+            <td>${arrivalHtml}</td>
+            <td style="font-weight:bold; color:var(--success);">${amt.toLocaleString()} ${lang.currency}</td>
             <td class="no-print action-btns">
                 <button class="btn-icon-sm print" onclick="printSingleRecord('marriage',${idx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
                 <button class="btn-icon-sm edit" onclick="editRecord('marriage',${idx})"><i class="fa-solid fa-pen"></i></button>
                 <button class="btn-icon-sm del" onclick="deleteRecord('marriage',${idx})"><i class="fa-solid fa-trash"></i></button>
             </td>
+        </tr>`;
+    }
+
+    const tbody = document.querySelector('#marriage-table tbody');
+    if (tbody) {
+        tbody.innerHTML = rowsHtml || `<tr><td colspan="7" style="text-align:center;">${lang.empty_data}</td></tr>`;
+    }
+
+    const statsDiv = document.getElementById('marriage-stats');
+    if (statsDiv) {
+        statsDiv.innerHTML = `
+            <div class="stat-item"><h4>${lang.st_marriage_contracts}</h4><div class="stat-value">${count}</div></div>
+            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
         `;
-        tbody.appendChild(tr);
-    });
+    }
 }
 
 function renderFines(filter) {
-    let data = getCachedData('fines');
-
-    const monthFilterEl = document.getElementById('filter-fines');
-    if (monthFilterEl && monthFilterEl.value) {
-        data = data.filter(item => item.date && item.date.split('-')[1] === monthFilterEl.value);
-    }
-
-    if (filter) data = data.filter(item => matchesFilter(item, filter));
-    const tbody = document.querySelector('#fines-table tbody');
-    if (!tbody) return;
-    const statsDiv = document.getElementById('fines-stats');
+    const data = getCachedData('fines');
     const lang = translations[currentLang];
-    if (statsDiv) {
-        let totalAmount = data.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
-        let type38Count = data.filter(item => item.book_type === '38 أ').length;
-        let type68Count = data.filter(item => item.book_type === '68 أ').length;
-        statsDiv.innerHTML = `
-            <div class="stat-item"><h4>${lang.st_total_books}</h4><div class="stat-value">${data.length}</div></div>
-            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
-            <div class="stat-item"><h4>38أ</h4><div class="stat-value">${type38Count}</div></div>
-            <div class="stat-item"><h4>68أ</h4><div class="stat-value">${type68Count}</div></div>
-        `;
-    }
-    tbody.innerHTML = data.length ? '' : `<tr><td colspan="7" style="text-align:center;">${lang.empty_data}</td></tr>`;
-    data.forEach((item, idx) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><span class="badge ${item.book_type === '38 أ' ? 'bg-primary' : 'bg-warning'}">${item.book_type}</span></td>
-            <td>${item.holder}</td>
-            <td>${item.book_number}</td>
-            <td style="font-weight:bold; color:var(--danger);">${parseFloat(item.total).toLocaleString()} ${lang.currency}</td>
-            <td>${item.date}</td>
-            <td>${item.location}</td>
+    const monthFilterEl = document.getElementById('filter-fines');
+    const monthVal = monthFilterEl ? monthFilterEl.value : '';
+
+    let totalAmount = 0;
+    let count = 0;
+    let type38 = 0;
+    let type68 = 0;
+    let rowsHtml = '';
+    const hasFilter = Boolean(filter);
+
+    for (let idx = 0; idx < data.length; idx++) {
+        const item = data[idx];
+        if (monthVal && item.date && item.date.slice(5, 7) !== monthVal) continue;
+        if (hasFilter && !matchesFilter(item, filter)) continue;
+
+        count++;
+        const tot = parseFloat(item.total) || 0;
+        totalAmount += tot;
+        if (item.book_type === '38 أ') type38++;
+        else if (item.book_type === '68 أ') type68++;
+
+        const badgeClass = item.book_type === '38 أ' ? 'bg-primary' : 'bg-warning';
+
+        const holderHtml = hasFilter ? highlightMatch(item.holder || '', filter) : (item.holder || '');
+        const bookNumHtml = hasFilter ? highlightMatch(item.book_number || '', filter) : (item.book_number || '');
+        const locHtml = hasFilter ? highlightMatch(item.location || '', filter) : (item.location || '');
+
+        rowsHtml += `<tr>
+            <td><span class="badge ${badgeClass}">${item.book_type || ''}</span></td>
+            <td>${holderHtml}</td>
+            <td>${bookNumHtml}</td>
+            <td style="font-weight:bold; color:var(--danger);">${tot.toLocaleString()} ${lang.currency}</td>
+            <td>${item.date || ''}</td>
+            <td>${locHtml}</td>
             <td class="no-print action-btns">
                 <button class="btn-icon-sm print" onclick="printSingleRecord('fines',${idx})" title="${lang.print_record}"><i class="fa-solid fa-print"></i></button>
                 <button class="btn-icon-sm edit" onclick="editRecord('fines',${idx})"><i class="fa-solid fa-pen"></i></button>
                 <button class="btn-icon-sm del" onclick="deleteRecord('fines',${idx})"><i class="fa-solid fa-trash"></i></button>
             </td>
+        </tr>`;
+    }
+
+    const tbody = document.querySelector('#fines-table tbody');
+    if (tbody) {
+        tbody.innerHTML = rowsHtml || `<tr><td colspan="7" style="text-align:center;">${lang.empty_data}</td></tr>`;
+    }
+
+    const statsDiv = document.getElementById('fines-stats');
+    if (statsDiv) {
+        statsDiv.innerHTML = `
+            <div class="stat-item"><h4>${lang.st_total_books}</h4><div class="stat-value">${count}</div></div>
+            <div class="stat-item"><h4>${lang.lbl_total}</h4><div class="stat-value">${totalAmount.toLocaleString()} ${lang.currency}</div></div>
+            <div class="stat-item"><h4>38أ</h4><div class="stat-value">${type38}</div></div>
+            <div class="stat-item"><h4>68أ</h4><div class="stat-value">${type68}</div></div>
         `;
-        tbody.appendChild(tr);
-    });
+    }
 }
 
-// Generic filter matcher — checks all string fields for the query (case-insensitive)
+function normalizeSearchText(str) {
+    if (!str) return '';
+    return String(str)
+        .toLowerCase()
+        .replace(/[أإآآألإأ]/g, 'ا')
+        .replace(/[ىيئێ]/g, 'ي')
+        .replace(/[ةهھ]/g, 'ه')
+        .replace(/[ۆؤو]/g, 'و')
+        .replace(/[\u064B-\u065F]/g, ''); // Remove Arabic diacritics / tashkeel
+}
+
+function highlightMatch(text, query) {
+    if (!text || !query) return text !== undefined && text !== null ? String(text) : '';
+    const str = String(text);
+    const rawTokens = String(query).trim().split(/\s+/).filter(Boolean);
+    if (!rawTokens.length) return str;
+
+    const pattern = rawTokens.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    if (!pattern) return str;
+
+    try {
+        const regex = new RegExp(`(${pattern})`, 'gi');
+        return str.replace(regex, '<mark class="search-highlight">$1</mark>');
+    } catch(e) {
+        return str;
+    }
+}
+
+// Generic filter matcher — checks all string fields for the query with Arabic/Kurdish normalization and multi-term match
 function matchesFilter(item, query) {
     if (!query) return true;
-    const q = String(query).trim().toLowerCase();
-    // If query is empty after trim
-    if (!q) return true;
-    // Check all values
+    const rawTokens = String(query).trim().split(/\s+/).filter(Boolean);
+    if (!rawTokens.length) return true;
+
+    const normalizedTokens = rawTokens.map(t => normalizeSearchText(t));
+
+    let combinedStr = '';
     for (const k in item) {
         if (!Object.prototype.hasOwnProperty.call(item, k)) continue;
+        if (k === 'receipt_image' || k === 'receipt_images' || k === 'originalIdx') continue;
         const v = item[k];
-        if (v === null || v === undefined) continue;
-        if (typeof v === 'string' || typeof v === 'number') {
-            try {
-                if (String(v).toLowerCase().includes(q)) return true;
-            } catch (e) { /* ignore */ }
+        if (v !== null && v !== undefined && (typeof v === 'string' || typeof v === 'number')) {
+            combinedStr += ' ' + normalizeSearchText(String(v));
         }
     }
-    return false;
+
+    return normalizedTokens.every(tok => combinedStr.includes(tok));
 }
 
 // Perform search on the currently active section
@@ -1691,6 +1934,10 @@ const modalKeyMap = {
 };
 
 function editRecord(key, idx) {
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert(translations[currentLang]?.permission_denied_msg || "عذراً! هذا الحساب مخصص للمشاهدة فقط ولا يمتلك صلاحية الإضافة أو التعديل أو الحذف.");
+        return;
+    }
     const data = getCachedData(key);
     const item = data[idx];
     if (!item) return;
@@ -1779,6 +2026,10 @@ function openAddReceiptModal(type) {
 }
 
 function deleteRecord(key, idx) {
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert(translations[currentLang]?.permission_denied_msg || "عذراً! هذا الحساب مخصص للمشاهدة فقط ولا يمتلك صلاحية الإضافة أو التعديل أو الحذف.");
+        return;
+    }
     pendingDelete = { key, idx };
     openModal('confirm-modal');
 }
@@ -1790,7 +2041,22 @@ function executeDelete() {
     // Use a copy of cached data - getCachedData returns the cached array, splice would mutate it
     const data = [...getCachedData(key)];
     data.splice(idx, 1);
+    
+    // 1. Update local storage & IndexedDB
     dbStore.setItem(key, JSON.stringify(data));
+
+    // 2. Direct immediate push to Firebase Realtime Database for instant permanent deletion
+    if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+        try {
+            firebase.database().ref('appData/' + key).set(stripImages(data)).then(() => {
+                console.log(`Record permanently deleted from Firebase node: appData/${key}`);
+            }).catch(err => {
+                console.error(`Firebase deletion error for node appData/${key}:`, err);
+            });
+        } catch(e) {
+            console.error("Firebase deletion exception:", e);
+        }
+    }
 
     const renderMap = {
         receipts: renderReceipts,
@@ -1804,7 +2070,7 @@ function executeDelete() {
     updateOverviewCards();
     updateAutocompletes();
     closeAllModals();
-    showToast(translations[currentLang].success_save); // Re-use success toast or add specific one
+    showToast(translations[currentLang]?.success_save || 'تم الحذف بنجاح');
 }
 
 function openModal(modalId) {
@@ -1931,6 +2197,10 @@ function checkDuplicate(key, dataObj) {
 }
 
 function saveRecord(key, dataObj, renderFunc, formEl) {
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert(translations[currentLang]?.permission_denied_msg || "عذراً! هذا الحساب مخصص للمشاهدة فقط ولا يمتلك صلاحية الإضافة أو التعديل أو الحذف.");
+        return;
+    }
     // Spread to get a mutable copy (getCachedData returns cached array)
     let currentData = [...getCachedData(key)];
     if (editingKey === key && editingIdx !== null) {
@@ -3156,18 +3426,67 @@ function cancelRestore() {
     if (fileInput) fileInput.value = '';
 }
 
+// Helper to merge and deduplicate records when restoring JSON backup files
+function mergeAndDeduplicate(existingArray, newArray) {
+    if (!Array.isArray(existingArray)) existingArray = [];
+    if (!Array.isArray(newArray)) newArray = [];
+    
+    const areRecordsEqual = (a, b) => {
+        if (a === b) return true;
+        if (!a || !b) return false;
+        if (a.id && b.id && String(a.id) === String(b.id)) return true;
+        
+        const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+        for (const k of keys) {
+            if (k === 'receipt_image' || k === 'receipt_images' || k === 'originalIdx') continue;
+            if (String(a[k] || '').trim() !== String(b[k] || '').trim()) return false;
+        }
+        return true;
+    };
+
+    const result = [...existingArray];
+    for (const newItem of newArray) {
+        const exists = result.some(item => areRecordsEqual(item, newItem));
+        if (!exists) {
+            result.push(newItem);
+        }
+    }
+    return result;
+}
+
 function confirmRestore() {
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert(translations[currentLang]?.permission_denied_msg || "عذراً! هذا الحساب مخصص للمشاهدة فقط ولا يمتلك صلاحية الإضافة أو التعديل أو الحذف.");
+        return;
+    }
     if (!pendingBackupData) return;
 
     try {
         const data = pendingBackupData;
+        const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
 
-        // Restore all keys to dbStore if they exist in the backup file
-        if (Array.isArray(data.receipts)) dbStore.setItem('receipts', JSON.stringify(data.receipts));
-        if (Array.isArray(data.delegations)) dbStore.setItem('delegations', JSON.stringify(data.delegations));
-        if (Array.isArray(data.children)) dbStore.setItem('children', JSON.stringify(data.children));
-        if (Array.isArray(data.marriage)) dbStore.setItem('marriage', JSON.stringify(data.marriage));
-        if (Array.isArray(data.fines)) dbStore.setItem('fines', JSON.stringify(data.fines));
+        for (const key of tables) {
+            if (Array.isArray(data[key])) {
+                const currentLocal = getCachedData(key) || [];
+                const merged = mergeAndDeduplicate(currentLocal, data[key]);
+                
+                // 1. Save merged deduplicated list to local storage / IndexedDB
+                dbStore.setItem(key, JSON.stringify(merged));
+                
+                // 2. Automatically push merged deduplicated data to Firebase Realtime Database
+                if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0) {
+                    try {
+                        firebase.database().ref('appData/' + key).set(stripImages(merged)).then(() => {
+                            console.log(`Auto-uploaded restored JSON backup data for node appData/${key} to Firebase.`);
+                        }).catch(err => {
+                            console.error(`Failed to push restored data for ${key} to Firebase:`, err);
+                        });
+                    } catch(e) {
+                        console.error(`Firebase push exception for ${key}:`, e);
+                    }
+                }
+            }
+        }
 
         if (data.sig_director_name !== undefined) dbStore.setItem('sig_director_name', data.sig_director_name);
         if (data.sig_clerk_name !== undefined) dbStore.setItem('sig_clerk_name', data.sig_clerk_name);
@@ -3186,16 +3505,18 @@ function confirmRestore() {
         renderPrintSignatureNames();
         updateAutocompletes();
 
-        // If on stats section, update stats
-        const statsSec = document.getElementById('stats-section');
-        if (statsSec && statsSec.classList.contains('active')) {
-            renderStats();
-        }
+        // Force re-rendering of all sections so 100% of restored records appear inside the site UI
+        if (typeof renderReceipts === 'function') renderReceipts();
+        if (typeof renderDelegations === 'function') renderDelegations();
+        if (typeof renderChildren === 'function') renderChildren();
+        if (typeof renderMarriage === 'function') renderMarriage();
+        if (typeof renderFines === 'function') renderFines();
+        if (typeof renderStats === 'function') renderStats();
 
-        showToast(translations[currentLang].import_success);
+        showToast(translations[currentLang]?.import_success || 'تم استرداد البيانات ورفعها بنجاح!');
     } catch (err) {
         console.error(err);
-        showToast(translations[currentLang].invalid_file_error);
+        showToast(translations[currentLang]?.invalid_file_error || 'ملف النسخة الاحتياطية غير صالح!');
     }
 }
 
@@ -3931,14 +4252,23 @@ function exportHTMLArchive() {
 window.firebaseInitialized = false;
 
 function openFirebaseModal() {
-    document.getElementById('firebase-modal').classList.add('active');
     const existing = localStorage.getItem('firebaseConfig');
     if (existing) {
-        document.getElementById('firebase-config-input').value = existing;
+        try {
+            const parsed = JSON.parse(existing);
+            document.getElementById('firebase-config-input').value = JSON.stringify(parsed, null, 2);
+        } catch(e) {
+            document.getElementById('firebase-config-input').value = existing;
+        }
     }
+    openModal('firebase-modal');
 }
 
 function saveFirebaseConfig() {
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert(translations[currentLang]?.permission_denied_msg || "عذراً! هذا الحساب مخصص للمشاهدة فقط ولا يمتلك صلاحية الإضافة أو التعديل أو الحذف.");
+        return;
+    }
     const input = document.getElementById('firebase-config-input').value.trim();
     const statusEl = document.getElementById('firebase-status');
     statusEl.style.display = 'block';
@@ -3975,9 +4305,8 @@ function saveFirebaseConfig() {
         }
         
         if (!configObj.databaseURL) {
-            statusEl.textContent = 'الرابط databaseURL مفقود! يرجى إنشاء Realtime Database في فايربيس أولاً ثم نسخ الكود الجديد.';
-            statusEl.style.color = 'var(--danger)';
-            return;
+            // Auto-construct databaseURL if possible
+            configObj.databaseURL = `https://${configObj.projectId}-default-rtdb.firebaseio.com`;
         }
         
         localStorage.setItem('firebaseConfig', JSON.stringify(configObj));
@@ -3996,6 +4325,25 @@ function saveFirebaseConfig() {
 }
 
 let isSyncingFromCloud = false;
+
+// Helper to strip heavy base64 image strings before sending to Firebase
+function stripImages(data) {
+    if (!data) return data;
+    if (Array.isArray(data)) {
+        return data.map(item => {
+            if (!item || typeof item !== 'object') return item;
+            const { receipt_images, receipt_image, ...rest } = item;
+            return rest;
+        });
+    } else if (typeof data === 'object') {
+        const result = {};
+        for (const key in data) {
+            result[key] = stripImages(data[key]);
+        }
+        return result;
+    }
+    return data;
+}
 
 function initFirebase() {
     const configStr = localStorage.getItem('firebaseConfig');
@@ -4018,25 +4366,27 @@ function initFirebase() {
             };
         }
 
-        if (!window.firebaseInitialized) {
-            firebase.initializeApp(configObj);
+        if (!window.firebaseInitialized && typeof firebase !== 'undefined') {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(configObj);
+            }
             window.firebaseInitialized = true;
             
-            // Listen to real-time changes
-            // Sync once at startup instead of real-time listener to avoid loop/network overload
-            firebase.database().ref('appData').once('value').then((snapshot) => {
+            // Real-time listener for continuous automatic sync (download & merge)
+            firebase.database().ref('appData').on('value', (snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    isSyncingFromCloud = true; // prevent re-uploading
+                    isSyncingFromCloud = true; // prevent re-uploading loop
                     
                     const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
+                    let hasChanges = false;
                     
                     for (const key in data) {
                         let val = data[key];
                         let valStr = typeof val === 'string' ? val : JSON.stringify(val);
                         
                         if (tables.includes(key)) {
-                            // Merge logic for table data arrays to prevent deletion of unsynced local files
+                            // Merge logic for table data arrays
                             let localData = [];
                             try {
                                 const localStr = dbStore.getItem(key);
@@ -4053,10 +4403,12 @@ function initFirebase() {
                             }
                             
                             if (Array.isArray(localData) && Array.isArray(cloudData)) {
-                                // Helper function to compare two records
+                                // Helper function to compare two records (ignoring images since cloud data strips images)
                                 const areRecordsEqual = (a, b) => {
                                     if (a === b) return true;
                                     if (!a || !b) return false;
+                                    
+                                    if (a.id && b.id && String(a.id) === String(b.id)) return true;
                                     
                                     const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
                                     for (const k of keys) {
@@ -4067,49 +4419,35 @@ function initFirebase() {
                                             return false;
                                         }
                                     }
-                                    
-                                    // Fast comparison for images using length first
-                                    const imgA = a.receipt_image || '';
-                                    const imgB = b.receipt_image || '';
-                                    if (imgA.length !== imgB.length) return false;
-                                    if (imgA !== imgB) return false;
-                                    
-                                    const imgsA = a.receipt_images || [];
-                                    const imgsB = b.receipt_images || [];
-                                    if (imgsA.length !== imgsB.length) return false;
-                                    for (let i = 0; i < imgsA.length; i++) {
-                                        if (imgsA[i].length !== imgsB[i].length) return false;
-                                        if (imgsA[i] !== imgsB[i]) return false;
-                                    }
-                                    
                                     return true;
                                 };
                                 
-                                // Merge cloud and local arrays (union without duplicates)
-                                const mergedData = [...cloudData];
-                                let localAdded = false;
-                                for (const localItem of localData) {
-                                    const exists = cloudData.some(cloudItem => areRecordsEqual(localItem, cloudItem));
-                                    if (!exists) {
-                                        mergedData.push(localItem);
-                                        localAdded = true;
+                                // Merge cloud and local arrays (preserve local images onto cloud records)
+                                const mergedData = cloudData.map(cloudItem => {
+                                    const itemCopy = { ...cloudItem };
+                                    const matchingLocal = localData.find(localItem => areRecordsEqual(localItem, cloudItem));
+                                    if (matchingLocal) {
+                                        if (matchingLocal.receipt_images && matchingLocal.receipt_images.length > 0 && (!itemCopy.receipt_images || itemCopy.receipt_images.length === 0)) {
+                                            itemCopy.receipt_images = matchingLocal.receipt_images;
+                                        }
+                                        if (matchingLocal.receipt_image && (!itemCopy.receipt_image || itemCopy.receipt_image === '')) {
+                                            itemCopy.receipt_image = matchingLocal.receipt_image;
+                                        }
                                     }
-                                }
+                                    return itemCopy;
+                                });
                                 
                                 const mergedStr = JSON.stringify(mergedData);
-                                invalidateCache(key);
-                                originalSetItem.call(dbStore, key, mergedStr);
-                                
-                                // If local records were added, sync them back to the cloud database
-                                if (localAdded) {
-                                    console.log(`Syncing merged local data for ${key} back to cloud...`);
-                                    firebase.database().ref('appData/' + key).set(mergedData).catch(err => {
-                                        console.error(`Failed to upload merged local data for ${key}:`, err);
-                                    });
+                                const currentLocalStr = dbStore.getItem(key);
+                                if (mergedStr !== currentLocalStr) {
+                                    hasChanges = true;
+                                    invalidateCache(key);
+                                    originalSetItem.call(dbStore, key, mergedStr);
                                 }
                             } else {
                                 invalidateCache(key);
                                 originalSetItem.call(dbStore, key, valStr);
+                                hasChanges = true;
                             }
                         } else {
                             // Non-table values (settings, etc.)
@@ -4119,16 +4457,18 @@ function initFirebase() {
                     }
                     isSyncingFromCloud = false;
                     
-                    // Re-render current section to reflect new data
-                    const activeSection = document.querySelector('.content-section.active');
-                    if (activeSection) {
-                        const secId = activeSection.id;
-                        if(secId === 'central-receipts-section' || secId === 'decentral-receipts-section' || secId === 'special-receipts-section') renderReceipts();
-                        else if(secId === 'delegations-section') renderDelegations();
-                        else if(secId === 'children-section') renderChildren();
-                        else if(secId === 'marriage-section') renderMarriage();
-                        else if(secId === 'fines-section') renderFines();
-                        else if(secId === 'stats-section') renderStats();
+                    // Re-render active section if cloud data brought changes
+                    if (hasChanges) {
+                        const activeSection = document.querySelector('.content-section.active');
+                        if (activeSection) {
+                            const secId = activeSection.id;
+                            if(secId === 'central-receipts-section' || secId === 'decentral-receipts-section' || secId === 'special-receipts-section') renderReceipts();
+                            else if(secId === 'delegations-section') renderDelegations();
+                            else if(secId === 'children-section') renderChildren();
+                            else if(secId === 'marriage-section') renderMarriage();
+                            else if(secId === 'fines-section') renderFines();
+                            else if(secId === 'stats-section') renderStats();
+                        }
                     }
                 } else {
                     // Cloud is empty, automatically upload local data!
@@ -4140,7 +4480,7 @@ function initFirebase() {
                         const localData = dbStore._cache[key] || localStorage.getItem(key);
                         if (localData && localData !== '[]') {
                             try {
-                                updates[key] = JSON.parse(localData);
+                                updates[key] = stripImages(JSON.parse(localData));
                             } catch(e) {
                                 updates[key] = localData;
                             }
@@ -4148,16 +4488,14 @@ function initFirebase() {
                         }
                     }
                     if (hasLocalData) {
-                        firebase.database().ref('appData').set(updates).then(() => {
-                            console.log("Auto-sync complete.");
-                            alert("✅ تم رفع جميع بياناتك القديمة إلى السحابة بنجاح!");
-                        }).catch((err) => {
-                            alert("❌ حدث خطأ أثناء الرفع للسحابة، قد تكون المشكلة في (Rules): " + err.message);
+                        firebase.database().ref('appData').set(updates).catch((err) => {
+                            handleFirebaseError(err);
                         });
                     }
                 }
-            }).catch(e => {
-                console.error("Firebase startup sync failed:", e);
+            }, (e) => {
+                console.error("Firebase real-time sync failed:", e);
+                handleFirebaseError(e);
             });
             console.log("Firebase initialized successfully.");
         }
@@ -4171,7 +4509,6 @@ let lastFirebaseErrorTime = 0;
 const originalSetItem = dbStore.setItem;
 
 // Debounced Firebase push - waits 2 seconds after last change before uploading
-// This prevents multiple rapid writes (e.g. when saving a record triggers multiple setItem calls)
 const _pendingFirebaseUploads = {};
 function _debouncedFirebasePush(key, valStr) {
     if (_pendingFirebaseUploads[key]) {
@@ -4184,39 +4521,29 @@ function _debouncedFirebasePush(key, valStr) {
             let cloudData;
             try { cloudData = JSON.parse(valStr); } catch(e) { cloudData = valStr; }
             
-            // For receipts: strip images before sending to reduce payload size
-            // Images are large Base64 strings that slow down Firebase significantly
-            if (key === 'receipts' && Array.isArray(cloudData)) {
-                const stripped = cloudData.map(item => {
-                    if (!item.receipt_images && !item.receipt_image) return item;
-                    const { receipt_images, receipt_image, ...rest } = item;
-                    return rest;
-                });
-                firebase.database().ref('appData/' + key).set(stripped).catch(handleFirebaseError);
-            } else {
-                firebase.database().ref('appData/' + key).set(cloudData).catch(handleFirebaseError);
-            }
+            // Strip images before sending to Firebase to prevent size limit rejection
+            const stripped = stripImages(cloudData);
+            firebase.database().ref('appData/' + key).set(stripped).catch(handleFirebaseError);
         } catch(err) {
             console.error(err);
         }
-    }, 2000); // 2 second debounce
+    }, 2000);
 }
 
 function handleFirebaseError(e) {
-    console.error("Firebase push error", e);
-    if (e.message && (e.message.includes("permission_denied") || e.message.includes("Permission denied"))) {
+    console.error("Firebase error", e);
+    const msg = String(e && (e.message || e.code || e));
+    if (msg.includes("permission_denied") || msg.includes("Permission denied") || msg.includes("PERMISSION_DENIED")) {
         const now = Date.now();
-        if (now - lastFirebaseErrorTime > 10000) {
+        if (now - lastFirebaseErrorTime > 8000) {
             lastFirebaseErrorTime = now;
-            alert("❌ تم رفض الإذن من Firebase! لا يمكن رفع الملف.\n\nيرجى التأكد من تعديل قواعد بيانات Firebase (Rules) لتسمح بالقراءة والكتابة:\n\n{\n  \"rules\": {\n    \".read\": true,\n    \".write\": true\n  }\n}");
+            alert("❌ تم رفض الإذن من Firebase!\n\nسبب المشكلة: قواعد حماية البيانات (Rules) في حساب Firebase تمنع القراءة/الكتابة.\n\nالحل: اذهب إلى Firebase Console -> Realtime Database -> Rules وعدّلها لتصبح:\n\n{\n  \"rules\": {\n    \".read\": true,\n    \".write\": true\n  }\n}");
         }
     }
 }
 
 dbStore.setItem = function(key, valStr) {
-    // Invalidate cache for this key
     invalidateCache(key);
-    
     const res = originalSetItem.call(this, key, valStr);
     
     const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
@@ -4242,21 +4569,26 @@ async function syncToCloud() {
         const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
         const updates = {};
         for(const key of tables) {
-            const localData = dbStore._cache[key] || '[]';
+            const localData = dbStore._cache[key] || localStorage.getItem(key) || '[]';
             try {
-                updates[key] = JSON.parse(localData);
+                const parsed = JSON.parse(localData);
+                updates[key] = stripImages(parsed);
             } catch(e) {
                 updates[key] = localData;
             }
         }
         await firebase.database().ref('appData').set(updates);
         
-        statusEl.textContent = 'تم الرفع إلى السحابة بنجاح!';
+        statusEl.textContent = '✅ تم الرفع إلى السحابة بنجاح!';
         statusEl.style.color = 'var(--success)';
+        if (typeof showToast === 'function') {
+            showToast('تم الرفع إلى السحابة بنجاح!');
+        }
     } catch (e) {
-        statusEl.textContent = 'فشل في الرفع إلى السحابة.';
+        statusEl.textContent = '❌ فشل في الرفع إلى السحابة: ' + (e.message || e);
         statusEl.style.color = 'var(--danger)';
         console.error(e);
+        handleFirebaseError(e);
     }
 }
 
@@ -4284,7 +4616,7 @@ async function syncFromCloud() {
             }
             isSyncingFromCloud = false;
             
-            statusEl.textContent = 'تم الاسترداد بنجاح! سيتم إعادة تحميل الصفحة.';
+            statusEl.textContent = '✅ تم الاسترداد بنجاح! سيتم إعادة تحميل الصفحة.';
             statusEl.style.color = 'var(--success)';
             setTimeout(() => window.location.reload(), 1000);
         } else {
@@ -4292,20 +4624,17 @@ async function syncFromCloud() {
              statusEl.style.color = 'var(--warning)';
         }
     } catch (e) {
-        statusEl.textContent = 'فشل في الاسترداد من السحابة.';
+        statusEl.textContent = '❌ فشل في الاسترداد من السحابة.';
         statusEl.style.color = 'var(--danger)';
         console.error(e);
+        handleFirebaseError(e);
     }
 }
 
-// Firebase is loaded with defer, so we use 'load' event to ensure it's ready
-// Also add a small retry mechanism in case of slow network
 window.addEventListener('load', () => {
-    // Try to init Firebase after a brief moment to ensure defer scripts are parsed
     if (typeof firebase !== 'undefined') {
         initFirebase();
     } else {
-        // Retry once if firebase not yet defined (very slow network)
         setTimeout(() => {
             if (typeof firebase !== 'undefined') {
                 initFirebase();
