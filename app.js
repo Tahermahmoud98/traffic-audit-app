@@ -722,6 +722,8 @@ const translations = {
         sheets_auto_sync_lbl: 'تفعيل المزامنة التلقائية عند الإضافة/التعديل',
         save_sheets_config: 'حفظ الإعدادات',
         sync_to_sheets: 'مزامنة البيانات الآن',
+        upload_to_sheets: 'رفع البيانات إلى شيت',
+        restore_from_sheets: 'استرداد البيانات من شيت',
         test_sheets_conn: 'فحص الاتصال',
         sheets_instructions_title: 'خطوات الإعداد والربط:',
         sheets_instructions_content: '1. افتح جدول بيانات Google جديد.<br>2. من القائمة العلوية اختر Extensions ثم Apps Script.<br>3. احذف الكود الموجود، والصق الكود البرمجي أدناه.<br>4. اضغط على Deploy ثم New Deployment.<br>5. اختر النوع Web app، واجعل Execute as: Me والوصول Who has access: Anyone.<br>6. اضغط Deploy وانسخ رابط Web App URL والصقه في الحقل أعلاه.',
@@ -972,6 +974,8 @@ const translations = {
         sheets_auto_sync_lbl: 'چالاککرنا هەڤدەمکرنا خۆکار دەما زێدەکرن/دەستکاریکرنێ',
         save_sheets_config: 'پاشکەفتکرنا ڕێکخستنان',
         sync_to_sheets: 'هەڤدەمکرنا داتایان نوکە',
+        upload_to_sheets: 'بارکرنا داتایان بۆ شیت',
+        restore_from_sheets: 'هینانەڤەیا داتایان ژ شیت',
         test_sheets_conn: 'پشکنینا گرێدانێ',
         sheets_instructions_title: 'پێنگاڤێن ڕێکخستن و گرێدانێ:',
         sheets_instructions_content: '1. خشتەیەکا نوو یا Google Sheets ڤەکە.<br>2. ژ لیستا سەری Extensions پاشان Apps Script هەلبژێرە.<br>3. کۆدێ هەيی ژێببە، و کۆدێ ل خوارێ لێبدە.<br>4. کلیکێ ل سەر Deploy پاشان New Deployment بکە.<br>5. جۆرێ Web app هەلبژێرە، و Execute as: Me و Who has access: Anyone دابنێ.<br>6. کلیکێ ل سەر Deploy بکە و لینكا Web App URL کۆپی بکە و ل جھێ سەری دابنێ.',
@@ -3353,8 +3357,8 @@ function openBackupModal() {
     const uploadText = document.getElementById('backup-upload-text');
     if (uploadText) uploadText.textContent = translations[currentLang].import_btn;
 
-    // Load Google Sheets config from localStorage
-    const sheetsUrl = localStorage.getItem('sheetsWebAppUrl') || '';
+    // Load Google Sheets config
+    const sheetsUrl = getSheetsWebAppUrl();
     const sheetsUrlInput = document.getElementById('sheets-url-input');
     if (sheetsUrlInput) {
         sheetsUrlInput.value = sheetsUrl;
@@ -4325,10 +4329,9 @@ dbStore.setItem = function(key, valStr) {
 
 
 window.addEventListener('load', () => {
-    // Automatically restore data from Google Sheets on startup if configured and auto-sync is active
-    const sheetsUrl = localStorage.getItem('sheetsWebAppUrl');
-    const autoSync = localStorage.getItem('sheetsAutoSync') === 'true';
-    if (sheetsUrl && autoSync) {
+    // Automatically restore data from Google Sheets on startup if configured
+    const sheetsUrl = getSheetsWebAppUrl();
+    if (sheetsUrl) {
         console.log("Automatic restore: retrieving data from Google Sheets on startup...");
         syncFromSheets(true);
     }
@@ -4338,6 +4341,9 @@ window.addEventListener('load', () => {
 // ==========================================
 // GOOGLE SHEETS SYNC MODULE
 // ==========================================
+function getSheetsWebAppUrl() {
+    return localStorage.getItem('sheetsWebAppUrl') || 'https://script.google.com/macros/s/AKfycbxfsv1wd--HAIWuSZqairL4usF4yw9vd2-kFwFkntQNbR8oXq_sFF87aJb8S8B3MT-KSw/exec';
+}
 
 
 function saveSheetsConfig() {
@@ -4452,16 +4458,23 @@ function sendSheetsRequest(url, data) {
         // Browser environment fallback
         fetch(url, {
             method: 'POST',
-            mode: 'no-cors', // Bypasses CORS blocking for outgoing POST requests
             headers: {
-                'Content-Type': 'text/plain'
+                'Content-Type': 'text/plain;charset=utf-8'
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
+            redirect: 'follow'
         })
-        .then(() => {
-            resolve({ status: 'success', message: 'Request sent (opaque response)' });
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+        })
+        .then(parsed => {
+            resolve(parsed);
         })
         .catch(err => {
+            console.error("Fetch fallback error:", err);
             reject(err);
         });
     });
@@ -4498,7 +4511,7 @@ async function testSheetsConnection() {
 }
 
 async function syncAllDataToSheets(silent = false) {
-    const webAppUrl = localStorage.getItem('sheetsWebAppUrl');
+    const webAppUrl = getSheetsWebAppUrl();
     if (!webAppUrl) {
         if (!silent) alert(translations[currentLang]?.sheets_no_url || "يرجى إدخال رابط Google Apps Script أولاً.");
         return;
@@ -4556,7 +4569,7 @@ async function syncAllDataToSheets(silent = false) {
 let isSyncingFromSheets = false;
 
 async function syncFromSheets(silent = false) {
-    const webAppUrl = localStorage.getItem('sheetsWebAppUrl');
+    const webAppUrl = getSheetsWebAppUrl();
     if (!webAppUrl) {
         if (!silent) alert(translations[currentLang]?.sheets_no_url || "يرجى إدخال رابط Google Apps Script أولاً.");
         return;
@@ -4648,6 +4661,11 @@ async function syncFromSheets(silent = false) {
             isSyncingFromSheets = false;
             
             if (hasChanges) {
+                // Always refresh the home dashboard overview counts
+                if (typeof updateOverviewCards === 'function') {
+                    updateOverviewCards();
+                }
+                
                 // Re-render active section
                 const activeSection = document.querySelector('.content-section.active');
                 if (activeSection) {
@@ -4690,7 +4708,7 @@ async function syncFromSheets(silent = false) {
 const _pendingSheetsUploads = {};
 function _debouncedSheetsPush() {
     const isAutoSync = localStorage.getItem('sheetsAutoSync') === 'true';
-    const sheetsUrl = localStorage.getItem('sheetsWebAppUrl');
+    const sheetsUrl = getSheetsWebAppUrl();
     if (!isAutoSync || !sheetsUrl || isSyncingFromSheets) return;
 
     if (_pendingSheetsUploads['sync']) {

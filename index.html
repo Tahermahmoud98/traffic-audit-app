@@ -1406,14 +1406,18 @@
                         </button>
                         <div style="display: flex; gap: 10px; width: 100%;">
                             <button type="button" onclick="syncAllDataToSheets()" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, #0f9d58, #0b8043); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
-                                <i class="fa-solid fa-arrows-rotate"></i>
-                                <span data-tr="sync_to_sheets">مزامنة البيانات الآن</span>
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <span data-tr="upload_to_sheets">رفع لجوجل شيت</span>
                             </button>
-                            <button type="button" onclick="testSheetsConnection()" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
-                                <i class="fa-solid fa-plug"></i>
-                                <span data-tr="test_sheets_conn">فحص الاتصال</span>
+                            <button type="button" onclick="syncFromSheets(false)" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, #8e44ad, #9b59b6); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
+                                <i class="fa-solid fa-cloud-arrow-down"></i>
+                                <span data-tr="restore_from_sheets">استرداد من جوجل شيت</span>
                             </button>
                         </div>
+                        <button type="button" onclick="testSheetsConnection()" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
+                            <i class="fa-solid fa-plug"></i>
+                            <span data-tr="test_sheets_conn">فحص الاتصال</span>
+                        </button>
                     </div>
 
                     <!-- Instructions and script inside details accordion -->
