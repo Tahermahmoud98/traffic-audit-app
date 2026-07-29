@@ -8,7 +8,7 @@ function createWindow () {
     webPreferences: {
       nodeIntegration: true
     },
-    icon: path.join(__dirname, 'logo.png')
+    icon: path.join(__dirname, 'logo.svg')
   })
 
   // إخفاء القائمة العلوية

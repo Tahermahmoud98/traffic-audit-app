@@ -1,5 +1,5 @@
-const CACHE_NAME = 'traffic-app-v4';
-const STATIC_CACHE = 'traffic-static-v4';
+const CACHE_NAME = 'traffic-app-v9';
+const STATIC_CACHE = 'traffic-static-v9';
 
 // Files to cache on install (local files - always available offline)
 const STATIC_FILES = [
@@ -7,10 +7,7 @@ const STATIC_FILES = [
     './index.html',
     './app.js',
     './style.css',
-    './logo.png',
-    './logo.ico',
-    './logo-192.png',
-    './logo-512.png',
+    './logo.svg',
     './manifest.json'
 ];
 
@@ -49,12 +46,12 @@ self.addEventListener('activate', event => {
 // Fetch Event - smart caching strategy
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
-    
+
     // Skip non-GET requests and Firebase database requests (always need fresh data)
     if (event.request.method !== 'GET') return;
     if (url.hostname.includes('firebaseio.com')) return;
     if (url.hostname.includes('firebaseapp.com') && url.pathname.includes('database')) return;
-    
+
     // For local files: Cache First (fastest)
     if (url.origin === self.location.origin) {
         event.respondWith(
@@ -71,7 +68,7 @@ self.addEventListener('fetch', event => {
         );
         return;
     }
-    
+
     // For CDN resources (fonts, FontAwesome, Firebase SDK): Stale While Revalidate
     const isCDN = CDN_HOSTS.some(host => url.hostname.includes(host));
     if (isCDN) {
@@ -84,7 +81,7 @@ self.addEventListener('fetch', event => {
                         }
                         return response;
                     }).catch(() => cached); // Fallback to cache if network fails
-                    
+
                     // Return cached immediately, update in background
                     return cached || networkFetch;
                 });
@@ -92,7 +89,7 @@ self.addEventListener('fetch', event => {
         );
         return;
     }
-    
+
     // Default: network first, fallback to cache
     event.respondWith(
         fetch(event.request).catch(() => caches.match(event.request))

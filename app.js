@@ -121,12 +121,10 @@ function applyRolePermissions() {
     
     const badgePill = document.getElementById('user-badge-pill');
     const lang = typeof currentLang !== 'undefined' ? currentLang : 'ar';
-    const btnFirebase = document.querySelector('.btn-firebase');
     const btnBackup = document.querySelector('.btn-backup');
     
     if (currentUser.role === 'admin') {
         document.body.classList.remove('is-viewer');
-        if (btnFirebase) btnFirebase.style.display = '';
         if (btnBackup) btnBackup.style.display = '';
         if (badgePill) {
             const roleTxt = (typeof translations !== 'undefined' && translations[lang]?.role_admin) ? translations[lang].role_admin : 'أدمن رئيسي';
@@ -135,7 +133,6 @@ function applyRolePermissions() {
         }
     } else {
         document.body.classList.add('is-viewer');
-        if (btnFirebase) btnFirebase.style.display = 'none';
         if (btnBackup) btnBackup.style.display = 'none';
         if (badgePill) {
             const roleTxt = (typeof translations !== 'undefined' && translations[lang]?.role_viewer) ? translations[lang].role_viewer : 'أدمن مشاهد';
@@ -717,7 +714,25 @@ const translations = {
         login_error_msg: 'اسم المستخدم أو كلمة المرور غير صحيحة!',
         role_admin: 'أدمن رئيسي',
         role_viewer: 'أدمن مشاهد',
-        alert_notice_title: 'تنبيه النظام'
+        alert_notice_title: 'تنبيه النظام',
+        sheets_btn: 'جوجل شيت',
+        sheets_modal_title: 'إعدادات ربط Google Sheets',
+        sheets_desc: 'قم بربط التطبيق بجدول بيانات Google Sheets للمزامنة التلقائية والنسخ الاحتياطي عبر Apps Script.',
+        sheets_url_lbl: 'رابط تطبيق ويب Google (Apps Script URL)',
+        sheets_auto_sync_lbl: 'تفعيل المزامنة التلقائية عند الإضافة/التعديل',
+        save_sheets_config: 'حفظ الإعدادات',
+        sync_to_sheets: 'مزامنة البيانات الآن',
+        test_sheets_conn: 'فحص الاتصال',
+        sheets_instructions_title: 'خطوات الإعداد والربط:',
+        sheets_instructions_content: '1. افتح جدول بيانات Google جديد.<br>2. من القائمة العلوية اختر Extensions ثم Apps Script.<br>3. احذف الكود الموجود، والصق الكود البرمجي أدناه.<br>4. اضغط على Deploy ثم New Deployment.<br>5. اختر النوع Web app، واجعل Execute as: Me والوصول Who has access: Anyone.<br>6. اضغط Deploy وانسخ رابط Web App URL والصقه في الحقل أعلاه.',
+        copy_script_btn: 'نسخ كود Apps Script',
+        script_copied: 'تم نسخ الكود بنجاح!',
+        sheets_status_success: '✅ تم الاتصال وحفظ الإعدادات بنجاح!',
+        sheets_status_invalid: '❌ رابط تطبيق الويب غير صالح أو لا يعمل!',
+        sheets_sync_success: '✅ تم مزامنة كافة البيانات مع Google Sheets بنجاح!',
+        sheets_sync_error: '❌ فشل المزامنة مع Google Sheets: ',
+        sheets_no_url: 'يرجى إدخال رابط Google Apps Script أولاً.',
+        sheets_syncing: 'جاري مزامنة البيانات مع Google Sheets...'
     },
     ku: {
         err_image: 'هه‌ڵه‌كا له‌ كاتا پرۆسه‌كرنا وێنەیێ',
@@ -949,7 +964,25 @@ const translations = {
         login_error_msg: 'ناڤێ بارهێنه‌رى یان په‌یڤا نهێنی خه‌ڵه‌ته‌!',
         role_admin: 'سه‌رۆكێ ڕێڤه‌به‌ریێ',
         role_viewer: 'بينه‌ر',
-        alert_notice_title: 'ئاگه‌هداریا سيسته‌مى'
+        alert_notice_title: 'ئاگه‌هداریا سيسته‌مى',
+        sheets_btn: 'گوگل شيت',
+        sheets_modal_title: 'ڕێکخستنێن گرێدانا Google Sheets',
+        sheets_desc: 'بەرنامەی گرێبدە ب خشتەیێ Google Sheets ژبۆ هەڤدەمکرنا خۆکار و پشتگریا پشتیڤان ب ڕێكا Apps Script.',
+        sheets_url_lbl: 'لینکا ئەپڵیکەیشنا وێب یا Google (Apps Script URL)',
+        sheets_auto_sync_lbl: 'چالاککرنا هەڤدەمکرنا خۆکار دەما زێدەکرن/دەستکاریکرنێ',
+        save_sheets_config: 'پاشکەفتکرنا ڕێکخستنان',
+        sync_to_sheets: 'هەڤدەمکرنا داتایان نوکە',
+        test_sheets_conn: 'پشکنینا گرێدانێ',
+        sheets_instructions_title: 'پێنگاڤێن ڕێکخستن و گرێدانێ:',
+        sheets_instructions_content: '1. خشتەیەکا نوو یا Google Sheets ڤەکە.<br>2. ژ لیستا سەری Extensions پاشان Apps Script هەلبژێرە.<br>3. کۆدێ هەيی ژێببە، و کۆدێ ل خوارێ لێبدە.<br>4. کلیکێ ل سەر Deploy پاشان New Deployment بکە.<br>5. جۆرێ Web app هەلبژێرە، و Execute as: Me و Who has access: Anyone دابنێ.<br>6. کلیکێ ل سەر Deploy بکە و لینكا Web App URL کۆپی بکە و ل جھێ سەری دابنێ.',
+        copy_script_btn: 'کۆپیکردنا کۆدێ Apps Script',
+        script_copied: 'کۆد ب سەرکەفتی هاتە کۆپیکرن!',
+        sheets_status_success: '✅ گرێدان ب سەرکەفتی ئەنجامدرا و ڕێکخستن هاتنە پاشکەفتکرن!',
+        sheets_status_invalid: '❌ لینكا وێب کار ناکەت یان یا دروست نینە!',
+        sheets_sync_success: '✅ هەمی داتا ب سەرکەفتی دگەل Google Sheets هاتنە هەڤدەمکرن!',
+        sheets_sync_error: '❌ شکست د هەڤدەمکرنا دگەل Google Sheets دە هات: ',
+        sheets_no_url: 'تکایە سەرەتا لینکی گوگل سکریپت بنووسە.',
+        sheets_syncing: 'داتا دگەل گوگل شیت تێنە هەڤدەمکرن...'
     }
 };
 
@@ -1028,6 +1061,8 @@ function applyLanguage() {
         if (langData[key]) {
             if (el.tagName === 'INPUT' && el.type !== 'radio' && el.type !== 'checkbox') {
                 el.placeholder = langData[key];
+            } else if (key === 'sheets_instructions_content' || key === 'sheets_desc') {
+                el.innerHTML = langData[key];
             } else {
                 el.textContent = langData[key];
             }
@@ -2450,7 +2485,7 @@ function printSingleRecord(key, idx) {
                     <p class="spc-audit">${lang.audit_dept}</p>
                 </div>
                 <div class="spc-header-center">
-                    <img src="logo.png" class="spc-logo">
+                    <img src="logo.svg" class="spc-logo">
                     <h2 class="spc-title">${sectionTitles[key]}</h2>
                     <p class="spc-badge">${lang.single_print}</p>
                 </div>
@@ -2666,7 +2701,7 @@ function buildSectionHTML(key, lang) {
                     <p style="color:#0D8ABC;">${lang.audit_dept}</p>
                 </div>
                 <div class="bs-center">
-                    <img src="logo.png" style="width:70px;height:70px;object-fit:contain;">
+                    <img src="logo.svg" style="width:70px;height:70px;object-fit:contain;">
                     <h2>${sectionTitles[key]}</h2>
                 </div>
                 <div class="bs-left">
@@ -2854,7 +2889,7 @@ function printSection(key) {
                         <p style="color:#0D8ABC;">${lang.audit_dept}</p>
                     </div>
                     <div class="bs-center">
-                        <img src="logo.png" style="width:75px;height:75px;object-fit:contain;">
+                        <img src="logo.svg" style="width:75px;height:75px;object-fit:contain;">
                         <h2 style="font-size:16px; font-weight:800; margin-top:5px;">${lang.stats}</h2>
                     </div>
                     <div class="bs-left">
@@ -3318,6 +3353,23 @@ function openBackupModal() {
     const uploadText = document.getElementById('backup-upload-text');
     if (uploadText) uploadText.textContent = translations[currentLang].import_btn;
 
+    // Load Google Sheets config from localStorage
+    const sheetsUrl = localStorage.getItem('sheetsWebAppUrl') || '';
+    const sheetsUrlInput = document.getElementById('sheets-url-input');
+    if (sheetsUrlInput) {
+        sheetsUrlInput.value = sheetsUrl;
+    }
+    
+    const autoSync = localStorage.getItem('sheetsAutoSync') === 'true';
+    const autoSyncCheckbox = document.getElementById('sheets-auto-sync-checkbox');
+    if (autoSyncCheckbox) {
+        autoSyncCheckbox.checked = autoSync;
+    }
+
+    // Hide status element
+    const statusEl = document.getElementById('sheets-status');
+    if (statusEl) statusEl.style.display = 'none';
+
     openModal('backup-modal');
 }
 
@@ -3446,9 +3498,20 @@ function mergeAndDeduplicate(existingArray, newArray) {
 
     const result = [...existingArray];
     for (const newItem of newArray) {
-        const exists = result.some(item => areRecordsEqual(item, newItem));
-        if (!exists) {
+        const matchIdx = result.findIndex(item => areRecordsEqual(item, newItem));
+        if (matchIdx === -1) {
             result.push(newItem);
+        } else {
+            // Restore images if the local record doesn't have them but the backup record has them
+            const existingItem = result[matchIdx];
+            if (newItem.receipt_images && newItem.receipt_images.length > 0) {
+                if (!existingItem.receipt_images || existingItem.receipt_images.length === 0) {
+                    existingItem.receipt_images = newItem.receipt_images;
+                }
+            }
+            if (newItem.receipt_image && (!existingItem.receipt_image || existingItem.receipt_image === '')) {
+                existingItem.receipt_image = newItem.receipt_image;
+            }
         }
     }
     return result;
@@ -4145,7 +4208,7 @@ function buildPrintCard(item){
       <p class="spc-audit">\${L.audit_dept}</p>
     </div>
     <div class="spc-header-center">
-      <img src="logo.png" class="spc-logo" onerror="this.style.display='none'">
+      <img src="logo.svg" class="spc-logo" onerror="this.style.display='none'">
       <h2 class="spc-title">\${secTitle}</h2>
       <span class="spc-badge">\${L.single_print}</span>
     </div>
@@ -4246,402 +4309,398 @@ function exportHTMLArchive() {
 }
 
 
-// ==========================================
-// FIREBASE CLOUD SYNC MODULE
-// ==========================================
-window.firebaseInitialized = false;
 
-function openFirebaseModal() {
-    const existing = localStorage.getItem('firebaseConfig');
-    if (existing) {
-        try {
-            const parsed = JSON.parse(existing);
-            document.getElementById('firebase-config-input').value = JSON.stringify(parsed, null, 2);
-        } catch(e) {
-            document.getElementById('firebase-config-input').value = existing;
-        }
-    }
-    openModal('firebase-modal');
-}
-
-function saveFirebaseConfig() {
-    if (!currentUser || currentUser.role !== 'admin') {
-        alert(translations[currentLang]?.permission_denied_msg || "عذراً! هذا الحساب مخصص للمشاهدة فقط ولا يمتلك صلاحية الإضافة أو التعديل أو الحذف.");
-        return;
-    }
-    const input = document.getElementById('firebase-config-input').value.trim();
-    const statusEl = document.getElementById('firebase-status');
-    statusEl.style.display = 'block';
-    
-    if (!input) {
-        statusEl.textContent = 'يرجى إدخال الإعدادات.';
-        statusEl.style.color = 'var(--danger)';
-        return;
-    }
-    
-    try {
-        let configObj;
-        let cleanInput = input;
-        
-        // Try to extract the object if they pasted the whole snippet
-        const match = input.match(/const\s+firebaseConfig\s*=\s*(\{[\s\S]*?\});?/);
-        if (match) {
-            cleanInput = match[1];
-        } else {
-            const objMatch = input.match(/\{[\s\S]*apiKey[\s\S]*projectId[\s\S]*\}/);
-            if (objMatch) {
-                cleanInput = objMatch[0];
-            }
-        }
-
-        try {
-             configObj = (new Function("return " + cleanInput))();
-        } catch(e) {
-             configObj = JSON.parse(cleanInput);
-        }
-        
-        if (!configObj || !configObj.apiKey || !configObj.projectId) {
-            throw new Error("Invalid config format");
-        }
-        
-        if (!configObj.databaseURL) {
-            // Auto-construct databaseURL if possible
-            configObj.databaseURL = `https://${configObj.projectId}-default-rtdb.firebaseio.com`;
-        }
-        
-        localStorage.setItem('firebaseConfig', JSON.stringify(configObj));
-        statusEl.textContent = 'تم حفظ الإعدادات بنجاح! سيتم تحديث الصفحة لتطبيقها...';
-        statusEl.style.color = 'var(--success)';
-        
-        setTimeout(() => {
-            window.location.reload();
-        }, 1500);
-        
-    } catch (e) {
-        statusEl.textContent = 'خطأ في صيغة الإعدادات: تأكد من نسخ الكود بشكل صحيح.';
-        statusEl.style.color = 'var(--danger)';
-        console.error("Firebase config parse error", e);
-    }
-}
-
-let isSyncingFromCloud = false;
-
-// Helper to strip heavy base64 image strings before sending to Firebase
-function stripImages(data) {
-    if (!data) return data;
-    if (Array.isArray(data)) {
-        return data.map(item => {
-            if (!item || typeof item !== 'object') return item;
-            const { receipt_images, receipt_image, ...rest } = item;
-            return rest;
-        });
-    } else if (typeof data === 'object') {
-        const result = {};
-        for (const key in data) {
-            result[key] = stripImages(data[key]);
-        }
-        return result;
-    }
-    return data;
-}
-
-function initFirebase() {
-    const configStr = localStorage.getItem('firebaseConfig');
-    let configObj = null;
-    
-    try {
-        if (configStr) {
-            configObj = JSON.parse(configStr);
-        } else {
-            // Hardcoded config provided by user
-            configObj = {
-              apiKey: "AIzaSyC1or4aNIDNdA5oDxJQNZ-YPlN7YTxvVDE",
-              authDomain: "traffic-audit.firebaseapp.com",
-              databaseURL: "https://traffic-audit-default-rtdb.firebaseio.com",
-              projectId: "traffic-audit",
-              storageBucket: "traffic-audit.firebasestorage.app",
-              messagingSenderId: "991603683928",
-              appId: "1:991603683928:web:4100285097d634b5dbd02d",
-              measurementId: "G-JQWE1NTZTF"
-            };
-        }
-
-        if (!window.firebaseInitialized && typeof firebase !== 'undefined') {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(configObj);
-            }
-            window.firebaseInitialized = true;
-            
-            // Real-time listener for continuous automatic sync (download & merge)
-            firebase.database().ref('appData').on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    isSyncingFromCloud = true; // prevent re-uploading loop
-                    
-                    const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
-                    let hasChanges = false;
-                    
-                    for (const key in data) {
-                        let val = data[key];
-                        let valStr = typeof val === 'string' ? val : JSON.stringify(val);
-                        
-                        if (tables.includes(key)) {
-                            // Merge logic for table data arrays
-                            let localData = [];
-                            try {
-                                const localStr = dbStore.getItem(key);
-                                if (localStr) localData = JSON.parse(localStr);
-                            } catch(e) {
-                                console.error("Error parsing local data for merge:", e);
-                            }
-                            
-                            let cloudData = [];
-                            try {
-                                cloudData = JSON.parse(valStr);
-                            } catch(e) {
-                                console.error("Error parsing cloud data for merge:", e);
-                            }
-                            
-                            if (Array.isArray(localData) && Array.isArray(cloudData)) {
-                                // Helper function to compare two records (ignoring images since cloud data strips images)
-                                const areRecordsEqual = (a, b) => {
-                                    if (a === b) return true;
-                                    if (!a || !b) return false;
-                                    
-                                    if (a.id && b.id && String(a.id) === String(b.id)) return true;
-                                    
-                                    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
-                                    for (const k of keys) {
-                                        if (k === 'receipt_image' || k === 'receipt_images' || k === 'originalIdx') {
-                                            continue;
-                                        }
-                                        if (String(a[k] || '').trim() !== String(b[k] || '').trim()) {
-                                            return false;
-                                        }
-                                    }
-                                    return true;
-                                };
-                                
-                                // Merge cloud and local arrays (preserve local images onto cloud records)
-                                const mergedData = cloudData.map(cloudItem => {
-                                    const itemCopy = { ...cloudItem };
-                                    const matchingLocal = localData.find(localItem => areRecordsEqual(localItem, cloudItem));
-                                    if (matchingLocal) {
-                                        if (matchingLocal.receipt_images && matchingLocal.receipt_images.length > 0 && (!itemCopy.receipt_images || itemCopy.receipt_images.length === 0)) {
-                                            itemCopy.receipt_images = matchingLocal.receipt_images;
-                                        }
-                                        if (matchingLocal.receipt_image && (!itemCopy.receipt_image || itemCopy.receipt_image === '')) {
-                                            itemCopy.receipt_image = matchingLocal.receipt_image;
-                                        }
-                                    }
-                                    return itemCopy;
-                                });
-                                
-                                const mergedStr = JSON.stringify(mergedData);
-                                const currentLocalStr = dbStore.getItem(key);
-                                if (mergedStr !== currentLocalStr) {
-                                    hasChanges = true;
-                                    invalidateCache(key);
-                                    originalSetItem.call(dbStore, key, mergedStr);
-                                }
-                            } else {
-                                invalidateCache(key);
-                                originalSetItem.call(dbStore, key, valStr);
-                                hasChanges = true;
-                            }
-                        } else {
-                            // Non-table values (settings, etc.)
-                            invalidateCache(key);
-                            originalSetItem.call(dbStore, key, valStr);
-                        }
-                    }
-                    isSyncingFromCloud = false;
-                    
-                    // Re-render active section if cloud data brought changes
-                    if (hasChanges) {
-                        const activeSection = document.querySelector('.content-section.active');
-                        if (activeSection) {
-                            const secId = activeSection.id;
-                            if(secId === 'central-receipts-section' || secId === 'decentral-receipts-section' || secId === 'special-receipts-section') renderReceipts();
-                            else if(secId === 'delegations-section') renderDelegations();
-                            else if(secId === 'children-section') renderChildren();
-                            else if(secId === 'marriage-section') renderMarriage();
-                            else if(secId === 'fines-section') renderFines();
-                            else if(secId === 'stats-section') renderStats();
-                        }
-                    }
-                } else {
-                    // Cloud is empty, automatically upload local data!
-                    console.log("Cloud is empty. Auto-syncing local data to cloud...");
-                    const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
-                    const updates = {};
-                    let hasLocalData = false;
-                    for(const key of tables) {
-                        const localData = dbStore._cache[key] || localStorage.getItem(key);
-                        if (localData && localData !== '[]') {
-                            try {
-                                updates[key] = stripImages(JSON.parse(localData));
-                            } catch(e) {
-                                updates[key] = localData;
-                            }
-                            hasLocalData = true;
-                        }
-                    }
-                    if (hasLocalData) {
-                        firebase.database().ref('appData').set(updates).catch((err) => {
-                            handleFirebaseError(err);
-                        });
-                    }
-                }
-            }, (e) => {
-                console.error("Firebase real-time sync failed:", e);
-                handleFirebaseError(e);
-            });
-            console.log("Firebase initialized successfully.");
-        }
-    } catch (e) {
-        console.error("Failed to initialize Firebase", e);
-    }
-}
-
-// Proxy dbStore.setItem for automatic push
-let lastFirebaseErrorTime = 0;
-const originalSetItem = dbStore.setItem;
-
-// Debounced Firebase push - waits 2 seconds after last change before uploading
-const _pendingFirebaseUploads = {};
-function _debouncedFirebasePush(key, valStr) {
-    if (_pendingFirebaseUploads[key]) {
-        clearTimeout(_pendingFirebaseUploads[key]);
-    }
-    _pendingFirebaseUploads[key] = setTimeout(() => {
-        delete _pendingFirebaseUploads[key];
-        if (!window.firebaseInitialized || isSyncingFromCloud) return;
-        try {
-            let cloudData;
-            try { cloudData = JSON.parse(valStr); } catch(e) { cloudData = valStr; }
-            
-            // Strip images before sending to Firebase to prevent size limit rejection
-            const stripped = stripImages(cloudData);
-            firebase.database().ref('appData/' + key).set(stripped).catch(handleFirebaseError);
-        } catch(err) {
-            console.error(err);
-        }
-    }, 2000);
-}
-
-function handleFirebaseError(e) {
-    console.error("Firebase error", e);
-    const msg = String(e && (e.message || e.code || e));
-    if (msg.includes("permission_denied") || msg.includes("Permission denied") || msg.includes("PERMISSION_DENIED")) {
-        const now = Date.now();
-        if (now - lastFirebaseErrorTime > 8000) {
-            lastFirebaseErrorTime = now;
-            alert("❌ تم رفض الإذن من Firebase!\n\nسبب المشكلة: قواعد حماية البيانات (Rules) في حساب Firebase تمنع القراءة/الكتابة.\n\nالحل: اذهب إلى Firebase Console -> Realtime Database -> Rules وعدّلها لتصبح:\n\n{\n  \"rules\": {\n    \".read\": true,\n    \".write\": true\n  }\n}");
-        }
-    }
-}
 
 dbStore.setItem = function(key, valStr) {
     invalidateCache(key);
     const res = originalSetItem.call(this, key, valStr);
     
     const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
-    if (window.firebaseInitialized && tables.includes(key) && !isSyncingFromCloud) {
-        _debouncedFirebasePush(key, valStr);
+    if (tables.includes(key)) {
+        _debouncedSheetsPush();
     }
     
     return res;
 };
 
 
-async function syncToCloud() {
-    if (!window.firebaseInitialized) {
-        alert("يرجى إعداد Firebase أولاً.");
+window.addEventListener('load', () => {
+    // Automatically restore data from Google Sheets on startup if configured and auto-sync is active
+    const sheetsUrl = localStorage.getItem('sheetsWebAppUrl');
+    const autoSync = localStorage.getItem('sheetsAutoSync') === 'true';
+    if (sheetsUrl && autoSync) {
+        console.log("Automatic restore: retrieving data from Google Sheets on startup...");
+        syncFromSheets(true);
+    }
+});
+
+
+// ==========================================
+// GOOGLE SHEETS SYNC MODULE
+// ==========================================
+
+
+function saveSheetsConfig() {
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert(translations[currentLang]?.permission_denied_msg || "عذراً! هذا الحساب مخصص للمشاهدة فقط ولا يمتلك صلاحية الإضافة أو التعديل أو الحذف.");
         return;
     }
-    const statusEl = document.getElementById('firebase-status');
-    statusEl.style.display = 'block';
-    statusEl.textContent = 'جاري الرفع إلى السحابة...';
-    statusEl.style.color = 'var(--primary)';
+    const sheetsUrl = document.getElementById('sheets-url-input').value.trim();
+    const autoSync = document.getElementById('sheets-auto-sync-checkbox').checked;
+    const statusEl = document.getElementById('sheets-status');
+    
+    if (statusEl) {
+        statusEl.style.display = 'block';
+    }
+    
+    if (sheetsUrl && !sheetsUrl.startsWith('http://') && !sheetsUrl.startsWith('https://')) {
+        if (statusEl) {
+            statusEl.textContent = translations[currentLang]?.sheets_status_invalid || '❌ رابط تطبيق الويب غير صالح أو لا يعمل!';
+            statusEl.style.color = 'var(--danger)';
+        }
+        return;
+    }
+    
+    localStorage.setItem('sheetsWebAppUrl', sheetsUrl);
+    localStorage.setItem('sheetsAutoSync', autoSync);
+    
+    if (statusEl) {
+        statusEl.textContent = translations[currentLang]?.sheets_status_success || '✅ تم الاتصال وحفظ الإعدادات بنجاح!';
+        statusEl.style.color = 'var(--success)';
+    }
+    
+    if (typeof showToast === 'function') {
+        showToast(translations[currentLang]?.sheets_status_success || '✅ تم حفظ الإعدادات بنجاح!');
+    }
+}
+
+function copySheetsScript() {
+    const codeEl = document.getElementById('sheets-script-code');
+    if (codeEl) {
+        const text = codeEl.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(translations[currentLang]?.script_copied || "تم نسخ الكود بنجاح!");
+        }).catch(err => {
+            console.error("Failed to copy script: ", err);
+        });
+    }
+}
+
+function sendSheetsRequest(url, data) {
+    return new Promise((resolve, reject) => {
+        // Check if we can use Node's https module to bypass CORS (inside Electron)
+        if (typeof require !== 'undefined') {
+            try {
+                const https = require('https');
+                const { URL } = require('url');
+                
+                const parsedUrl = new URL(url);
+                const postData = JSON.stringify(data);
+                
+                const makeRequest = (targetUrl, payload) => {
+                    const parsedTarget = new URL(targetUrl);
+                    const options = {
+                        hostname: parsedTarget.hostname,
+                        path: parsedTarget.pathname + parsedTarget.search,
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Content-Length': Buffer.byteLength(payload)
+                        }
+                    };
+                    
+                    const req = https.request(options, (res) => {
+                        // Handle redirects (e.g. 302, 301)
+                        if ([301, 302, 307, 308].includes(res.statusCode)) {
+                            if (res.headers.location) {
+                                makeRequest(res.headers.location, payload);
+                                return;
+                            }
+                        }
+                        
+                        let body = '';
+                        res.on('data', (chunk) => body += chunk);
+                        res.on('end', () => {
+                            try {
+                                const parsed = JSON.parse(body);
+                                resolve(parsed);
+                            } catch(e) {
+                                if (res.statusCode >= 200 && res.statusCode < 300) {
+                                    resolve({ status: 'success', message: body });
+                                } else {
+                                    reject(new Error(body || `HTTP status ${res.statusCode}`));
+                                }
+                            }
+                        });
+                    });
+                    
+                    req.on('error', (e) => {
+                        reject(e);
+                    });
+                    
+                    req.write(payload);
+                    req.end();
+                };
+                
+                makeRequest(url, postData);
+                return;
+            } catch(nodeErr) {
+                console.warn("Node https request failed, falling back to fetch: ", nodeErr);
+            }
+        }
+        
+        // Browser environment fallback
+        fetch(url, {
+            method: 'POST',
+            mode: 'no-cors', // Bypasses CORS blocking for outgoing POST requests
+            headers: {
+                'Content-Type': 'text/plain'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(() => {
+            resolve({ status: 'success', message: 'Request sent (opaque response)' });
+        })
+        .catch(err => {
+            reject(err);
+        });
+    });
+}
+
+async function testSheetsConnection() {
+    const webAppUrl = document.getElementById('sheets-url-input').value.trim();
+    const statusEl = document.getElementById('sheets-status');
+    
+    if (!webAppUrl) {
+        alert(translations[currentLang]?.sheets_no_url || "يرجى إدخال رابط Google Apps Script أولاً.");
+        return;
+    }
+    
+    if (statusEl) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'جاري فحص الاتصال...';
+        statusEl.style.color = 'var(--primary)';
+    }
+    
+    try {
+        const response = await sendSheetsRequest(webAppUrl, { action: 'test' });
+        if (statusEl) {
+            statusEl.textContent = response.message || translations[currentLang]?.sheets_status_success || '✅ تم الاتصال بنجاح!';
+            statusEl.style.color = 'var(--success)';
+        }
+    } catch(err) {
+        console.error("Sheets connection test failed:", err);
+        if (statusEl) {
+            statusEl.textContent = (translations[currentLang]?.sheets_status_invalid || '❌ رابط تطبيق الويب غير صالح أو لا يعمل!') + ' (' + err.message + ')';
+            statusEl.style.color = 'var(--danger)';
+        }
+    }
+}
+
+async function syncAllDataToSheets(silent = false) {
+    const webAppUrl = localStorage.getItem('sheetsWebAppUrl');
+    if (!webAppUrl) {
+        if (!silent) alert(translations[currentLang]?.sheets_no_url || "يرجى إدخال رابط Google Apps Script أولاً.");
+        return;
+    }
+    
+    const statusEl = document.getElementById('sheets-status');
+    if (statusEl && !silent) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = translations[currentLang]?.sheets_syncing || 'جاري مزامنة البيانات مع Google Sheets...';
+        statusEl.style.color = 'var(--primary)';
+    }
     
     try {
         const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
-        const updates = {};
-        for(const key of tables) {
-            const localData = dbStore._cache[key] || localStorage.getItem(key) || '[]';
-            try {
-                const parsed = JSON.parse(localData);
-                updates[key] = stripImages(parsed);
-            } catch(e) {
-                updates[key] = localData;
-            }
-        }
-        await firebase.database().ref('appData').set(updates);
+        const payload = {};
         
-        statusEl.textContent = '✅ تم الرفع إلى السحابة بنجاح!';
-        statusEl.style.color = 'var(--success)';
-        if (typeof showToast === 'function') {
-            showToast('تم الرفع إلى السحابة بنجاح!');
+        for (const key of tables) {
+            const localDataStr = dbStore.getItem(key) || '[]';
+            let parsed = [];
+            try {
+                parsed = JSON.parse(localDataStr);
+            } catch(e) {
+                console.error("Error parsing local data for sheets sync:", e);
+            }
+            // Strip images to avoid hitting Sheets cells limits
+            payload[key] = parsed.map(item => {
+                const itemCopy = { ...item };
+                delete itemCopy.receipt_image;
+                delete itemCopy.receipt_images;
+                return itemCopy;
+            });
         }
-    } catch (e) {
-        statusEl.textContent = '❌ فشل في الرفع إلى السحابة: ' + (e.message || e);
-        statusEl.style.color = 'var(--danger)';
-        console.error(e);
-        handleFirebaseError(e);
+        
+        await sendSheetsRequest(webAppUrl, { action: 'sync', data: payload });
+        
+        if (statusEl && !silent) {
+            statusEl.textContent = translations[currentLang]?.sheets_sync_success || '✅ تم مزامنة كافة البيانات مع Google Sheets بنجاح!';
+            statusEl.style.color = 'var(--success)';
+        }
+        if (!silent && typeof showToast === 'function') {
+            showToast(translations[currentLang]?.sheets_sync_success || '✅ تم مزامنة البيانات بنجاح!');
+        }
+    } catch(err) {
+        console.error("Google Sheets synchronization failed:", err);
+        if (statusEl && !silent) {
+            statusEl.textContent = (translations[currentLang]?.sheets_sync_error || '❌ فشل المزامنة مع Google Sheets: ') + err.message;
+            statusEl.style.color = 'var(--danger)';
+        }
+        if (!silent) {
+            alert((translations[currentLang]?.sheets_sync_error || '❌ فشل المزامنة مع Google Sheets: ') + err.message);
+        }
     }
 }
 
-async function syncFromCloud() {
-    if (!window.firebaseInitialized) {
-        alert("يرجى إعداد Firebase أولاً.");
+let isSyncingFromSheets = false;
+
+async function syncFromSheets(silent = false) {
+    const webAppUrl = localStorage.getItem('sheetsWebAppUrl');
+    if (!webAppUrl) {
+        if (!silent) alert(translations[currentLang]?.sheets_no_url || "يرجى إدخال رابط Google Apps Script أولاً.");
         return;
     }
-    const statusEl = document.getElementById('firebase-status');
-    statusEl.style.display = 'block';
-    statusEl.textContent = 'جاري الاسترداد من السحابة...';
-    statusEl.style.color = 'var(--primary)';
+    
+    const statusEl = document.getElementById('sheets-status');
+    if (statusEl && !silent) {
+        statusEl.style.display = 'block';
+        statusEl.textContent = 'جاري استرداد البيانات من Google Sheets...';
+        statusEl.style.color = 'var(--primary)';
+    }
     
     try {
-        const snapshot = await firebase.database().ref('appData').once('value');
-        const data = snapshot.val();
-        if (data) {
-            isSyncingFromCloud = true;
-            for (const key in data) {
-                let valStr = data[key];
-                if (typeof valStr !== 'string') {
-                    valStr = JSON.stringify(valStr);
-                }
-                originalSetItem.call(dbStore, key, valStr);
-            }
-            isSyncingFromCloud = false;
+        isSyncingFromSheets = true;
+        const response = await sendSheetsRequest(webAppUrl, { action: 'read' });
+        
+        if (response && response.status === 'success' && response.data) {
+            const data = response.data;
+            const tables = ['receipts', 'delegations', 'children', 'marriage', 'fines'];
+            let hasChanges = false;
             
-            statusEl.textContent = '✅ تم الاسترداد بنجاح! سيتم إعادة تحميل الصفحة.';
-            statusEl.style.color = 'var(--success)';
-            setTimeout(() => window.location.reload(), 1000);
+            for (const key of tables) {
+                if (data[key] !== undefined) {
+                    let cloudData = data[key];
+                    let localData = [];
+                    
+                    try {
+                        const localStr = dbStore.getItem(key);
+                        if (localStr) localData = JSON.parse(localStr);
+                    } catch(e) {
+                        console.error("Error parsing local data for Sheets merge:", e);
+                    }
+                    
+                    if (Array.isArray(localData) && Array.isArray(cloudData)) {
+                        // Helper function to compare two records (ignoring images since Sheets strips images)
+                        const areRecordsEqual = (a, b) => {
+                            if (a === b) return true;
+                            if (!a || !b) return false;
+                            
+                            if (a.id && b.id && String(a.id) === String(b.id)) return true;
+                            
+                            const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+                            for (const k of keys) {
+                                if (k === 'receipt_image' || k === 'receipt_images' || k === 'originalIdx') {
+                                    continue;
+                                }
+                                if (String(a[k] || '').trim() !== String(b[k] || '').trim()) {
+                                    return false;
+                                }
+                            }
+                            return true;
+                        };
+                        
+                        // Merge cloud and local arrays (preserve local images onto cloud records)
+                        const mergedData = cloudData.map(cloudItem => {
+                            const itemCopy = { ...cloudItem };
+                            const matchingLocal = localData.find(localItem => areRecordsEqual(localItem, cloudItem));
+                            if (matchingLocal) {
+                                if (matchingLocal.receipt_images && matchingLocal.receipt_images.length > 0 && (!itemCopy.receipt_images || itemCopy.receipt_images.length === 0)) {
+                                    itemCopy.receipt_images = matchingLocal.receipt_images;
+                                }
+                                if (matchingLocal.receipt_image && (!itemCopy.receipt_image || itemCopy.receipt_image === '')) {
+                                    itemCopy.receipt_image = matchingLocal.receipt_image;
+                                }
+                            }
+                            return itemCopy;
+                        });
+                        
+                        const mergedStr = JSON.stringify(mergedData);
+                        const currentLocalStr = dbStore.getItem(key);
+                        
+                        if (mergedStr !== currentLocalStr) {
+                            hasChanges = true;
+                            invalidateCache(key);
+                            originalSetItem.call(dbStore, key, mergedStr);
+                        }
+                    } else {
+                        const valStr = JSON.stringify(cloudData);
+                        const currentLocalStr = dbStore.getItem(key);
+                        if (valStr !== currentLocalStr) {
+                            hasChanges = true;
+                            invalidateCache(key);
+                            originalSetItem.call(dbStore, key, valStr);
+                        }
+                    }
+                }
+            }
+            
+            isSyncingFromSheets = false;
+            
+            if (hasChanges) {
+                // Re-render active section
+                const activeSection = document.querySelector('.content-section.active');
+                if (activeSection) {
+                    const secId = activeSection.id;
+                    if(secId === 'central-receipts-section' || secId === 'decentral-receipts-section' || secId === 'special-receipts-section') renderReceipts();
+                    else if(secId === 'delegations-section') renderDelegations();
+                    else if(secId === 'children-section') renderChildren();
+                    else if(secId === 'marriage-section') renderMarriage();
+                    else if(secId === 'fines-section') renderFines();
+                    else if(secId === 'stats-section') renderStats();
+                }
+            }
+            
+            if (statusEl && !silent) {
+                statusEl.textContent = '✅ تم استرداد ومزامنة البيانات من Google Sheets بنجاح!';
+                statusEl.style.color = 'var(--success)';
+            }
+            
+            if (!silent && typeof showToast === 'function') {
+                showToast('✅ تم استرداد البيانات بنجاح!');
+            }
         } else {
-             statusEl.textContent = 'لا توجد بيانات في السحابة.';
-             statusEl.style.color = 'var(--warning)';
+            isSyncingFromSheets = false;
+            if (statusEl && !silent) {
+                statusEl.textContent = '❌ لا توجد بيانات في Google Sheets أو ملف البرمجة غير منقح!';
+                statusEl.style.color = 'var(--warning)';
+            }
         }
-    } catch (e) {
-        statusEl.textContent = '❌ فشل في الاسترداد من السحابة.';
-        statusEl.style.color = 'var(--danger)';
-        console.error(e);
-        handleFirebaseError(e);
+    } catch(err) {
+        isSyncingFromSheets = false;
+        console.error("Failed to restore from Google Sheets:", err);
+        if (statusEl && !silent) {
+            statusEl.textContent = '❌ فشل الاسترداد: ' + err.message;
+            statusEl.style.color = 'var(--danger)';
+        }
     }
 }
 
-window.addEventListener('load', () => {
-    if (typeof firebase !== 'undefined') {
-        initFirebase();
-    } else {
-        setTimeout(() => {
-            if (typeof firebase !== 'undefined') {
-                initFirebase();
-            }
-        }, 3000);
+// Debounced Google Sheets sync for automatic changes
+const _pendingSheetsUploads = {};
+function _debouncedSheetsPush() {
+    const isAutoSync = localStorage.getItem('sheetsAutoSync') === 'true';
+    const sheetsUrl = localStorage.getItem('sheetsWebAppUrl');
+    if (!isAutoSync || !sheetsUrl || isSyncingFromSheets) return;
+
+    if (_pendingSheetsUploads['sync']) {
+        clearTimeout(_pendingSheetsUploads['sync']);
     }
-});
+    _pendingSheetsUploads['sync'] = setTimeout(() => {
+        delete _pendingSheetsUploads['sync'];
+        syncAllDataToSheets(true); // background sync, no alerts/status changes
+    }, 3000);
+}
 
 
 // ===== SCROLLBAR AUTO-HIDE (same behavior in light & dark mode) =====

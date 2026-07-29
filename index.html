@@ -48,7 +48,7 @@
 
         <div class="login-portal-card glass-panel">
             <div class="login-portal-header">
-                <img src="logo.png" alt="شعار المراجعة" class="login-portal-logo">
+                <img src="logo.svg" alt="شعار المراجعة" class="login-portal-logo">
                 <p class="login-gov" data-tr="gov_name">حكومة إقليم كوردستان - العراق</p>
                 <p class="login-ministry" data-tr="ministry">وزارة الداخلية</p>
                 <h2 class="login-dept" data-tr="dept_name">مديرية مرور زاخو</h2>
@@ -94,7 +94,7 @@
                 <p class="bold-text" data-tr="audit_dept">قسم التدقيق</p>
             </div>
             <div class="print-col center">
-                <img src="logo.png" alt="شعار حكومة إقليم كوردستان" class="print-logo">
+                <img src="logo.svg" alt="شعار حكومة إقليم كوردستان" class="print-logo">
                 <h3 id="print-section-title">سجل التدقيق</h3>
             </div>
             <div class="print-col text-left">
@@ -120,7 +120,7 @@
                 <div class="header-title">
                     <div class="brand-lockup">
                         <div class="logo brand-logo">
-                            <img src="logo.png" alt="Logo">
+                            <img src="logo.svg" alt="Logo">
                         </div>
                         <h1 data-tr="app_title">قسم التدقيق - مديرية مرور زاخو</h1>
                     </div>
@@ -165,10 +165,6 @@
                         title="النسخ الاحتياطي">
                         <i class="fa-solid fa-database"></i>
                         <span data-tr="backup_btn">النسخ الاحتياطي</span>
-                    </button>
-                    <button class="btn-firebase" onclick="openFirebaseModal()" data-tr-title="firebase_btn" title="الربط السحابي">
-                        <i class="fa-solid fa-cloud"></i>
-                        <span data-tr="firebase_btn">الربط السحابي</span>
                     </button>
                 </div>
             </header>
@@ -1323,55 +1319,7 @@
     </div>
 
 
-    <!-- ===== FIREBASE MODAL ===== -->
-    <div class="modal glass-panel no-print" id="firebase-modal" style="max-width: 520px;">
-        <div class="modal-header">
-            <h3>
-                <i class="fa-solid fa-cloud" style="margin-left:10px; color:#f57c00"></i>
-                <span data-tr="firebase_modal_title">إعدادات الربط السحابي (Firebase)</span>
-            </h3>
-            <button class="close-btn" type="button" onclick="closeAllModals()"><i class="fa-solid fa-times"></i></button>
-        </div>
-        <div class="modal-body">
-            <p style="margin-bottom: 15px; font-size: 14px; color: var(--text-muted); line-height: 1.6;" data-tr="firebase_desc">
-                قم بلصق كود الإعدادات الخاص بمشروعك (firebaseConfig) لتفعيل التخزين السحابي والمزامنة التلقائية.
-            </p>
-            <div class="form-group">
-                <textarea id="firebase-config-input" class="form-control" style="height: 150px; direction: ltr; font-family: monospace;" placeholder='{
-  apiKey: "...",
-  authDomain: "...",
-  databaseURL: "...",
-  projectId: "...",
-  storageBucket: "...",
-  messagingSenderId: "...",
-  appId: "..."
-}'></textarea>
-            </div>
-            
-            <div id="firebase-status" style="margin-top: 15px; padding: 10px; border-radius: 8px; display: none; text-align: center; font-weight: bold;"></div>
 
-            <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--surface-border); border-radius: 12px; padding: 20px; margin-top: 20px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center;">
-                <button type="button" onclick="saveFirebaseConfig()" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--success), #059669); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
-                    <i class="fa-solid fa-check"></i>
-                    <span data-tr="save_firebase_config">حفظ الإعدادات والاتصال</span>
-                </button>
-                <div style="display: flex; gap: 10px; width: 100%;">
-                    <button type="button" onclick="syncToCloud()" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <span data-tr="sync_to_cloud">رفع للسحابة</span>
-                    </button>
-                    <button type="button" onclick="syncFromCloud()" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, #8e44ad, #9b59b6); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                        <i class="fa-solid fa-cloud-arrow-down"></i>
-                        <span data-tr="sync_from_cloud">استرداد من السحابة</span>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="modal-footer" style="padding: 20px 0 0 0; margin-top: 15px;">
-                <button type="button" class="btn-secondary" onclick="closeAllModals()" data-tr="close_btn" style="width: 100%;">إغلاق</button>
-            </div>
-        </div>
-    </div>
 
     <!-- ===== BACKUP & RESTORE MODAL ===== -->
     <div class="modal glass-panel no-print" id="backup-modal" style="max-width: 520px;">
@@ -1424,6 +1372,285 @@
                             <span data-tr="import_btn" id="backup-upload-text">استيراد البيانات (JSON)</span>
                         </label>
                     </div>
+                </div>
+
+                <!-- Google Sheets Sync Section -->
+                <div style="margin-top: 25px; border-top: 1px solid var(--surface-border); padding-top: 20px;">
+                    <h4 style="font-size: 15px; font-weight: bold; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-table" style="color:#0f9d58"></i>
+                        <span data-tr="sheets_modal_title">إعدادات ربط Google Sheets</span>
+                    </h4>
+                    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;" data-tr="sheets_desc">
+                        قم بربط التطبيق بجدول بيانات Google Sheets للمزامنة التلقائية والنسخ الاحتياطي عبر Apps Script.
+                    </p>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label style="font-weight: 600; margin-bottom: 6px; display: block; font-size: 13px;" data-tr="sheets_url_lbl">رابط تطبيق ويب Google (Apps Script URL)</label>
+                        <input type="text" id="sheets-url-input" class="form-control" style="direction: ltr;" placeholder="https://script.google.com/macros/s/.../exec">
+                    </div>
+
+                    <!-- Auto Sync Switch Toggle -->
+                    <div class="toggle-switch-wrapper" style="margin-bottom: 12px;">
+                        <span style="font-weight: 600; font-size: 13px;" data-tr="sheets_auto_sync_lbl">تفعيل المزامنة التلقائية عند الإضافة/التعديل</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="sheets-auto-sync-checkbox">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div id="sheets-status" style="margin-top: 12px; padding: 10px; border-radius: 8px; display: none; text-align: center; font-weight: bold; font-size: 13px;"></div>
+
+                    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+                        <button type="button" onclick="saveSheetsConfig()" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--success), #059669); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span data-tr="save_sheets_config">حفظ الإعدادات</span>
+                        </button>
+                        <div style="display: flex; gap: 10px; width: 100%;">
+                            <button type="button" onclick="syncAllDataToSheets()" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, #0f9d58, #0b8043); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
+                                <i class="fa-solid fa-arrows-rotate"></i>
+                                <span data-tr="sync_to_sheets">مزامنة البيانات الآن</span>
+                            </button>
+                            <button type="button" onclick="testSheetsConnection()" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 8px; background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s;">
+                                <i class="fa-solid fa-plug"></i>
+                                <span data-tr="test_sheets_conn">فحص الاتصال</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Instructions and script inside details accordion -->
+                    <details style="margin-top: 15px; border: 1px solid var(--surface-border); border-radius: 8px; background: rgba(0, 0, 0, 0.1);">
+                        <summary style="padding: 10px; font-size: 13px; font-weight: bold; cursor: pointer; color: var(--text-muted);" data-tr="sheets_instructions_title">خطوات الإعداد والربط:</summary>
+                        <div style="padding: 10px; border-top: 1px solid var(--surface-border);">
+                            <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 10px;" data-tr="sheets_instructions_content">
+                                1. افتح جدول بيانات Google جديد.<br>
+                                2. من القائمة العلوية اختر Extensions ثم Apps Script.<br>
+                                3. احذف الكود الموجود، والصق الكود البرمجي أدناه.<br>
+                                4. اضغط على Deploy ثم New Deployment.<br>
+                                5. اختر النوع Web app، واجعل Execute as: Me والوصول Who has access: Anyone.<br>
+                                6. اضغط Deploy وانسخ رابط Web App URL والصقه في الحقل أعلاه.
+                            </p>
+                            
+                            <div class="sheets-code-section" style="margin-top: 8px;">
+                                <div class="sheets-code-header" style="padding: 6px 10px;">
+                                    <span style="font-size: 11px;">Apps Script Code</span>
+                                    <button type="button" class="btn-copy-code" onclick="copySheetsScript()" style="padding: 2px 6px; font-size: 11px;">
+                                        <i class="fa-regular fa-copy"></i>
+                                        <span data-tr="copy_script_btn">نسخ كود Apps Script</span>
+                                    </button>
+                                </div>
+                                <div class="sheets-code-body" id="sheets-script-code" style="max-height: 100px; font-size: 11px;">function doPost(e) {
+  try {
+    var requestData = JSON.parse(e.postData.contents);
+    var action = requestData.action;
+    
+    if (action === 'test') {
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'اتصال جوجل شيت يعمل بنجاح!' }))
+                           .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    var sheetsConfig = {
+      'receipts': {
+        name: 'الوصولات',
+        headers: ['نوع الوصل', 'اسم المديرية', 'أقسام المديرية', 'مكان الوصل', 'تاريخ الوصل', 'الكود', 'المبلغ'],
+        mapping: function(item) {
+          return [
+            item.receipt_type || '',
+            item.directorate || '',
+            item.department || '',
+            item.location || '',
+            item.date || '',
+            item.code || '',
+            item.amount || 0
+          ];
+        },
+        unmapping: function(row) {
+          return {
+            receipt_type: row[0] || '',
+            directorate: row[1] || '',
+            department: row[2] || '',
+            location: row[3] || '',
+            date: row[4] || '',
+            code: row[5] || '',
+            amount: row[6] || 0
+          };
+        }
+      },
+      'delegations': {
+        name: 'الإيفادات',
+        headers: ['الاسم الثلاثي للموفد', 'الشهر', 'عدد الإيفادات', 'مكان الصادر', 'مكان الوارد', 'المبلغ', 'المبلغ الكلي'],
+        mapping: function(item) {
+          return [
+            item.name || '',
+            item.month || '',
+            item.count || 0,
+            item.export_num || '',
+            item.import_num || '',
+            item.amount || 0,
+            item.total || 0
+          ];
+        },
+        unmapping: function(row) {
+          return {
+            name: row[0] || '',
+            month: row[1] || '',
+            count: row[2] || 0,
+            export_num: row[3] || '',
+            import_num: row[4] || '',
+            amount: row[5] || 0,
+            total: row[6] || 0
+          };
+        }
+      },
+      'children': {
+        name: 'الأطفال',
+        headers: ['الاسم الثلاثي للأب', 'الاسم الثلاثي للأم', 'الاسم الثلاثي للطفل', 'الجنس', 'تاريخ ميلاد الطفل', 'تاريخ وصوله', 'مجموع مبلغ الطفل'],
+        mapping: function(item) {
+          return [
+            item.father || '',
+            item.mother || '',
+            item.child || '',
+            item.gender || '',
+            item.dob || '',
+            item.arrival || '',
+            item.amount || 0
+          ];
+        },
+        unmapping: function(row) {
+          return {
+            father: row[0] || '',
+            mother: row[1] || '',
+            child: row[2] || '',
+            gender: row[3] || '',
+            dob: row[4] || '',
+            arrival: row[5] || '',
+            amount: row[6] || 0
+          };
+        }
+      },
+      'marriage': {
+        name: 'عقود الزواج',
+        headers: ['الاسم الثلاثي للزوج', 'الاسم الثلاثي للزوجة', 'جنس الموظف', 'تاريخ الزواج', 'تاريخ واصله', 'مجموع مبلغ الزوجة'],
+        mapping: function(item) {
+          return [
+            item.husband || '',
+            item.wife || '',
+            item.gender || '',
+            item.date || '',
+            item.arrival || '',
+            item.amount || 0
+          ];
+        },
+        unmapping: function(row) {
+          return {
+            husband: row[0] || '',
+            wife: row[1] || '',
+            gender: row[2] || '',
+            date: row[3] || '',
+            arrival: row[4] || '',
+            amount: row[5] || 0
+          };
+        }
+      },
+      'fines': {
+        name: 'الغرامات',
+        headers: ['نوع الدفتر', 'اسم حامل الدفتر', 'رقم الدفتر', 'تاريخ', 'مكان صادر', 'المبلغ الكلي للدفتر'],
+        mapping: function(item) {
+          return [
+            item.book_type || '',
+            item.holder || '',
+            item.book_number || item.book_num || '',
+            item.date || '',
+            item.location || '',
+            item.total || 0
+          ];
+        },
+        unmapping: function(row) {
+          return {
+            book_type: row[0] || '',
+            holder: row[1] || '',
+            book_number: row[2] || '',
+            date: row[3] || '',
+            location: row[4] || '',
+            total: row[5] || 0
+          };
+        }
+      }
+    };
+    
+    if (action === 'read') {
+      var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+      var responseData = {};
+      
+      for (var key in sheetsConfig) {
+        var config = sheetsConfig[key];
+        var sheet = spreadsheet.getSheetByName(config.name);
+        responseData[key] = [];
+        
+        if (sheet) {
+          var lastRow = sheet.getLastRow();
+          if (lastRow > 1) {
+            var range = sheet.getRange(2, 1, lastRow - 1, config.headers.length);
+            var values = range.getValues();
+            for (var i = 0; i < values.length; i++) {
+              responseData[key].push(config.unmapping(values[i]));
+            }
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: responseData }))
+                           .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    if (action === 'sync') {
+      var payload = requestData.data;
+      var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+      
+      for (var key in sheetsConfig) {
+        if (payload[key] !== undefined) {
+          var config = sheetsConfig[key];
+          var sheet = spreadsheet.getSheetByName(config.name);
+          if (!sheet) {
+            sheet = spreadsheet.insertSheet(config.name);
+          } else {
+            sheet.clear();
+          }
+          
+          var items = payload[key];
+          var headers = config.headers;
+          sheet.appendRow(headers);
+          
+          var headerRange = sheet.getRange(1, 1, 1, headers.length);
+          headerRange.setFontWeight('bold');
+          headerRange.setBackground('#e2efda');
+          headerRange.setHorizontalAlignment('center');
+          
+          if (items && items.length > 0) {
+            var rows = [];
+            for (var i = 0; i < items.length; i++) {
+              rows.push(config.mapping(items[i]));
+            }
+            sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+            
+            for (var col = 1; col <= headers.length; col++) {
+              sheet.autoResizeColumn(col);
+            }
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'تمت المزامنة بنجاح!' }))
+                           .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'إجراء غير معروف!' }))
+                         .setMimeType(ContentService.MimeType.JSON);
+                         
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() }))
+                         .setMimeType(ContentService.MimeType.JSON);
+  }
+}</div>
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </div>
 
