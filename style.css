@@ -2377,7 +2377,48 @@ html.is-scrolling ::-webkit-scrollbar-thumb {
     box-shadow: 0 6px 20px var(--btn-backup-hover-shadow);
 }
 
+/* Firebase Cloud Sync Button */
+.btn-firebase {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    background: linear-gradient(135deg, #FFCA28, #FF8F00);
+    border: none;
+    color: #fff;
+    border-radius: 10px;
+    font-family: var(--font-main);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(255, 143, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
 
+.btn-firebase::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: all 0.6s ease;
+}
+
+.btn-firebase:hover::before {
+    left: 100%;
+}
+
+.btn-firebase:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(255, 143, 0, 0.5);
+    color: #fff;
+}
 
 /* ============================================
    BULK PRINT MODAL OPTIONS
@@ -3697,180 +3738,15 @@ html.is-scrolling ::-webkit-scrollbar-thumb {
     transform: translateY(-1px);
 }
 
-/* Hide admin-only buttons (Backup & Google Sheets) for viewer mode */
-body.is-viewer .btn-backup,
-body.is-viewer .btn-sheets {
+/* Hide admin-only buttons (Cloud Sync & Backup) for viewer mode */
+body.is-viewer .btn-firebase,
+body.is-viewer .btn-backup {
     display: none !important;
 }
 
 .view-only-hidden {
     display: none !important;
 }
-
-/* Google Sheets Sync Button */
-.btn-sheets {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 18px;
-    background: linear-gradient(135deg, #0F9D58, #0B8043);
-    border: none;
-    color: #fff;
-    border-radius: 10px;
-    font-family: var(--font-main);
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    white-space: nowrap;
-    box-shadow: 0 4px 15px rgba(11, 128, 67, 0.3);
-    position: relative;
-    overflow: hidden;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
-}
-
-.btn-sheets::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    transition: all 0.6s ease;
-}
-
-.btn-sheets:hover::before {
-    left: 100%;
-}
-
-.btn-sheets:hover {
-    transform: translateY(-3px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(11, 128, 67, 0.5);
-    color: #fff;
-}
-
-/* Google Sheets Settings Toggle Switch */
-.toggle-switch-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--surface-border);
-    padding: 12px 16px;
-    border-radius: 10px;
-    margin-top: 10px;
-    margin-bottom: 15px;
-}
-
-.toggle-switch-wrapper label {
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 46px;
-    height: 24px;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(255,255,255,0.1);
-    transition: .3s;
-    border-radius: 24px;
-    border: 1px solid var(--surface-border);
-}
-
-.toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 3px;
-    bottom: 3px;
-    background-color: #fff;
-    transition: .3s;
-    border-radius: 50%;
-}
-
-.toggle-switch input:checked + .toggle-slider {
-    background-color: #0f9d58;
-    border-color: #0b8043;
-}
-
-.toggle-switch input:checked + .toggle-slider:before {
-    transform: translateX(22px);
-}
-
-/* Code block section in Sheets modal */
-.sheets-code-section {
-    margin-top: 15px;
-    border: 1px solid var(--surface-border);
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-}
-
-.sheets-code-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--surface-border);
-}
-
-.sheets-code-header span {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-muted);
-}
-
-.btn-copy-code {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--surface-border);
-    color: var(--text-main);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease;
-}
-
-.btn-copy-code:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.sheets-code-body {
-    padding: 10px;
-    max-height: 120px;
-    overflow-y: auto;
-    font-family: monospace;
-    font-size: 12px;
-    direction: ltr;
-    text-align: left;
-    white-space: pre;
-    color: #e2e8f0;
-}
-
 
 
 
